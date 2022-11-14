@@ -429,20 +429,40 @@ void board_write_spi_cs(uint32_t pin, uint8_t state)
 void board_init_led_pins(void)
 {
     init_led_pins_as_gpio();
+#if BOARD_LED_TOGGLE_RGB
     gpio_set_pin_output_with_initial(BOARD_R_GPIO_CTRL, BOARD_R_GPIO_INDEX, BOARD_R_GPIO_PIN, BOARD_LED_OFF_LEVEL);
     gpio_set_pin_output_with_initial(BOARD_G_GPIO_CTRL, BOARD_G_GPIO_INDEX, BOARD_G_GPIO_PIN, BOARD_LED_OFF_LEVEL);
     gpio_set_pin_output_with_initial(BOARD_B_GPIO_CTRL, BOARD_B_GPIO_INDEX, BOARD_B_GPIO_PIN, BOARD_LED_OFF_LEVEL);
+#else
+    gpio_set_pin_output_with_initial(BOARD_G_GPIO_CTRL, BOARD_G_GPIO_INDEX, BOARD_G_GPIO_PIN, BOARD_LED_OFF_LEVEL);
+#endif
+
+#if BOARD_LED3_TOGGLE
+    board_init_led3_pins();
+#endif
+
+#if BOARD_LED6_TOGGLE
+    board_init_led6_pins();
+#endif
 }
 
 void board_led_toggle(void)
 {
-#ifdef BOARD_LED_TOGGLE_RGB
+#if BOARD_LED_TOGGLE_RGB
     static uint8_t i;
     gpio_write_port(BOARD_R_GPIO_CTRL, BOARD_R_GPIO_INDEX, (7 & ~(1 << i)) << BOARD_R_GPIO_PIN);
     i++;
     i = i % 3;
 #else
     gpio_toggle_pin(BOARD_LED_GPIO_CTRL, BOARD_LED_GPIO_INDEX, BOARD_LED_GPIO_PIN);
+#endif
+
+#if BOARD_LED3_TOGGLE
+    board_led3_toggle();
+#endif
+
+#if BOARD_LED6_TOGGLE
+    board_led6_toggle();
 #endif
 }
 
@@ -1049,4 +1069,37 @@ hpm_stat_t board_reset_enet_phy(ENET_Type *ptr)
 uint8_t board_enet_get_dma_pbl(ENET_Type *ptr)
 {
     return enet_pbl_32;
+}
+
+void board_init_led3_pins(void)
+{
+    uint32_t pad_ctl = 0;//IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+
+    HPM_IOC->PAD[IOC_PAD_PZ05].FUNC_CTL = IOC_PZ05_FUNC_CTL_GPIO_Z_05;
+    HPM_IOC->PAD[IOC_PAD_PZ05].PAD_CTL = pad_ctl;
+
+    HPM_BIOC->PAD[IOC_PAD_PZ05].FUNC_CTL = IOC_PZ05_FUNC_CTL_SOC_PZ_05;
+
+    gpio_set_pin_output_with_initial(BOARD_LED3_GPIO_CTRL, BOARD_LED3_GPIO_INDEX, BOARD_LED3_GPIO_PIN, BOARD_LED_OFF_LEVEL);
+}
+
+void board_led3_toggle(void)
+{
+    gpio_toggle_pin(BOARD_LED3_GPIO_CTRL, BOARD_LED3_GPIO_INDEX, BOARD_LED3_GPIO_PIN);
+}
+
+
+void board_init_led6_pins(void)
+{
+    uint32_t pad_ctl = IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+
+    HPM_IOC->PAD[IOC_PAD_PD15].FUNC_CTL = IOC_PD15_FUNC_CTL_GPIO_D_15;
+    HPM_IOC->PAD[IOC_PAD_PD15].PAD_CTL = pad_ctl;
+
+    gpio_set_pin_output_with_initial(BOARD_LED6_GPIO_CTRL, BOARD_LED6_GPIO_INDEX, BOARD_LED6_GPIO_PIN, BOARD_LED_ON_LEVEL);
+}
+
+void board_led6_toggle(void)
+{
+    gpio_toggle_pin(BOARD_LED6_GPIO_CTRL, BOARD_LED6_GPIO_INDEX, BOARD_LED6_GPIO_PIN);
 }

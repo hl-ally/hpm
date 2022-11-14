@@ -289,6 +289,7 @@ typedef enum {
 
 /**
  * @brief Clock nodes
+ * 功能时钟，用户手册-表19
  */
 typedef enum {
     clock_node_cpu0 = 0,
@@ -374,6 +375,7 @@ typedef enum {
 
 /**
  * @brief General clock sources
+ * 时钟源，用户手册-表18
  */
 typedef enum {
     clock_source_osc0_clk0 = 0,

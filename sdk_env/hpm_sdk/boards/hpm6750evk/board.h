@@ -162,10 +162,21 @@
 #define BOARD_LED_OFF_LEVEL 1
 #define BOARD_LED_ON_LEVEL 0
 
-#define BOARD_LED_TOGGLE_RGB 1
+#define BOARD_LED_TOGGLE_RGB    0
+#define BOARD_LED3_TOGGLE       1
+#define BOARD_LED6_TOGGLE       1
 
 #define BOARD_APP_GPIO_INDEX GPIO_DI_GPIOZ
 #define BOARD_APP_GPIO_PIN 2
+
+#define BOARD_LED3_GPIO_CTRL    HPM_GPIO0
+#define BOARD_LED3_GPIO_INDEX   GPIO_DO_GPIOZ
+#define BOARD_LED3_GPIO_PIN     5
+
+#define BOARD_LED6_GPIO_CTRL    HPM_GPIO0
+#define BOARD_LED6_GPIO_INDEX   GPIO_DO_GPIOD
+#define BOARD_LED6_GPIO_PIN     15
+
 
 /* pinmux section */
 #define USING_GPIO0_FOR_GPIOZ
@@ -522,6 +533,15 @@ void board_disable_output_rgb_led(uint8_t color);
  * Keep mchtmr clock on low power mode
  */
 void board_ungate_mchtmr_at_lp_mode(void);
+
+
+/*
+ * user IAP
+*/
+void board_init_led3_pins(void);
+void board_led3_toggle(void);
+void board_init_led6_pins(void);
+void board_led6_toggle(void);
 
 #if defined(__cplusplus)
 }
