@@ -10,6 +10,7 @@
 #include "hpm_lcdc_drv.h"
 #include "hpm_i2c_drv.h"
 #include "hpm_gpio_drv.h"
+#include "hpm_gpiom_drv.h"
 #include "hpm_dram_drv.h"
 #include "pinmux.h"
 #include "hpm_pmp_drv.h"
@@ -217,6 +218,9 @@ void board_init(void)
 #if BOARD_SHOW_BANNER
     board_print_banner();
 #endif
+
+    board_print_clock_freq();
+    board_init_test_pin();
 }
 
 void board_init_sdram_pins(void)
@@ -1102,4 +1106,26 @@ void board_init_led6_pins(void)
 void board_led6_toggle(void)
 {
     gpio_toggle_pin(BOARD_LED6_GPIO_CTRL, BOARD_LED6_GPIO_INDEX, BOARD_LED6_GPIO_PIN);
+}
+
+void board_init_test_pin(void)
+{
+    uint32_t pad_ctl = IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+
+#if TEST_GPIO_PD16
+    HPM_IOC->PAD[IOC_PAD_PD16].FUNC_CTL = IOC_PD16_FUNC_CTL_GPIO_D_16;
+    HPM_IOC->PAD[IOC_PAD_PD16].PAD_CTL = pad_ctl;
+#else
+    HPM_IOC->PAD[IOC_PAD_PE31].FUNC_CTL = IOC_PE31_FUNC_CTL_GPIO_E_31;
+    HPM_IOC->PAD[IOC_PAD_PE31].PAD_CTL = pad_ctl;
+#endif
+    
+    //gpio_set_pin_output_with_initial(BOARD_TEST_GPIO_CTRL, BOARD_TEST_GPIO_INDEX, BOARD_TEST_GPIO_PIN, 1);
+    gpio_set_pin_output(HPM_FGPIO, GPIO_OE_GPIOD, 16);//设置为输出
+    gpiom_set_pin_controller(HPM_GPIOM, BOARD_TEST_GPIO_INDEX, BOARD_TEST_GPIO_PIN, gpiom_core0_fast);
+}
+
+void board_test_toggle(void)
+{
+    gpio_toggle_pin(BOARD_TEST_GPIO_CTRL, BOARD_TEST_GPIO_INDEX, BOARD_TEST_GPIO_PIN);
 }

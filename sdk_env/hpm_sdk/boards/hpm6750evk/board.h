@@ -177,6 +177,15 @@
 #define BOARD_LED6_GPIO_INDEX   GPIO_DO_GPIOD
 #define BOARD_LED6_GPIO_PIN     15
 
+#define TEST_GPIO_PD16          1           // 1:使用PD16作为测试口;0:使用PE31作为测试口
+#define BOARD_TEST_GPIO_CTRL    HPM_FGPIO
+#if TEST_GPIO_PD16
+#define BOARD_TEST_GPIO_INDEX   GPIO_DO_GPIOD
+#define BOARD_TEST_GPIO_PIN     16
+#else
+#define BOARD_TEST_GPIO_INDEX   GPIO_DO_GPIOE
+#define BOARD_TEST_GPIO_PIN     31
+#endif
 
 /* pinmux section */
 #define USING_GPIO0_FOR_GPIOZ
@@ -427,6 +436,7 @@
 #define BOARD_RGB_BLUE  (BOARD_RGB_RED + 2)
 
 #define BOARD_CPU_FREQ (816000000UL)
+//#define BOARD_CPU_FREQ (408000000UL)
 
 #define BOARD_APP_DISPLAY_CLOCK clock_display
 
@@ -542,6 +552,8 @@ void board_init_led3_pins(void);
 void board_led3_toggle(void);
 void board_init_led6_pins(void);
 void board_led6_toggle(void);
+void board_init_test_pin(void);
+void board_test_toggle(void);
 
 #if defined(__cplusplus)
 }

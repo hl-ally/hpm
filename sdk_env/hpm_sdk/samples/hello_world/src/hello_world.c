@@ -22,11 +22,17 @@ int main(void)
     printf("hello world\n");
     while(1)
     {
+#if 0
         u = getchar();
         if (u == '\r') {
             u = '\n';
         }
         printf("%c", u);
+#else
+        //clock_cpu_delay_us(1);
+        //board_delay_ms(300);
+        board_test_toggle();
+#endif
     }
     return 0;
 }
