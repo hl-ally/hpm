@@ -220,7 +220,6 @@ void board_init(void)
 #endif
 
     board_print_clock_freq();
-    board_init_test_pin();
 }
 
 void board_init_sdram_pins(void)
@@ -1125,7 +1124,69 @@ void board_init_test_pin(void)
     gpiom_set_pin_controller(HPM_GPIOM, BOARD_TEST_GPIO_INDEX, BOARD_TEST_GPIO_PIN, gpiom_core0_fast);
 }
 
+#if ZLG_FAE_FGPIO_TEST
+static void PE21_FGPIO_TEST(void) 
+{
+    HPM_IOC->PAD[IOC_PAD_PE21].PAD_CTL = IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+    HPM_IOC->PAD[IOC_PAD_PE21].FUNC_CTL = IOC_PE21_FUNC_CTL_GPIO_E_21;//复用为GPIO
+    gpiom_set_pin_controller(HPM_GPIOM, GPIOM_ASSIGN_GPIOE, 21, gpiom_core0_fast);//选择高速控制器
+    gpio_set_pin_output(HPM_FGPIO, GPIO_OE_GPIOE, 21);//设置为输出
+
+    while(1)
+    {
+        __asm("nop");
+        gpio_toggle_pin(HPM_FGPIO, GPIO_DO_GPIOE,21);    //翻转
+    }
+}
+
+
+static void PD16_TEST(void) 
+{
+
+    HPM_IOC->PAD[IOC_PAD_PD16].FUNC_CTL = IOC_PD16_FUNC_CTL_GPIO_D_16;//复用为GPIO
+    gpiom_set_pin_controller(HPM_GPIOM, GPIOM_ASSIGN_GPIOD, 16, gpiom_core0_fast);//选择高速控制器
+    gpio_set_pin_output(HPM_FGPIO, GPIO_OE_GPIOD, 16);//设置为输出
+
+    while(1)
+    {
+        gpio_toggle_pin(HPM_FGPIO, GPIO_DO_GPIOD,16);    //翻转
+    }
+}
+
+
+static void PD252423_TEST(void) 
+{
+
+    HPM_IOC->PAD[IOC_PAD_PD25].FUNC_CTL = IOC_PD25_FUNC_CTL_GPIO_D_25;//复用为GPIO
+    gpiom_set_pin_controller(HPM_GPIOM, GPIOM_ASSIGN_GPIOD, 25, gpiom_core0_fast);//选择高速控制器
+    gpio_set_pin_output(HPM_FGPIO, GPIO_OE_GPIOD, 25);//设置为输出
+
+   HPM_IOC->PAD[IOC_PAD_PD23].FUNC_CTL = IOC_PD23_FUNC_CTL_GPIO_D_23;//复用为GPIO
+    gpiom_set_pin_controller(HPM_GPIOM, GPIOM_ASSIGN_GPIOD, 23, gpiom_core0_fast);//选择高速控制器
+    gpio_set_pin_output(HPM_FGPIO, GPIO_OE_GPIOD, 23);//设置为输出
+
+
+   HPM_IOC->PAD[IOC_PAD_PD24].FUNC_CTL = IOC_PD24_FUNC_CTL_GPIO_D_24;//复用为GPIO
+    gpiom_set_pin_controller(HPM_GPIOM, GPIOM_ASSIGN_GPIOD, 24, gpiom_core0_fast);//选择高速控制器
+    gpio_set_pin_output(HPM_FGPIO, GPIO_OE_GPIOD, 24);//设置为输出
+
+
+    while(1)
+    {
+        gpio_toggle_pin(HPM_FGPIO, GPIO_DO_GPIOD,25);    //翻转
+        //gpio_toggle_pin(HPM_FGPIO, GPIO_DO_GPIOD,23);    //翻转
+        //gpio_toggle_pin(HPM_FGPIO, GPIO_DO_GPIOD,24);    //翻转
+    }
+}
+#endif
+
 void board_test_toggle(void)
 {
-    gpio_toggle_pin(BOARD_TEST_GPIO_CTRL, BOARD_TEST_GPIO_INDEX, BOARD_TEST_GPIO_PIN);
+#if ZLG_FAE_FGPIO_TEST
+    //PE21_FGPIO_TEST();
+    //PD16_TEST();
+    PD252423_TEST();//翻转测试
+#else
+    gpio_toggle_pin(BOARD_TEST_GPIO_CTRL, BOARD_TEST_GPIO_INDEX, BOARD_TEST_GPIO_PIN);   
+#endif
 }
