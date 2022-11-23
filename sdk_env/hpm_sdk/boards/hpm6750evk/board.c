@@ -1107,7 +1107,7 @@ void board_led6_toggle(void)
     gpio_toggle_pin(BOARD_LED6_GPIO_CTRL, BOARD_LED6_GPIO_INDEX, BOARD_LED6_GPIO_PIN);
 }
 
-void board_init_test_pin(void)
+void board_init_fgpio_pin(void)
 {
     uint32_t pad_ctl = IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
 
@@ -1180,7 +1180,7 @@ static void PD252423_TEST(void)
 }
 #endif
 
-void board_test_toggle(void)
+void board_fgpio_toggle_process(void)
 {
 #if ZLG_FAE_FGPIO_TEST
     //PE21_FGPIO_TEST();

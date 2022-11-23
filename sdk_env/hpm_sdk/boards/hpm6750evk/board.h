@@ -552,8 +552,8 @@ void board_init_led3_pins(void);
 void board_led3_toggle(void);
 void board_init_led6_pins(void);
 void board_led6_toggle(void);
-void board_init_test_pin(void);
-void board_test_toggle(void);
+void board_init_fgpio_pin(void);
+void board_fgpio_toggle_process(void);
 
 #if defined(__cplusplus)
 }
