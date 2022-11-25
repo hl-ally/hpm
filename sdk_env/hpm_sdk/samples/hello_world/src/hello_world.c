@@ -21,7 +21,7 @@
 
 #define LED_IO_TEST                 1       // IO口控制LED测试
 #define RGB_LED_PWM_TEST            0       // PWM控制RGB LED测试
-#define PWM_BEEP_TEST               0       // PWM控制蜂鸣器测试
+#define PWM_BEEP_TEST               1       // PWM控制蜂鸣器测试
 
 
 #define LED_FLASH_PERIOD_IN_MS      300

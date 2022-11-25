@@ -66,12 +66,12 @@ static void pwm_isr(void)
     do_update = true;
 }
 
-SDK_DECLARE_EXT_ISR_M(RED_PWM_IRQ, pwm_isr)
+SDK_DECLARE_EXT_ISR_M(RED_PWM_IRQ, pwm_isr);
 #if (GREEN_PWM_IRQ != RED_PWM_IRQ)
-SDK_DECLARE_EXT_ISR_M(GREEN_PWM_IRQ, pwm_isr)
+SDK_DECLARE_EXT_ISR_M(GREEN_PWM_IRQ, pwm_isr);
 #endif
 #if (BLUE_PWM_IRQ != RED_PWM_IRQ) && (GREEN_PWM_IRQ != BLUE_PWM_IRQ)
-SDK_DECLARE_EXT_ISR_M(BLUE_PWM_IRQ, pwm_isr)
+SDK_DECLARE_EXT_ISR_M(BLUE_PWM_IRQ, pwm_isr);
 #endif
 
 static void config_pwm(PWM_Type * ptr, uint8_t pin, uint8_t cmp_index, uint32_t reload, bool cmp_initial_zero, uint8_t hw_event_cmp, bool off_level_high)
