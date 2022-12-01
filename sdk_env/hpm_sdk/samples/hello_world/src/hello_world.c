@@ -21,14 +21,17 @@
 
 #define LED_IO_TEST                 1       // IO口控制LED测试
 #define RGB_LED_PWM_TEST            0       // PWM控制RGB LED测试
-#define PWM_BEEP_TEST               1       // PWM控制蜂鸣器测试
+#define PWM_BEEP_TEST               0       // PWM控制蜂鸣器测试
+#define CHERRYUSB_DEVICE_TEST       1       // cherryusb device测试程序
 
 
 #define LED_FLASH_PERIOD_IN_MS      300
 
+extern void hid_custom_init(void);
+
 int main(void)
 {
-    int u;
+    int u = 0;
     board_init();
 
 #if LED_IO_TEST
@@ -50,6 +53,26 @@ int main(void)
     pwm_beep_init();
 #endif
 
+#if CHERRYUSB_DEVICE_TEST
+    printf("cherry usb device test.\n");
+    board_init_usb_pins();
+
+    hid_custom_init();
+   #if 0
+    while (u < 2) 
+    {
+        hid_mouse_test();
+        if (dtr_enable) {
+            u++;
+            cdc_acm_data_send_with_dtr_test();
+        }
+    }
+    #endif
+#endif
+
+#if defined(__GNUC__)
+    printf("gcc version %d\n", __GNUC__);
+#endif
     printf("hello world\n");
     while(1)
     {
@@ -73,7 +96,12 @@ int main(void)
 #endif
 
 #if PWM_BEEP_TEST
+        board_delay_ms(10);
         pwm_beep_process();
+#endif
+
+#if CHERRYUSB_DEVICE_TEST
+        ;
 #endif
     }
     return 0;

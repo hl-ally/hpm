@@ -54,7 +54,7 @@ static void config_beep_pwm(beep_pwm_t stPwm, uint8_t hw_event_cmp, bool off_lev
     pwm_cmp_config_t cmp_config = {0};
     pwm_config_t pwm_config = {0};
 
-    pwm_stop_counter(stPwm.pwm);
+    pwm_stop_counter(stPwm.pwm);    // 关闭PWM定时器的计数器
     pwm_get_default_pwm_config(stPwm.pwm, &pwm_config);
     pwm_get_default_cmp_config(stPwm.pwm, &cmp_config);
 
@@ -69,7 +69,6 @@ static void config_beep_pwm(beep_pwm_t stPwm, uint8_t hw_event_cmp, bool off_lev
     pwm_set_start_count(stPwm.pwm, 0, 0);
 
     cmp_config.mode = pwm_cmp_mode_output_compare;
-
     cmp_config.cmp = stPwm.pwm_cmp_initial_zero ? 0 : stPwm.reload + 1;
     cmp_config.update_trigger = pwm_shadow_register_update_on_modify;
 
@@ -110,7 +109,7 @@ static void init_beep_pwm_pin(void)
 void pwm_beep_init(void)
 {
     uint32_t freq;
-    uint32_t hw_event_cmp;
+    //uint32_t hw_event_cmp;
     trgm_output_t config = {0};
     
     printf("beep pwm init\n");
@@ -140,6 +139,7 @@ void pwm_beep_init(void)
     st_beepPwm.pwm_cmp_initial_zero = BOARD_BEEP_PWM_CMP_INITIAL_ZERO;
     st_beepPwm.pwm_irq = BOARD_BEEP_PWM_IRQ;
 
+#if 0
     hw_event_cmp = PWM_SOC_CMP_MAX_COUNT;
     for (uint8_t i = 0; i < PWM_SOC_CMP_MAX_COUNT; i++) 
     {
@@ -155,10 +155,11 @@ void pwm_beep_init(void)
         while (1) {
         };
     }
+#endif
 
-    config_beep_pwm(st_beepPwm, hw_event_cmp, BOARD_LED_OFF_LEVEL);
-    pwm_start_counter(st_beepPwm.pwm);
-    intc_m_enable_irq_with_priority(st_beepPwm.pwm_irq, 1);
+    config_beep_pwm(st_beepPwm, BOARD_BEEP_PWM_CMP, BOARD_LED_OFF_LEVEL);
+    pwm_start_counter(st_beepPwm.pwm);          // 使能PWM定时器的计数器
+    intc_m_enable_irq_with_priority(st_beepPwm.pwm_irq, 1);     // 开启中断, 并设置中断优先级
     
 }
 

@@ -27,6 +27,6 @@ build-type:
   - flash_sdram_uf2_release
   - sec_core_img
   - sec_core_img_release
-default-sample: hello_world
+default-sample: cherryusb/device/hid/custom_inout
 default-board: hpm6750evk
-default-type: flash_xip
+default-type: flash_xip_release
