@@ -7,66 +7,68 @@
 
 #include "usbd_core.h"
 #include "usbd_hid.h"
+#include "user_config.h"
 
+#if USBD_APP_TEST
 /*!< hidraw in endpoint */
-#define HIDRAW_IN_EP       0x81
-#define HIDRAW_IN_SIZE     64
-#define HIDRAW_IN_INTERVAL 10
+#define HIDRAW_IN_EP                    0x81
+#define HIDRAW_IN_SIZE                  64
+#define HIDRAW_IN_INTERVAL              1
 
 /*!< hidraw out endpoint */
-#define HIDRAW_OUT_EP          0x02
-#define HIDRAW_OUT_EP_SIZE     64
-#define HIDRAW_OUT_EP_INTERVAL 10
+#define HIDRAW_OUT_EP                   0x01
+#define HIDRAW_OUT_EP_SIZE              64
+#define HIDRAW_OUT_EP_INTERVAL          1
 
-#define USBD_VID           0xcafe
-#define USBD_PID           0x4004
-#define USBD_MAX_POWER     100
-#define USBD_LANGID_STRING 1033
+#define USBD_VID                        0x1FF7
+#define USBD_PID                        0x0F32
+#define USBD_MAX_POWER                  100
+#define USBD_LANGID_STRING              1033
 
 /*!< config descriptor size */
-#define USB_HID_CONFIG_DESC_SIZ (9 + 9 + 9 + 7 + 7)
+#define USB_HID_CONFIG_DESC_SIZ         (9 + 9 + 9 + 7 + 7)
 
 /*!< custom hid report descriptor size */
-#define HID_CUSTOM_REPORT_DESC_SIZE 38
+#define HID_CUSTOM_REPORT_DESC_SIZE     46
 
 /*!< global descriptor */
 static const uint8_t hid_descriptor[] = {
     USB_DEVICE_DESCRIPTOR_INIT(USB_2_0, 0x00, 0x00, 0x00, USBD_VID, USBD_PID, 0x0002, 0x01),
     USB_CONFIG_DESCRIPTOR_INIT(USB_HID_CONFIG_DESC_SIZ, 0x01, 0x01, USB_CONFIG_BUS_POWERED, USBD_MAX_POWER),
     /************** Descriptor of Custom interface *****************/
-    0x09,                          /* bLength: Interface Descriptor size */
-    USB_DESCRIPTOR_TYPE_INTERFACE, /* bDescriptorType: Interface descriptor type */
-    0x00,                          /* bInterfaceNumber: Number of Interface */
-    0x00,                          /* bAlternateSetting: Alternate setting */
-    0x02,                          /* bNumEndpoints */
-    0x03,                          /* bInterfaceClass: HID */
-    0x01,                          /* bInterfaceSubClass : 1=BOOT, 0=no boot */
-    0x00,                          /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
-    0,                             /* iInterface: Index of string descriptor */
+    0x09,                           /* bLength: Interface Descriptor size */
+    USB_DESCRIPTOR_TYPE_INTERFACE,  /* bDescriptorType: Interface descriptor type */
+    0x00,                           /* bInterfaceNumber: Number of Interface */
+    0x00,                           /* bAlternateSetting: Alternate setting */
+    0x02,                           /* bNumEndpoints */
+    0x03,                           /* bInterfaceClass: HID */
+    0x00,                           /* bInterfaceSubClass : 1=BOOT, 0=no boot */
+    0x00,                           /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
+    0,                              /* iInterface: Index of string descriptor */
     /******************** Descriptor of Custom HID ********************/
-    0x09,                    /* bLength: HID Descriptor size */
-    HID_DESCRIPTOR_TYPE_HID, /* bDescriptorType: HID */
-    0x11,                    /* bcdHID: HID Class Spec release number */
+    0x09,                           /* bLength: HID Descriptor size */
+    HID_DESCRIPTOR_TYPE_HID,        /* bDescriptorType: HID */
+    0x00,                           /* bcdHID: HID Class Spec release number */
     0x01,
-    0x00,                        /* bCountryCode: Hardware target country */
-    0x01,                        /* bNumDescriptors: Number of HID class descriptors to follow */
-    0x22,                        /* bDescriptorType */
-    HID_CUSTOM_REPORT_DESC_SIZE, /* wItemLength: Total length of Report descriptor */
+    0x00,                           /* bCountryCode: Hardware target country */
+    0x01,                           /* bNumDescriptors: Number of HID class descriptors to follow */
+    0x22,                           /* bDescriptorType */
+    HID_CUSTOM_REPORT_DESC_SIZE,    /* wItemLength: Total length of Report descriptor */
     0x00,
     /******************** Descriptor of Custom in endpoint ********************/
-    0x07,                         /* bLength: Endpoint Descriptor size */
-    USB_DESCRIPTOR_TYPE_ENDPOINT, /* bDescriptorType: */
-    HIDRAW_IN_EP,                 /* bEndpointAddress: Endpoint Address (IN) */
-    0x03,                         /* bmAttributes: Interrupt endpoint */
-    WBVAL(HIDRAW_IN_SIZE),        /* wMaxPacketSize: 4 Byte max */
-    HIDRAW_IN_INTERVAL,           /* bInterval: Polling Interval */
+    0x07,                           /* bLength: Endpoint Descriptor size */
+    USB_DESCRIPTOR_TYPE_ENDPOINT,   /* bDescriptorType: */
+    HIDRAW_IN_EP,                   /* bEndpointAddress: Endpoint Address (IN) */
+    0x03,                           /* bmAttributes: Interrupt endpoint */
+    WBVAL(HIDRAW_IN_SIZE),          /* wMaxPacketSize: 4 Byte max */
+    HIDRAW_IN_INTERVAL,             /* bInterval: Polling Interval */
     /******************** Descriptor of Custom out endpoint ********************/
-    0x07,                         /* bLength: Endpoint Descriptor size */
-    USB_DESCRIPTOR_TYPE_ENDPOINT, /* bDescriptorType: */
-    HIDRAW_OUT_EP,                /* bEndpointAddress: Endpoint Address (IN) */
-    0x03,                         /* bmAttributes: Interrupt endpoint */
-    WBVAL(HIDRAW_OUT_EP_SIZE),    /* wMaxPacketSize: 4 Byte max */
-    HIDRAW_OUT_EP_INTERVAL,       /* bInterval: Polling Interval */
+    0x07,                           /* bLength: Endpoint Descriptor size */
+    USB_DESCRIPTOR_TYPE_ENDPOINT,   /* bDescriptorType: */
+    HIDRAW_OUT_EP,                  /* bEndpointAddress: Endpoint Address (IN) */
+    0x03,                           /* bmAttributes: Interrupt endpoint */
+    WBVAL(HIDRAW_OUT_EP_SIZE),      /* wMaxPacketSize: 4 Byte max */
+    HIDRAW_OUT_EP_INTERVAL,         /* bInterval: Polling Interval */
     /* 73 */
     /*
      * string0 descriptor
@@ -144,27 +146,30 @@ static const uint8_t hid_descriptor[] = {
 
 /*!< custom hid report descriptor */
 static const uint8_t hid_custom_report_desc[HID_CUSTOM_REPORT_DESC_SIZE] = {
-    /* USER CODE BEGIN 0 */
-    0x06, 0x00, 0xff, /* USAGE_PAGE (Vendor Defined Page 1) */
-    0x09, 0x01,       /* USAGE (Vendor Usage 1) */
-    0xa1, 0x01,       /* COLLECTION (Application) */
-    0x85, 0x02,       /*   REPORT ID (0x02) */
-    0x09, 0x01,       /*   USAGE (Vendor Usage 1) */
-    0x15, 0x00,       /*   LOGICAL_MINIMUM (0) */
-    0x26, 0xff, 0x00, /*   LOGICAL_MAXIMUM (255) */
-    0x95, 0x40 - 1,   /*   REPORT_COUNT (63) */
-    0x75, 0x08,       /*   REPORT_SIZE (8) */
-    0x81, 0x02,       /*   INPUT (Data,Var,Abs) */
-    /* <___________________________________________________> */
-    0x85, 0x01,       /*   REPORT ID (0x01) */
-    0x09, 0x01,       /*   USAGE (Vendor Usage 1) */
-    0x15, 0x00,       /*   LOGICAL_MINIMUM (0) */
-    0x26, 0xff, 0x00, /*   LOGICAL_MAXIMUM (255) */
-    0x95, 0x40 - 1,   /*   REPORT_COUNT (63) */
-    0x75, 0x08,       /*   REPORT_SIZE (8) */
-    0x91, 0x02,       /*   OUTPUT (Data,Var,Abs) */
-    /* USER CODE END 0 */
-    0xC0 /*     END_COLLECTION	             */
+    /* USER CODE BEGIN 0 */ 
+  0x06, 0x00, 0xff,               	/*   USAGE_PAGE (Undefined)     */
+  0x09, 0x00,                     	/*   USAGE (Undefined)          */
+  0xa1, 0x01,                     	/*   COLLECTION (Application)   */
+  0x85, 0xFD,                     	/*   REPORT_ID (253)            */
+  0x06, 0x00, 0xff,               	/*   USAGE_PAGE (Undefined)     */
+  0x19, 0x01,                     	/*   USAGE_MINIMUM              */
+  0x29, 0x3f,                     	/*   USAGE_MAXIMUM              */
+  0x15, 0x00,                     	/*   LOGICAL_MINIMUM (0)        */
+  0x25, 0xff,                     	/*   LOGICAL_MAXIMUM (255)      */
+  0x75, 0x08,                     	/*   REPORT_SIZE (8)            */
+  0x95, 0x3f,                     	/*   REPORT_COUNT (63)          */
+  0x81, 0x02,                     	/*   INPUT (Data,Var,Abs)       */
+  0x85, 0xFE,                     	/*   REPORT_ID (254)            */
+  0x06, 0x00, 0xff,               	/*   USAGE_PAGE (Undefined)     */
+  0x19, 0x01,                     	/*   USAGE_MINIMUM              */
+  0x29, 0x3f,                     	/*   USAGE_MAXIMUM              */
+  0x15, 0x00,                     	/*   LOGICAL_MINIMUM (0)        */
+  0x25, 0xff,                     	/*   LOGICAL_MAXIMUM (255)      */
+  0x75, 0x08,                     	/*   REPORT_SIZE (8)            */
+  0x95, 0x3f,                     	/*   REPORT_COUNT (63)          */
+  0x91, 0x02,                     	/*   OutPut (Data,Var,Abs)      */
+  /* USER CODE END 0 */ 
+  0xC0    /*     END_COLLECTION                 */
 };
 
 USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t read_buffer[64];
@@ -213,7 +218,7 @@ static struct usbd_endpoint custom_out_ep = {
  * @param[in]        none
  * @retval           none
  */
-void hid_custom_init(void)
+void app_hid_init(void)
 {
     usbd_desc_register(hid_descriptor);
     usbd_add_interface(usbd_hid_alloc_intf(hid_custom_report_desc, HID_CUSTOM_REPORT_DESC_SIZE));
@@ -222,3 +227,4 @@ void hid_custom_init(void)
 
     usbd_initialize();
 }
+#endif
