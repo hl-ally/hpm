@@ -7,69 +7,68 @@
 
 #include "usbd_core.h"
 #include "usbd_hid.h"
+#include "usbd_cdc.h"
+#include "usbd_msc.h"
 #include "user_config.h"
+#include "board.h"
 
 #if USBD_APP_TEST
-/*!< hidraw in endpoint */
-#define HIDRAW_IN_EP                    0x81
-#define HIDRAW_IN_SIZE                  64
-#define HIDRAW_IN_INTERVAL              1
+/*!< endpoint address */
+#define CDC_IN_EP                       0x81
+#define CDC_OUT_EP                      0x02
+#define CDC_INT_EP                      0x83
 
-/*!< hidraw out endpoint */
-#define HIDRAW_OUT_EP                   0x01
-#define HIDRAW_OUT_EP_SIZE              64
-#define HIDRAW_OUT_EP_INTERVAL          1
+/*!< endpoint address */
+#define HID_INT_EP                      0x86
+#define HID_INT_EP_SIZE                 4
+#define HID_INT_EP_INTERVAL             10
 
 #define USBD_VID                        0x1FF7
-#define USBD_PID                        0x0F32
+#define USBD_PID                        0x0F0A
 #define USBD_MAX_POWER                  100
 #define USBD_LANGID_STRING              1033
 
-/*!< config descriptor size */
-#define USB_HID_CONFIG_DESC_SIZ         (9 + 9 + 9 + 7 + 7)
+/*!< report descriptor size */
+#define HID_MOUSE_REPORT_DESC_SIZE      74
 
-/*!< custom hid report descriptor size */
-#define HID_CUSTOM_REPORT_DESC_SIZE     46
+#define USB_CONFIG_SIZE                 (9 + CDC_ACM_DESCRIPTOR_LEN + 25)
 
 /*!< global descriptor */
-static const uint8_t hid_descriptor[] = {
-    USB_DEVICE_DESCRIPTOR_INIT(USB_2_0, 0x00, 0x00, 0x00, USBD_VID, USBD_PID, 0x0002, 0x01),
-    USB_CONFIG_DESCRIPTOR_INIT(USB_HID_CONFIG_DESC_SIZ, 0x01, 0x01, USB_CONFIG_BUS_POWERED, USBD_MAX_POWER),
-    /************** Descriptor of Custom interface *****************/
+static const uint8_t usb0_descriptor[] = {
+    USB_DEVICE_DESCRIPTOR_INIT(USB_2_0, 0x00, 0x00, 0x00, USBD_VID, USBD_PID, 0x0200, 0x01),
+    USB_CONFIG_DESCRIPTOR_INIT(USB_CONFIG_SIZE, 0x03, 0x01, USB_CONFIG_BUS_POWERED, USBD_MAX_POWER),
+    CDC_ACM_DESCRIPTOR_INIT(0x00, CDC_INT_EP, CDC_OUT_EP, CDC_IN_EP, 0x01),
+    /************** Descriptor of Joystick Mouse interface ****************/
+    /* 09 */
     0x09,                           /* bLength: Interface Descriptor size */
     USB_DESCRIPTOR_TYPE_INTERFACE,  /* bDescriptorType: Interface descriptor type */
-    0x00,                           /* bInterfaceNumber: Number of Interface */
+    0x02,                           /* bInterfaceNumber: Number of Interface */
     0x00,                           /* bAlternateSetting: Alternate setting */
-    0x02,                           /* bNumEndpoints */
+    0x01,                           /* bNumEndpoints */
     0x03,                           /* bInterfaceClass: HID */
-    0x00,                           /* bInterfaceSubClass : 1=BOOT, 0=no boot */
-    0x00,                           /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
+    0x01,                           /* bInterfaceSubClass : 1=BOOT, 0=no boot */
+    0x02,                           /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
     0,                              /* iInterface: Index of string descriptor */
-    /******************** Descriptor of Custom HID ********************/
+    /******************** Descriptor of Joystick Mouse HID ********************/
+    /* 18 */
     0x09,                           /* bLength: HID Descriptor size */
     HID_DESCRIPTOR_TYPE_HID,        /* bDescriptorType: HID */
-    0x00,                           /* bcdHID: HID Class Spec release number */
+    0x11,                           /* bcdHID: HID Class Spec release number */
     0x01,
     0x00,                           /* bCountryCode: Hardware target country */
     0x01,                           /* bNumDescriptors: Number of HID class descriptors to follow */
     0x22,                           /* bDescriptorType */
-    HID_CUSTOM_REPORT_DESC_SIZE,    /* wItemLength: Total length of Report descriptor */
+    HID_MOUSE_REPORT_DESC_SIZE,     /* wItemLength: Total length of Report descriptor */
     0x00,
-    /******************** Descriptor of Custom in endpoint ********************/
+    /******************** Descriptor of Mouse endpoint ********************/
+    /* 27 */
     0x07,                           /* bLength: Endpoint Descriptor size */
     USB_DESCRIPTOR_TYPE_ENDPOINT,   /* bDescriptorType: */
-    HIDRAW_IN_EP,                   /* bEndpointAddress: Endpoint Address (IN) */
+    HID_INT_EP,                     /* bEndpointAddress: Endpoint Address (IN) */
     0x03,                           /* bmAttributes: Interrupt endpoint */
-    WBVAL(HIDRAW_IN_SIZE),          /* wMaxPacketSize: 4 Byte max */
-    HIDRAW_IN_INTERVAL,             /* bInterval: Polling Interval */
-    /******************** Descriptor of Custom out endpoint ********************/
-    0x07,                           /* bLength: Endpoint Descriptor size */
-    USB_DESCRIPTOR_TYPE_ENDPOINT,   /* bDescriptorType: */
-    HIDRAW_OUT_EP,                  /* bEndpointAddress: Endpoint Address (IN) */
-    0x03,                           /* bmAttributes: Interrupt endpoint */
-    WBVAL(HIDRAW_OUT_EP_SIZE),      /* wMaxPacketSize: 4 Byte max */
-    HIDRAW_OUT_EP_INTERVAL,         /* bInterval: Polling Interval */
-    /* 73 */
+    HID_INT_EP_SIZE,                /* wMaxPacketSize: 4 Byte max */
+    0x00,
+    HID_INT_EP_INTERVAL,            /* bInterval: Polling Interval */
     /*
      * string0 descriptor
      */
@@ -103,9 +102,9 @@ static const uint8_t hid_descriptor[] = {
     'S', 0x00,                  /* wcChar7 */
     'B', 0x00,                  /* wcChar8 */
     ' ', 0x00,                  /* wcChar9 */
-    'H', 0x00,                  /* wcChar10 */
-    'I', 0x00,                  /* wcChar11 */
-    'D', 0x00,                  /* wcChar12 */
+    'C', 0x00,                  /* wcChar10 */
+    'M', 0x00,                  /* wcChar11 */
+    'H', 0x00,                  /* wcChar12 */
     ' ', 0x00,                  /* wcChar13 */
     'D', 0x00,                  /* wcChar14 */
     'E', 0x00,                  /* wcChar15 */
@@ -144,87 +143,221 @@ static const uint8_t hid_descriptor[] = {
     0x00
 };
 
-/*!< custom hid report descriptor */
-static const uint8_t hid_custom_report_desc[HID_CUSTOM_REPORT_DESC_SIZE] = {
-    /* USER CODE BEGIN 0 */ 
-  0x06, 0x00, 0xff,               	/*   USAGE_PAGE (Undefined)     */
-  0x09, 0x00,                     	/*   USAGE (Undefined)          */
-  0xa1, 0x01,                     	/*   COLLECTION (Application)   */
-  0x85, 0xFD,                     	/*   REPORT_ID (253)            */
-  0x06, 0x00, 0xff,               	/*   USAGE_PAGE (Undefined)     */
-  0x19, 0x01,                     	/*   USAGE_MINIMUM              */
-  0x29, 0x3f,                     	/*   USAGE_MAXIMUM              */
-  0x15, 0x00,                     	/*   LOGICAL_MINIMUM (0)        */
-  0x25, 0xff,                     	/*   LOGICAL_MAXIMUM (255)      */
-  0x75, 0x08,                     	/*   REPORT_SIZE (8)            */
-  0x95, 0x3f,                     	/*   REPORT_COUNT (63)          */
-  0x81, 0x02,                     	/*   INPUT (Data,Var,Abs)       */
-  0x85, 0xFE,                     	/*   REPORT_ID (254)            */
-  0x06, 0x00, 0xff,               	/*   USAGE_PAGE (Undefined)     */
-  0x19, 0x01,                     	/*   USAGE_MINIMUM              */
-  0x29, 0x3f,                     	/*   USAGE_MAXIMUM              */
-  0x15, 0x00,                     	/*   LOGICAL_MINIMUM (0)        */
-  0x25, 0xff,                     	/*   LOGICAL_MAXIMUM (255)      */
-  0x75, 0x08,                     	/*   REPORT_SIZE (8)            */
-  0x95, 0x3f,                     	/*   REPORT_COUNT (63)          */
-  0x91, 0x02,                     	/*   OutPut (Data,Var,Abs)      */
-  /* USER CODE END 0 */ 
-  0xC0    /*     END_COLLECTION                 */
+/*!< hid mouse report descriptor */
+static const uint8_t hid_mouse_report_desc[HID_MOUSE_REPORT_DESC_SIZE] = {
+    0x05, 0x01, /* USAGE_PAGE (Generic Desktop) */
+    0x09, 0x02, /* USAGE (Mouse) */
+    0xA1, 0x01, /* COLLECTION (Application) */
+    0x09, 0x01, /*   USAGE (Pointer) */
+
+    0xA1, 0x00, /*   COLLECTION (Physical) */
+    0x05, 0x09, /*     USAGE_PAGE (Button) */
+    0x19, 0x01, /*     USAGE_MINIMUM (Button 1) */
+    0x29, 0x03, /*     USAGE_MAXIMUM (Button 3) */
+
+    0x15, 0x00, /*     LOGICAL_MINIMUM (0) */
+    0x25, 0x01, /*     LOGICAL_MAXIMUM (1) */
+    0x95, 0x03, /*     REPORT_COUNT (3) */
+    0x75, 0x01, /*     REPORT_SIZE (1) */
+
+    0x81, 0x02, /*     INPUT (Data,Var,Abs) */
+    0x95, 0x01, /*     REPORT_COUNT (1) */
+    0x75, 0x05, /*     REPORT_SIZE (5) */
+    0x81, 0x01, /*     INPUT (Cnst,Var,Abs) */
+
+    0x05, 0x01, /*     USAGE_PAGE (Generic Desk*/
+    0x09, 0x30, /*     USAGE (X) */
+    0x09, 0x31, /*     USAGE (Y) */
+    0x09, 0x38,
+
+    0x15, 0x81, /*     LOGICAL_MINIMUM (-127) */
+    0x25, 0x7F, /*     LOGICAL_MAXIMUM (127) */
+    0x75, 0x08, /*     REPORT_SIZE (8) */
+    0x95, 0x03, /*     REPORT_COUNT (2) */
+
+    0x81, 0x06, /*     INPUT (Data,Var,Rel) */
+    0xC0, 0x09,
+    0x3c, 0x05,
+    0xff, 0x09,
+
+    0x01, 0x15,
+    0x00, 0x25,
+    0x01, 0x75,
+    0x01, 0x95,
+
+    0x02, 0xb1,
+    0x22, 0x75,
+    0x06, 0x95,
+    0x01, 0xb1,
+
+    0x01, 0xc0 /*   END_COLLECTION */
 };
 
-USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t read_buffer[64];
-USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t send_buffer[64];
+
+/*!< mouse report struct */
+struct hid_mouse {
+    uint8_t buttons;
+    int8_t x;
+    int8_t y;
+    int8_t wheel;
+};
+
+/*!< mouse report */
+static USB_NOCACHE_RAM_SECTION struct hid_mouse mouse_cfg;
 
 #define HID_STATE_IDLE 0
 #define HID_STATE_BUSY 1
 
 /*!< hid state ! Data can be sent only when state is idle  */
-static volatile uint8_t custom_state;
+static volatile uint8_t hid_state = HID_STATE_IDLE;
+
+/* function ------------------------------------------------------------------*/
+static void usbd_hid_int_callback(uint8_t ep, uint32_t nbytes)
+{
+    /*!< endpoint call back */
+    /*!< transfer successfully */
+    if (hid_state == HID_STATE_BUSY) 
+    {
+        /*!< update the state  */
+        hid_state = HID_STATE_IDLE;
+    }
+}
+
+/*!< endpoint call back */
+static struct usbd_endpoint hid_in_ep = {
+    .ep_cb = usbd_hid_int_callback,
+    .ep_addr = HID_INT_EP
+};
+
+USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t read_buffer[2048];
+USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t write_buffer[2048];
+
+volatile bool ep_tx_busy_flag;
+
+#ifdef CONFIG_USB_HS
+#define CDC_MAX_MPS 512
+#else
+#define CDC_MAX_MPS 64
+#endif
 
 void usbd_configure_done_callback(void)
 {
     /* setup first out ep read transfer */
-    usbd_ep_start_read(HIDRAW_OUT_EP, read_buffer, 64);
+    usbd_ep_start_read(CDC_OUT_EP, read_buffer, 2048);
 }
 
-static void usbd_hid_custom_in_callback(uint8_t ep, uint32_t nbytes)
-{
-    USB_LOG_RAW("actual in len:%d\r\n", nbytes);
-    custom_state = HID_STATE_IDLE;
-}
-
-static void usbd_hid_custom_out_callback(uint8_t ep, uint32_t nbytes)
+static void usbd_cdc_acm_bulk_out(uint8_t ep, uint32_t nbytes)
 {
     USB_LOG_RAW("actual out len:%d\r\n", nbytes);
-    usbd_ep_start_read(HIDRAW_OUT_EP, read_buffer, 64);
-    read_buffer[0] = 0x02;    /* IN: report id */
-    usbd_ep_start_write(HIDRAW_IN_EP, read_buffer, nbytes);
+    /* setup next out ep read transfer */
+    usbd_ep_start_read(CDC_OUT_EP, read_buffer, 2048);
+//    usbd_ep_start_write(CDC_IN_EP, read_buffer, nbytes);
 }
 
-static struct usbd_endpoint custom_in_ep = {
-    .ep_cb = usbd_hid_custom_in_callback,
-    .ep_addr = HIDRAW_IN_EP
+static void usbd_cdc_acm_bulk_in(uint8_t ep, uint32_t nbytes)
+{
+    USB_LOG_RAW("actual in len:%d\r\n", nbytes);
+
+    if ((nbytes % CDC_MAX_MPS) == 0 && nbytes) 
+    {
+        /* send zlp */
+        usbd_ep_start_write(CDC_IN_EP, NULL, 0);
+    } 
+    else 
+    {
+        ep_tx_busy_flag = false;
+    }
+}
+
+/*!< endpoint call back */
+struct usbd_endpoint cdc_out_ep = {
+    .ep_addr = CDC_OUT_EP,
+    .ep_cb = usbd_cdc_acm_bulk_out
 };
 
-static struct usbd_endpoint custom_out_ep = {
-    .ep_cb = usbd_hid_custom_out_callback,
-    .ep_addr = HIDRAW_OUT_EP
+struct usbd_endpoint cdc_in_ep = {
+    .ep_addr = CDC_IN_EP,
+    .ep_cb = usbd_cdc_acm_bulk_in
 };
 
 /* function ------------------------------------------------------------------*/
 /**
- * @brief            hid custom init
+ * @brief            msc ram init
  * @pre              none
  * @param[in]        none
  * @retval           none
  */
 void app_hid_init(void)
 {
-    usbd_desc_register(hid_descriptor);
-    usbd_add_interface(usbd_hid_alloc_intf(hid_custom_report_desc, HID_CUSTOM_REPORT_DESC_SIZE));
-    usbd_add_endpoint(&custom_in_ep);
-    usbd_add_endpoint(&custom_out_ep);
+    usbd_desc_register(usb0_descriptor);
+
+    usbd_add_interface(usbd_cdc_acm_alloc_intf());
+    usbd_add_interface(usbd_cdc_acm_alloc_intf());
+    usbd_add_endpoint(&cdc_out_ep);
+    usbd_add_endpoint(&cdc_in_ep);
+
+    usbd_add_interface(usbd_hid_alloc_intf(hid_mouse_report_desc, HID_MOUSE_REPORT_DESC_SIZE));
+    usbd_add_endpoint(&hid_in_ep);
+
+    /*!< init mouse report data */
+    mouse_cfg.buttons = 0;
+    mouse_cfg.wheel = 0;
+    mouse_cfg.x = 0;
+    mouse_cfg.y = 0;
 
     usbd_initialize();
+}
+
+/**
+ * @brief            hid mouse test
+ * @pre              none
+ * @param[in]        none
+ * @retval           none
+ */
+static void mouse_test(void)
+{
+    if (gpio_read_pin(BOARD_APP_GPIO_CTRL, BOARD_APP_GPIO_INDEX, BOARD_APP_GPIO_PIN) == 0u) 
+    {
+        /*!< move mouse pointer */
+        mouse_cfg.x = 5;
+        int ret = usbd_ep_start_write(HID_INT_EP, (uint8_t *)&mouse_cfg, 4);
+        if (ret < 0) 
+        {
+            return;
+        }
+        hid_state = HID_STATE_BUSY;
+    }
+
+    while (hid_state == HID_STATE_BUSY) 
+    {
+        ;
+    }
+}
+
+static void virtual_serial_port_test(void)
+{
+    ep_tx_busy_flag = true;
+    write_buffer[0] = 'h';
+    write_buffer[1] = 'p';
+    write_buffer[2] = 'm';
+    write_buffer[3] = 'i';
+    write_buffer[4] = 'c';
+    write_buffer[5] = 'r';
+    write_buffer[6] = 'o';
+    write_buffer[7] = 0x0D;
+    write_buffer[8] = 0x0A;
+//    memset(&write_buffer[9], 'a', 2037);
+//    write_buffer[2046] = 0x0D;
+//    write_buffer[2047] = 0x0A;
+    usbd_ep_start_write(CDC_IN_EP, write_buffer, 8);
+    while (ep_tx_busy_flag) 
+    {
+        printf("%s, %d, %s, wait tx idle\r\n", __FILE__, __LINE__, __func__);
+    }
+}
+
+void app_hid_test(void)
+{
+    virtual_serial_port_test();
 }
 #endif

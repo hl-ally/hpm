@@ -227,4 +227,14 @@ void boot_hid_init(void)
 
     usbd_initialize();
 }
+
+void boot_hid_test(void)
+{
+    memset(send_buffer, 0, 64);
+    send_buffer[0] = 0xFC;
+    send_buffer[1] = 0x30;
+    send_buffer[2] = 0x31;
+
+    usbd_ep_start_write(BOOT_IN_EP, send_buffer, 12);
+}
 #endif

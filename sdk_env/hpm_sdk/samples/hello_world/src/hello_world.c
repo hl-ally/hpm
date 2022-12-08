@@ -81,7 +81,15 @@ int main(void)
 #endif
 
 #if CHERRYUSB_DEVICE_TEST
-        ;
+        #if USBD_BOOT_TEST
+        boot_hid_test();
+        board_delay_ms(1000);
+        #endif
+        
+        #if USBD_APP_TEST
+        app_hid_test();
+//        board_delay_ms(1000);
+        #endif
 #endif
     }
     return 0;
