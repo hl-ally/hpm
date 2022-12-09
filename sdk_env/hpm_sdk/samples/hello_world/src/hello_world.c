@@ -54,12 +54,15 @@ int main(void)
 
 #if OTP_TEST
     OtpValuePrint();
+    ShowUuid();
+    ShowUid();
 #endif
 
 #if defined(__GNUC__)
     printf("gcc version %d\n", __GNUC__);
 #endif
     printf("hello world\n");
+    printf("now into while loop, enjoy......\n");
     while(1)
     {
 #if 0
@@ -90,7 +93,7 @@ int main(void)
         #if USBD_BOOT_TEST
         boot_hid_test();
         nLastTime = GetCurrentTimeUs();
-        while(GetCurrentTimeUs()- nLastTime < 500000)
+        while(GetCurrentTimeUs()- nLastTime < 2000)
         {
             ;
         }

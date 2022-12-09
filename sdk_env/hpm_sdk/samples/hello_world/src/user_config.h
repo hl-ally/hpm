@@ -10,7 +10,7 @@
 #define RGB_LED_PWM_TEST            0       // PWM控制RGB LED测试
 #define PWM_BEEP_TEST               0       // PWM控制蜂鸣器测试
 
-#define CHERRYUSB_DEVICE_TEST       1       // cherryusb device测试程序
+#define CHERRYUSB_DEVICE_TEST       0       // cherryusb device测试程序
 #if CHERRYUSB_DEVICE_TEST
 #define USBD_BOOT_TEST              1
 #define USBD_APP_TEST               0
@@ -19,6 +19,7 @@
 #define USBD_APP_TEST               0
 #endif
 
+#define OTP_TEST                    1
 
 #define LED_FLASH_PERIOD_IN_MS      300
 

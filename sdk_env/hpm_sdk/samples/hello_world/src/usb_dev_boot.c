@@ -9,6 +9,14 @@
 #include "usbd_hid.h"
 #include "user_config.h"
 
+
+#if !(USBD_BOOT_TEST || USBD_APP_TEST)
+void usbd_configure_done_callback(void)
+{
+    ;
+}
+#endif
+
 #if USBD_BOOT_TEST
 /*!< hidraw in endpoint */
 #define BOOT_IN_EP                      0x81

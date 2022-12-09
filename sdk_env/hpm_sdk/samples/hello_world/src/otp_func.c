@@ -1,8 +1,19 @@
 #include <stdio.h>
 #include "otp_func.h"
 #include "hpm_otp_drv.h"
+#include "hpm_romapi.h"
 
-#define READ_OPT_VALUE   otp_read_from_shadow
+//#define READ_OPT_VALUE            otp_read_from_shadow
+
+// 使用rom API读取OPT数据
+#define READ_OPT_VALUE              ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow  
+
+
+#define OTP_CHIP_UID_IDX_START      (8U)
+#define OTP_CHIP_UID_IDX_END        (11U)
+
+#define OTP_CHIP_UUID_IDX_START     (88U)
+#define OTP_CHIP_UUID_IDX_END       (91U)
 
 void OtpValuePrint(void)
 {
@@ -50,4 +61,38 @@ void OtpValuePrint(void)
             READ_OPT_VALUE(112), READ_OPT_VALUE(113), READ_OPT_VALUE(114), READ_OPT_VALUE(115), 
             READ_OPT_VALUE(116), READ_OPT_VALUE(117), READ_OPT_VALUE(118), READ_OPT_VALUE(119));
     printf("\r\n******************************************\r\n");
+}
+
+void ShowUuid(void)
+{
+    uint32_t uuid_words[4];
+
+    uint32_t word_idx = 0;
+    for (uint32_t i = OTP_CHIP_UUID_IDX_START; i <= OTP_CHIP_UUID_IDX_END; i++) {
+        uuid_words[word_idx++] = ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow(i);
+    }
+
+    printf("UUID: ");
+    uint8_t *uuid_bytes = (uint8_t *)uuid_words;
+    for (uint32_t i = 0; i < sizeof(uuid_words); i++) {
+        printf("%02x ", uuid_bytes[i]);
+    }
+    printf("\n");
+}
+
+void ShowUid(void)
+{
+    uint32_t uid_words[4];
+
+    uint32_t word_idx = 0;
+    for (uint32_t i = OTP_CHIP_UID_IDX_START; i <= OTP_CHIP_UID_IDX_END; i++) {
+        uid_words[word_idx++] = ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow(i);
+    }
+
+    printf("UID:  ");
+    uint8_t *uid_bytes = (uint8_t *)uid_words;
+    for (uint32_t i = 0; i < sizeof(uid_words); i++) {
+        printf("%02x ", uid_bytes[i]);
+    }
+    printf("\n");
 }
