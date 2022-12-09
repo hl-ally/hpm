@@ -554,6 +554,7 @@ void board_init_led6_pins(void);
 void board_led6_toggle(void);
 void board_init_fgpio_pin(void);
 void board_fgpio_toggle_process(void);
+uint64_t GetCurrentTimeUs(void);
 
 #if defined(__cplusplus)
 }

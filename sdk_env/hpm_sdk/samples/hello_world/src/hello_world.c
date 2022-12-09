@@ -11,6 +11,7 @@
 #include "hpm_debug_console.h"
 #include "pwm_rgb_led.h"
 #include "pwm_beep.h"
+#include "otp_func.h"
 #include "hpm_gpio_drv.h"
 #include "hpm_gpiom_drv.h"
 
@@ -18,6 +19,7 @@
 int main(void)
 {
     int u = 0;
+    uint64_t nLastTime = 0;
     board_init();
 
 #if LED_IO_TEST
@@ -48,6 +50,10 @@ int main(void)
     #if USBD_APP_TEST
     app_hid_init();
     #endif
+#endif
+
+#if OTP_TEST
+    OtpValuePrint();
 #endif
 
 #if defined(__GNUC__)
@@ -83,7 +89,11 @@ int main(void)
 #if CHERRYUSB_DEVICE_TEST
         #if USBD_BOOT_TEST
         boot_hid_test();
-        board_delay_ms(1000);
+        nLastTime = GetCurrentTimeUs();
+        while(GetCurrentTimeUs()- nLastTime < 500000)
+        {
+            ;
+        }
         #endif
         
         #if USBD_APP_TEST

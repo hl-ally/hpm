@@ -27,7 +27,7 @@
 
 #if USBD_BOOT_TEST
 extern void boot_hid_init(void);
-extern void boot_hid_init(void);
+extern void boot_hid_test(void);
 #endif
 #if USBD_APP_TEST
 extern void app_hid_init(void);
