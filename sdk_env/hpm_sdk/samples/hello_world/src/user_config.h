@@ -19,7 +19,8 @@
 #define USBD_APP_TEST               0
 #endif
 
-#define OTP_TEST                    1
+#define OTP_TEST                    0
+#define NOR_FLASH_TEST              1
 
 #define LED_FLASH_PERIOD_IN_MS      300
 

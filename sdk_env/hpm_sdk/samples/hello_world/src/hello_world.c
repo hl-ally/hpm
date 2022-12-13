@@ -14,6 +14,7 @@
 #include "otp_func.h"
 #include "hpm_gpio_drv.h"
 #include "hpm_gpiom_drv.h"
+#include "nor_flash.h"
 
 
 int main(void)
@@ -56,6 +57,11 @@ int main(void)
     OtpValuePrint();
     ShowUuid();
     ShowUid();
+    ShowXpiFlashInfo();
+#endif
+
+#if NOR_FLASH_TEST
+    NorFlashTestInit();
 #endif
 
 #if defined(__GNUC__)
@@ -71,6 +77,10 @@ int main(void)
             u = '\n';
         }
         printf("%c", u);
+#endif
+
+#if NOR_FLASH_TEST
+        NorFlashTestProcess();
 #endif
 
 #if FGPIO_TOGGLE_TEST
