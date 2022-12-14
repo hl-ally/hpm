@@ -15,6 +15,8 @@
 #include "hpm_gpio_drv.h"
 #include "hpm_gpiom_drv.h"
 #include "nor_flash.h"
+#include "hpm_romapi.h"
+#include "hpm_ppor_drv.h"
 
 
 int main(void)
@@ -69,6 +71,7 @@ int main(void)
 #endif
     printf("hello world\n");
     printf("now into while loop, enjoy......\n");
+    nLastTime = GetCurrentTimeUs();
     while(1)
     {
 #if 0
@@ -113,6 +116,28 @@ int main(void)
         app_hid_test();
 //        board_delay_ms(1000);
         #endif
+#endif
+
+#if 0
+        // 运行rom api, run_bootloader测试
+        if (GetCurrentTimeUs() - nLastTime > 20*1000*1000)
+        {
+            api_boot_arg_t boot_arg = { .index = 0, 
+                                        .peripheral = API_BOOT_PERIPH_AUTO,
+                                        .src = API_BOOT_SRC_ISP,
+                                        .tag = API_BOOT_TAG};
+            ROM_API_TABLE_ROOT->run_bootloader(&boot_arg);
+        }
+#endif
+
+#if 0
+        // 复位操作
+        if (GetCurrentTimeUs() - nLastTime > 20*1000*1000)
+        {
+            printf("softerware reset\r\n");
+            ppor_sw_reset(HPM_PPOR, 5*24*1000*1000);
+            while(1);
+        }
 #endif
     }
     return 0;

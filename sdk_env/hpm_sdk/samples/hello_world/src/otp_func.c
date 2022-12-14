@@ -100,6 +100,7 @@ void ShowUid(void)
 
 void ShowXpiFlashInfo(void)
 {
+#if 0
     printf("\r\n******************************************\r\n");
     printf("word[24], XPI_INFO=0x%08X\r\n", READ_OPT_VALUE(24));
     printf("XPI_FREQ_OPTION=%d\r\n", READ_OPT_VALUE(24) & 0xF);
@@ -118,4 +119,23 @@ void ShowXpiFlashInfo(void)
 
     xpi_config_t xpi_config;
     hpm_stat_t status = ROM_API_TABLE_ROOT->xpi_driver_if->get_default_config(&xpi_config);
+#else
+    ROM_API_TABLE_ROOT->otp_driver_if->init();
+    uint32_t fuse_word = ROM_API_TABLE_ROOT->otp_driver_if->read_from_ip(24);
+    printf("\r\n******************************************\r\n");
+    printf("word[24], XPI_INFO=0x%08X\r\n", fuse_word);
+    printf("XPI_FREQ_OPTION=%d\r\n", fuse_word & 0xF);
+    printf("XPI_INSTANCE=%d\r\n", (fuse_word>>4) & 0x01);
+    printf("XPI_PIN_GROUP=%d\r\n", (fuse_word>>5) & 0x01);
+    printf("XPI_PORT_SEL=%d\r\n", (fuse_word>>6) & 0x03);
+    printf("PROBE_TYPE=%d\r\n", (fuse_word>>8) & 0x0F);
+    printf("ENCRYPT_XIP=%d\r\n", (fuse_word>>12) & 0x01);
+    printf("XPI_NOR_CFG_SRC=%d\r\n", (fuse_word>>13) & 0x01);
+    printf("XPI_DEFAULT_READ=%d\r\n", (fuse_word>>14) & 0x03);
+    printf("BOOT_MODE=%d\r\n", (fuse_word>>16) & 0x0F);
+    printf("DRIVE_STRENGTH=%d\r\n", (fuse_word>>20) & 0x0F);
+    printf("DUMMY_CYCLE=%d\r\n", (fuse_word>>24) & 0x7F);
+    printf("IO_VOLTAGE=%d\r\n", (fuse_word>>31) & 0x01);    
+    printf("\r\n******************************************\r\n");
+#endif
 }
