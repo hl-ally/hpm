@@ -1,4 +1,4 @@
-﻿#ifndef _PWM_BEEP_H
+#ifndef _PWM_BEEP_H
 #define _PWM_BEEP_H
 
 void pwm_beep_init(void);

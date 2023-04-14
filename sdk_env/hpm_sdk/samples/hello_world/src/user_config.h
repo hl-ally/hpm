@@ -1,4 +1,4 @@
-﻿#ifndef _USER_CONFIG_H
+#ifndef _USER_CONFIG_H
 #define _USER_CONFIG_H
 
 #define FGPIO_TOGGLE_TEST           0       // 高速GPIO翻转测试
@@ -37,5 +37,9 @@ extern void app_hid_init(void);
 extern void app_hid_test(void);
 #endif
 
+#if WDOG_TEST
+extern void WatchDogInit(void);
+extern void FeedWatchDog(void);
+#endif
 
 #endif

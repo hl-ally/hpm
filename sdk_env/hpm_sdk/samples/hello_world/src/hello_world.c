@@ -66,6 +66,10 @@ int main(void)
     NorFlashTestInit();
 #endif
 
+#if WDOG_TEST
+    WatchDogInit();
+#endif
+
 #if defined(__GNUC__)
     printf("gcc version %d\n", __GNUC__);
 #endif
@@ -138,6 +142,10 @@ int main(void)
             ppor_sw_reset(HPM_PPOR, 5*24*1000*1000);
             while(1);
         }
+#endif
+
+#if WDOG_TEST
+        FeedWatchDog();
 #endif
     }
     return 0;

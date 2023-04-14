@@ -1,4 +1,4 @@
-﻿#include "pwm_rgb_led.h"
+#include "pwm_rgb_led.h"
 #include "hpm_pwm_drv.h"
 #include "board.h"
 
