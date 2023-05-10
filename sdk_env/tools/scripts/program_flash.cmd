@@ -69,20 +69,23 @@ if not "%ELF_FILE%"=="" (
     )
 )
 
-if "%SPECIFIC_BOARD%"=="hpm6750evk" (
-    set OCD_PROBE=ft2232.cfg
-    set OCD_SOC=hpm6750-single-core.cfg
-) else if "%SPECIFIC_BOARD%"=="hpm6750evk2" (
-    set OCD_PROBE=cmsis_dap.cfg
-    set OCD_SOC=hpm6750-single-core.cfg
-) else if "%SPECIFIC_BOARD%"=="hpm6750evkmini" (
-    set OCD_PROBE=ft2232.cfg
-    set OCD_SOC=hpm6750-single-core.cfg
-) else if "%SPECIFIC_BOARD%"=="hpm6300evk" (
-    set OCD_PROBE=ft2232.cfg
-    set OCD_SOC=hpm6360.cfg
-) else (
+if not exist "%HPM_SDK_BASE%\boards\%SPECIFIC_BOARD%\%SPECIFIC_BOARD%.yaml" (
     CALL :LIST_ALL_BOARDS
+    goto EXIT
+) else (
+    for /F "tokens=2 delims= " %%a in ('findstr /I "openocd-probe:" %HPM_SDK_BASE%\boards\%SPECIFIC_BOARD%\%SPECIFIC_BOARD%.yaml') do set OCD_PROBE=%%a.cfg
+    for /F "tokens=2 delims= " %%a in ('findstr /I "openocd-soc:" %HPM_SDK_BASE%\boards\%SPECIFIC_BOARD%\%SPECIFIC_BOARD%.yaml') do set OCD_SOC=%%a.cfg
+    rem use single core config file for programming
+    set OCD_SOC=!OCD_SOC:dual=single!
+)
+
+if not exist "%APPDATA%\OpenOCD\probes\%OCD_PROBE%" (
+    echo "%APPDATA%\OpenOCD\probes\%OCD_PROBE%" does not exist
+    goto EXIT
+)
+
+if not exist "%APPDATA%\OpenOCD\soc\%OCD_SOC%" (
+    echo "%APPDATA%\OpenOCD\soc\%OCD_SOC%" does not exist
     goto EXIT
 )
 

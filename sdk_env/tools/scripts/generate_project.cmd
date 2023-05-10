@@ -14,7 +14,7 @@ set SUPPORTED_BUILD_TYPES=release debug flash_xip flash_xip_release flash_sdram_
 
 if "%HPM_SDK_BASE%"=="" (
     echo HPM_SDK_BASE needs to be defined first, pointing to the root directory of HPM_SDK
-    goto EXIT
+    goto ERROR
 )
 
 
@@ -69,7 +69,7 @@ if not "%BUILD_TYPE%"=="" (
     echo  error: unsupported build type %BUILD_TYPE%
     echo  Here're supported build types:
     call :LIST_SUPPORTED_BUILD_TYPES
-    goto EXIT
+    goto ERROR
 
 :BUILD_TYPE_FOUND
 
@@ -89,10 +89,11 @@ if "%GENERATE_ALL%"=="1" (
 if not "%SPECIFIC_BOARD%"=="" (
     if exist "%HPM_SDK_BASE%\boards\%SPECIFIC_BOARD%\CMakeLists.txt" (
         call :GEN_PROJECT_FOR_BOARD %SPECIFIC_BOARD% !BUILD_TYPE!
+        goto EXIT
     ) else (
         echo %SPECIFIC_BOARD% can not be found, please make sure it is a valid board.
+        goto ERROR
     )
-    goto EXIT
 )
 
 echo error: no board specified
@@ -111,7 +112,7 @@ if exist CMakeLists.txt (
             rd /q /s %build_dir%
         ) else (
             echo %build_dir% directory exists, please remove it manually or run this script with -f option
-            goto EXIT
+            goto ERROR
         )
     )
     md %build_dir%
@@ -155,6 +156,9 @@ goto EXIT
 
 :NOT_IN_SAMPLE_DIR
 echo no CMakeLists.txt is found at %~dp0, please change diretory to certain sample directory under %HPM_SDK_BASE%\samples\
+
+:ERROR
+exit /b 1
 
 :EXIT
 endlocal

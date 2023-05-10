@@ -1,7 +1,5 @@
 proj_gen is a GUI tool maintained and supported by HPMicro, which is used to configure and build samples in hpm_sdk.
 
-proj_gen is built using Qt 5.12.9.
-
 Usage:
 1. You can run proj_gen by "start_gui" in sdk_env directory, or double click it directly. We strongly suggest you to use "start_gui", which
 will load sdk_env directory automatically.

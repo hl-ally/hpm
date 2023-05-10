@@ -90,6 +90,41 @@ set POSITION=0
 endlocal&set %3=%POSITION%
 goto :eof
 
+:FIND_AVAILABLE_TYPE_AND_COMPILE ERROR_INFO BOARD_NAME BUILD_TYPE SAMPLE_DIR ERROR_IN_FLAG
+setlocal
+set ERROR_INFO=%1
+type build.log | findstr /c:%ERROR_INFO% >nul 2>&1
+if !ERRORLEVEL!==0 (
+    set ERROR_IN_FLAG=1
+    cd ..
+    if exist "!cd!\%3" (
+        rd /q /s !cd!\%3
+    )
+    for %%t in (%ALL_BUILD_TYPE%) do (
+        if not "%3"=="%%t" (
+            if exist "%%t" (
+                rd /q /s %%t
+            )
+            md %%t
+            cd %%t
+            cmake -GNinja -DBOARD=%2 -DCMAKE_BUILD_TYPE=%%t %4 >build.log 2>&1
+            if !ERRORLEVEL!==0 (
+                goto FIND_AVAILABLE_TYPE_AND_COMPILE_EXIT
+            ) else (
+                cd ..
+                if exist "%%t" (
+                    rd /q /s %%t
+                )
+            )
+        )
+    )
+)
+set ERROR_IN_FLAG=0
+:FIND_AVAILABLE_TYPE_AND_COMPILE_EXIT
+endlocal&set %5=%ERROR_IN_FLAG%
+exit /b 0
+
+
 :EXAMPLE_COMPILE BOARD_NAME BUILD_TYPE SAMPLE_DIR
 cmake -GNinja -DBOARD=%1  -DCMAKE_BUILD_TYPE=%2 %3 >build.log 2>&1
 if not %ERRORLEVEL%==0 (
@@ -102,42 +137,11 @@ if not %ERRORLEVEL%==0 (
         )
         goto EXAMPLE_COMPILE_EXIT
     )
-    type build.log | findstr /c:"has been excluded for this example" >nul 2>&1
-    if !ERRORLEVEL!==0 (
-        cd ..
-        if exist "!cd!\%2" (
-            rd /q /s !cd!\%2
-        )
-        for %%t in (%ALL_BUILD_TYPE%) do (
-            if not "%1"=="%%t" (
-                if exist "%%t" (
-                    rd /q /s %%t
-                )
-                md %%t
-                cd %%t
-                cmake -GNinja -DBOARD=%1 -DCMAKE_BUILD_TYPE=%%t %3 >build.log 2>&1
-                if !ERRORLEVEL!==0 (
-                    goto GENERATE_SUCCESS
-                ) else (
-                    cd ..
-                    if exist "%%t" (
-                        rd /q /s %%t
-                    )
-                )
-            )
-        )
+    call :FIND_AVAILABLE_TYPE_AND_COMPILE "has been excluded for this example" %1 %2 %3 INFO_IN_FLAG
+    if "!INFO_IN_FLAG!"=="0" (
+        call :FIND_AVAILABLE_TYPE_AND_COMPILE "is not supported" %1 %2 %3 INFO_IN_FLAG
     )
     
-) else (
-:GENERATE_SUCCESS
-    for /f "delims=" %%i in ('dir /a-d /b') do (
-        del /q %%i
-    )
-    for /f "delims=" %%j in ('dir /ad /b') do (
-        if not "%%j"=="segger_embedded_studio" (
-            rd /q /s %%j
-        )
-    )
 )
 :EXAMPLE_COMPILE_EXIT
 exit /b 0
@@ -148,14 +152,6 @@ if not "!POSITION_CORE0!"=="0" (
     cmake -GNinja -DBOARD=%1  %2 >build.log 2>&1
 ) else (
     cmake -GNinja -DBOARD=%1 -DCMAKE_BUILD_TYPE="sec_core_img" %2 >build.log 2>&1
-)
-for /f "delims=" %%i in ('dir /a-d /b') do (
-    del /q %%i
-)
-for /f "delims=" %%j in ('dir /ad /b') do (
-    if not "%%j"=="segger_embedded_studio" (
-        rd /q /s %%j
-    )
 )
 exit /b 0
 

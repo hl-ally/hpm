@@ -30,14 +30,26 @@
  *
  */
 
+/*
+ * Copyright (c) 2021-2022 HPMicro
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+
 /* lwIP includes. */
-#include "common.h"
+#include "common_lwip.h"
 #include "lwip/debug.h"
 #include "lwip/def.h"
 #include "lwip/sys.h"
 #include "lwip/mem.h"
 #include "lwip/stats.h"
 #include "lwip/tcpip.h"
+
+#if !NO_SYS
+#include "FreeRTOS.h"
+#include "semphr.h"
+#endif
 
 #if !NO_SYS
 #include "sys_arch.h"
@@ -83,7 +95,7 @@ int errno;
  * Default is 1, where FreeRTOS ticks are used to calculate back to ms.
  */
 #ifndef LWIP_FREERTOS_SYS_NOW_FROM_FREERTOS
-#define LWIP_FREERTOS_SYS_NOW_FROM_FREERTOS           0
+#define LWIP_FREERTOS_SYS_NOW_FROM_FREERTOS           1
 #endif
 
 #if !configSUPPORT_DYNAMIC_ALLOCATION

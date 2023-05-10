@@ -97,6 +97,7 @@ void init_board_app_dma(void)
     ch1_config.dst_fixed = true;
     ch1_config.src = core_local_mem_to_sys_address(BOARD_RUNNING_CORE, (uint32_t)uart_tx_buf);
     ch1_config.src_fixed = false;
+    ch1_config.data_width = DMA_TRANSFER_WIDTH_BYTE;
     ch1_config.size_in_byte = TEST_BUFFER_SIZE;
     dma_setup_handshake(TEST_UART_DMA_CONTROLLER, &ch1_config, false);
 }
@@ -125,7 +126,7 @@ void task_entry_5ms(void)
     rx_front_index = rx_rear_index;
 
     if (rx_data_size > 0) {
-        if (!dma_channel_is_transferring(TEST_UART_DMA_CONTROLLER, DMAMUX_MUXCFG_HDMA_MUX1)) {
+        if (!dma_channel_is_enable(TEST_UART_DMA_CONTROLLER, DMAMUX_MUXCFG_HDMA_MUX1)) {
             dma_set_transfer_size(TEST_UART_DMA_CONTROLLER, DMAMUX_MUXCFG_HDMA_MUX1, rx_data_size);
             dma_set_source_address(TEST_UART_DMA_CONTROLLER, DMAMUX_MUXCFG_HDMA_MUX1, core_local_mem_to_sys_address(BOARD_RUNNING_CORE, (uint32_t)uart_tx_buf));
             dma_enable_channel(TEST_UART_DMA_CONTROLLER, DMAMUX_MUXCFG_HDMA_MUX1);

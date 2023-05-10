@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.13)
 
 set(CUSTOM_GCC_LINKER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../linker/gcc/core0.ld)
 
+set(CMAKE_BUILD_TYPE "")
 set(CONFIG_LVGL 1)
 if(NOT DEFINED CONFIG_TOUCH)
 set(CONFIG_TOUCH "gt911")
@@ -13,7 +14,6 @@ set(CONFIG_HPM_TOUCH 1)
 set(CONFIG_LV_INDEV 1)
 set(CONFIG_LV_DEMO lv_demo_widgets)
 set(CONFIG_COREMARK 1)
-set(CMAKE_BUILD_TYPE flash_sdram_xip_release)
 set(INCLUDE_BOOTHEADER 1)
 
 
@@ -26,11 +26,6 @@ sdk_compile_definitions(-DCONFIG_LV_GPU_HPM_SOC_INCLUDE="hpm_soc.h")
 sdk_compile_definitions("-DFLASH_XIP=1")
 sdk_compile_definitions("-DINIT_EXT_RAM_FOR_DATA=1")
 sdk_compile_definitions("-DLV_USE_DEMO_WIDGETS=1")
-if(DEFINED SEC_CORE_IMG_START)
-    sdk_compile_definitions(-DSEC_CORE_IMG_START=${SEC_CORE_IMG_START})
-else()
-    sdk_compile_definitions(-DSEC_CORE_IMG_START=0x0)
-endif()
 
 set(opt_string "-O3 -funroll-all-loops -finline-limit=600 -ftree-dominator-opts -fno-if-conversion2 -fselective-scheduling -fno-code-hoisting")
 separate_arguments(opt_list UNIX_COMMAND ${opt_string})

@@ -15,18 +15,19 @@ env:
     - nds-gcc
     - nds-llvm
 build-type:
-  - release
-  - debug
-  - flash_xip
-  - flash_xip_release
-  - flash_sdram_xip
-  - flash_sdram_xip_release
-  - flash_uf2
-  - flash_uf2_release
-  - flash_sdram_uf2
-  - flash_sdram_uf2_release
-  - sec_core_img
-  - sec_core_img_release
+  release: ~
+  debug: ~
+  flash_xip: ~
+  flash_xip_release: ~
+  flash_sdram_xip: [femc]
+  flash_sdram_xip_release: [femc]
+  flash_uf2: [usb-otg]
+  flash_uf2_release: [usb-otg]
+  flash_sdram_uf2: [femc, usb-otg]
+  flash_sdram_uf2_release: [femc, usb-otg]
+  sec_core_img: [multicore]
+  sec_core_img_release: [multicore]
+default-type: [flash_sdram_xip, flash_xip]
 default-sample: hello_world
-default-board: hpm6750evk
-default-type: flash_xip_release
+default-board: hpm6750evkmini
+output-directory: C:/Users/JoeYin/Desktop/hpm6750evkmini

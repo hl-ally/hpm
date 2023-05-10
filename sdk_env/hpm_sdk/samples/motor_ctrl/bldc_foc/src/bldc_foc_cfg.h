@@ -38,6 +38,7 @@ extern  int32_t qei_clock_hz;
 #define BOARD_BLDCPWM_CMP_INDEX_3         (3U)
 #define BOARD_BLDCPWM_CMP_INDEX_4         (4U)
 #define BOARD_BLDCPWM_CMP_INDEX_5         (5U)
+#define BOARD_BLDCPWM_CMP_TRIG_CMP        (20U)
 
 #endif
 
@@ -93,8 +94,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 /*call back func*/
-void bldc_pwm_enable(uint8_t motor_index,uint8_t pin_name);
-void bldc_pwm_disable(uint8_t motor_index,uint8_t pin_name);
+void hpm_mcl_bldc_pwm_enable(uint8_t motor_index, uint8_t pin_name);
+void hpm_mcl_bldc_pwm_disable(uint8_t motor_index, uint8_t pin_name);
 
 #if defined(__cplusplus)
 }

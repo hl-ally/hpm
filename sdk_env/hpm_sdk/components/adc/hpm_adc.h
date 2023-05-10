@@ -221,7 +221,7 @@ static inline hpm_stat_t hpm_adc_init(adc_config_t *config)
         return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -247,7 +247,7 @@ static inline hpm_stat_t hpm_adc_channel_init(adc_channel_config_t *config)
         return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -274,7 +274,7 @@ static inline hpm_stat_t hpm_adc_set_period_config(adc_prd_config_t *config)
         return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -300,7 +300,7 @@ static inline hpm_stat_t hpm_adc_set_sequence_config(adc_seq_config_t *config)
         return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -326,7 +326,7 @@ static inline hpm_stat_t hpm_adc_set_preempt_config(adc_pmt_config_t *config)
         return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -386,6 +386,44 @@ static inline void hpm_adc_init_seq_dma(adc_dma_config_t *config)
     }
 }
 
+/**
+ * @brief Reset value of the WAIT_DIS bit. ADC blocks access to the associated peripheral bus
+ * until the ADC completes the conversion.
+ *
+ * @param[in] config A pointer to configuration struct of "adc_dma_config_t".
+ */
+static inline void hpm_adc_disable_busywait(adc_dma_config_t *config)
+{
+    if (config->module == adc_module_adc12) {
+#ifdef CONFIG_HAS_HPMSDK_ADC12
+        adc12_disable_busywait(config->adc_base.adc12);
+#endif
+    } else if (config->module == adc_module_adc16) {
+#ifdef CONFIG_HAS_HPMSDK_ADC16
+        adc16_disable_busywait(config->adc_base.adc16);
+#endif
+    }
+}
+
+/**
+ * @brief Set value of the WAIT_DIS bit. The ADC does not block access to the associated peripheral bus
+ * until the ADC has completed its conversion.
+ *
+ * @param[in] config A pointer to configuration struct of "adc_dma_config_t".
+ */
+static inline void hpm_adc_enable_busywait(adc_dma_config_t *config)
+{
+    if (config->module == adc_module_adc12) {
+#ifdef CONFIG_HAS_HPMSDK_ADC12
+        adc12_enable_busywait(config->adc_base.adc12);
+#endif
+    } else if (config->module == adc_module_adc16) {
+#ifdef CONFIG_HAS_HPMSDK_ADC16
+        adc16_enable_busywait(config->adc_base.adc16);
+#endif
+    }
+}
+
 
 /**
  * @brief Get ADC status flags.
@@ -400,43 +438,16 @@ static inline uint32_t hpm_adc_get_status_flags(adc_type *ptr)
 #ifdef CONFIG_HAS_HPMSDK_ADC12
         return adc12_get_status_flags(ptr->adc_base.adc12);
 #else
-        return 0;
+        return status_invalid_argument;
 #endif
     } else if (ptr->module == adc_module_adc16) {
 #ifdef CONFIG_HAS_HPMSDK_ADC16
         return adc16_get_status_flags(ptr->adc_base.adc16);
 #else
-        return 0;
+        return status_invalid_argument;
 #endif
     } else {
-        return false;
-    }
-}
-
-/**
- * @brief Get the setting value of wait disable.
- *
- * This status flag is only used when wait_dis is set to disable.
- *
- * @param[in] ptr An ADC peripheral base address.
- * @retval Status It means whether the current setting of wait disable is disable.
- */
-static inline bool hpm_adc_get_wait_dis_status(adc_type *ptr)
-{
-    if (ptr->module == adc_module_adc12) {
-#ifdef CONFIG_HAS_HPMSDK_ADC12
-        return adc12_get_wait_dis_status(ptr->adc_base.adc12);
-#else
-        return 1;
-#endif
-    } else if (ptr->module == adc_module_adc16) {
-#ifdef CONFIG_HAS_HPMSDK_ADC16
-        return adc16_get_wait_dis_status(ptr->adc_base.adc16);
-#else
-        return 1;
-#endif
-    } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -455,16 +466,16 @@ static inline bool hpm_adc_get_conv_valid_status(adc_type *ptr, uint8_t ch)
 #ifdef CONFIG_HAS_HPMSDK_ADC12
         return adc12_get_conv_valid_status(ptr->adc_base.adc12, ch);
 #else
-        return 0;
+        return status_invalid_argument;
 #endif
     } else if (ptr->module == adc_module_adc16) {
 #ifdef CONFIG_HAS_HPMSDK_ADC16
         return adc16_get_conv_valid_status(ptr->adc_base.adc16, ch);
 #else
-        return 0;
+        return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -552,7 +563,7 @@ static inline hpm_stat_t hpm_adc_get_oneshot_result(adc_type *ptr, uint8_t ch, u
         return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -566,7 +577,7 @@ static inline hpm_stat_t hpm_adc_get_oneshot_result(adc_type *ptr, uint8_t ch, u
  * @retval status_success Get the result of an ADC12 conversion in periodic mode successfully.
  * @retval status_invalid_argument Get the result of an ADC12 conversion in periodic mode unsuccessfully because of passing invalid arguments.
  */
-hpm_stat_t hpm_adc_get_prd_result(adc_type *ptr, uint8_t ch, uint16_t *result)
+static inline hpm_stat_t hpm_adc_get_prd_result(adc_type *ptr, uint8_t ch, uint16_t *result)
 {
     if (ptr->module == adc_module_adc12) {
 #ifdef CONFIG_HAS_HPMSDK_ADC12
@@ -581,7 +592,7 @@ hpm_stat_t hpm_adc_get_prd_result(adc_type *ptr, uint8_t ch, uint16_t *result)
         return status_invalid_argument;
 #endif
     } else {
-        return false;
+        return status_invalid_argument;
     }
 }
 
@@ -591,7 +602,7 @@ hpm_stat_t hpm_adc_get_prd_result(adc_type *ptr, uint8_t ch, uint16_t *result)
  * @param[in] ptr An adc peripheral base address.
  *
  */
-void hpm_adc_trigger_seq_by_sw(adc_type *ptr)
+static inline hpm_stat_t hpm_adc_trigger_seq_by_sw(adc_type *ptr)
 {
      if (ptr->module == adc_module_adc12) {
 #ifdef CONFIG_HAS_HPMSDK_ADC12
@@ -601,9 +612,10 @@ void hpm_adc_trigger_seq_by_sw(adc_type *ptr)
 #ifdef CONFIG_HAS_HPMSDK_ADC16
         return adc16_trigger_seq_by_sw(ptr->adc_base.adc16);
 #endif
+    } else {
+        return status_invalid_argument;
     }
 }
-
 
 #ifdef __cplusplus
 }

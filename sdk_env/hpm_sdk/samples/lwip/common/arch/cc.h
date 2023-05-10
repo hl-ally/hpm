@@ -29,6 +29,14 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
+
+/*
+ * Copyright (c) 2021-2022 HPMicro
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+
 #ifndef __CC_H__
 #define __CC_H__
 
@@ -77,7 +85,7 @@
 #define LWIP_PLATFORM_ASSERT(x) printf(x)
 
 #ifndef LWIP_MEM_SECTION
-#define LWIP_MEM_SECTION __attribute__ ((section(".noncacheable")))
+#define LWIP_MEM_SECTION ".fast_ram"
 #endif
 
 #endif /* __CC_H__ */

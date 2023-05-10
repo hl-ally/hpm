@@ -1,5 +1,16 @@
 # Change Log 
 
+## [1.1.0] - 2023-03-31:
+- update SDK to v1.1.0
+- tools: ft2232 driver update to libusbk
+- doc: add hpm6200evk quick start guide
+
+## [1.0.0] 2022-12-31:
+
+- Update SDK to v1.0.0
+- Add HPM6750EVK2 quick guide
+- Add runtime for start_gui
+
 ## [0.14.0] 2022-10-31:
 
 ### Changed

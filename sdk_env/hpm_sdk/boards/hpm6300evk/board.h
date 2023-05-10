@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 HPMicro
+ * Copyright (c) 2022-2023 HPMicro
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -13,6 +13,9 @@
 #include "hpm_soc.h"
 #include "hpm_soc_feature.h"
 #include "pinmux.h"
+#if !defined(CONFIG_NDEBUG_CONSOLE) || !CONFIG_NDEBUG_CONSOLE
+#include "hpm_debug_console.h"
+#endif
 
 #define BOARD_NAME "hpm6300evk"
 #define BOARD_UF2_SIGNATURE (0x0A4D5048UL)
@@ -39,12 +42,14 @@
 
 #define BOARD_APP_UART_BAUDRATE (115200UL)
 #define BOARD_APP_UART_CLK_NAME clock_uart0
+#define BOARD_APP_UART_RX_DMA_REQ HPM_DMA_SRC_UART0_RX
+#define BOARD_APP_UART_TX_DMA_REQ HPM_DMA_SRC_UART0_TX
 
 #ifndef BOARD_CONSOLE_TYPE
-#define BOARD_CONSOLE_TYPE console_type_uart
+#define BOARD_CONSOLE_TYPE CONSOLE_TYPE_UART
 #endif
 
-#if console_type_uart == BOARD_CONSOLE_TYPE
+#if CONSOLE_TYPE_UART == BOARD_CONSOLE_TYPE
 #ifndef BOARD_CONSOLE_BASE
 #if BOARD_RUNNING_CORE == HPM_CORE0
 #define BOARD_CONSOLE_BASE HPM_UART0
@@ -80,8 +85,8 @@
 /* sdram section */
 #define BOARD_SDRAM_ADDRESS  (0x40000000UL)
 #define BOARD_SDRAM_SIZE     (32*SIZE_1MB)
-#define BOARD_SDRAM_CS       DRAM_SDRAM_CS0
-#define BOARD_SDRAM_PORT_SIZE DRAM_SDRAM_PORT_SIZE_16_BITS
+#define BOARD_SDRAM_CS       FEMC_SDRAM_CS0
+#define BOARD_SDRAM_PORT_SIZE FEMC_SDRAM_PORT_SIZE_16_BITS
 #define BOARD_SDRAM_REFRESH_COUNT (8192UL)
 #define BOARD_SDRAM_REFRESH_IN_MS (64UL)
 #define BOARD_SDRAM_DATA_WIDTH_IN_BYTE (4UL)
@@ -93,11 +98,11 @@
 
 /* i2c section */
 #define BOARD_APP_I2C_BASE HPM_I2C0
+#define BOARD_APP_I2C_IRQ IRQn_I2C0
 #define BOARD_APP_I2C_CLK_NAME clock_i2c0
 #define BOARD_APP_I2C_DMA HPM_HDMA
 #define BOARD_APP_I2C_DMAMUX HPM_DMAMUX
 #define BOARD_APP_I2C_DMA_SRC HPM_DMA_SRC_I2C0
-#define BOARD_APP_I2C_DMAMUX_CH DMAMUX_MUXCFG_HDMA_MUX0
 
 /* ACMP desction */
 #define BOARD_ACMP HPM_ACMP
@@ -119,6 +124,7 @@
 #define BOARD_GPTMR_CHANNEL 0
 #define BOARD_GPTMR_PWM HPM_GPTMR2
 #define BOARD_GPTMR_PWM_CHANNEL 0
+#define BOARD_GPTMR_CLK_NAME clock_gptmr2
 
 /* gpio section */
 #define BOARD_APP_GPIO_INDEX GPIO_DI_GPIOZ
@@ -143,13 +149,11 @@
 #define BOARD_APP_SPI_BASE HPM_SPI3
 #define BOARD_APP_SPI_CLK_NAME          clock_spi3
 #define BOARD_APP_SPI_IRQ               IRQn_SPI3
-#define BOARD_APP_SPI_SCLK_FREQ         (1562500UL)
+#define BOARD_APP_SPI_SCLK_FREQ         (20000000UL)
 #define BOARD_APP_SPI_ADDR_LEN_IN_BYTES (1U)
 #define BOARD_APP_SPI_DATA_LEN_IN_BITS  (8U)
 #define BOARD_APP_SPI_RX_DMA HPM_DMA_SRC_SPI3_RX
-#define BOARD_APP_SPI_RX_DMAMUX_CH DMAMUX_MUXCFG_HDMA_MUX0
 #define BOARD_APP_SPI_TX_DMA HPM_DMA_SRC_SPI3_TX
-#define BOARD_APP_SPI_TX_DMAMUX_CH DMAMUX_MUXCFG_HDMA_MUX1
 #define BOARD_SPI_CS_GPIO_CTRL           HPM_GPIO0
 #define BOARD_SPI_CS_PIN                 IOC_PAD_PC18
 #define BOARD_SPI_CS_ACTIVE_LEVEL        (0U)
@@ -168,6 +172,10 @@
 #define BOARD_APP_AUDIO_CLK_SRC_NAME clk_pll2clk0
 
 /* enet section */
+#define BOARD_ENET_PPS                  HPM_ENET0
+#define BOARD_ENET_PPS_IDX              enet_pps_0
+#define BOARD_ENET_PPS_PTP_CLOCK        clock_ptp0
+
 #define BOARD_ENET_RMII                 HPM_ENET0
 #define BOARD_ENET_RMII_RST_GPIO
 #define BOARD_ENET_RMII_RST_GPIO_INDEX
@@ -242,6 +250,7 @@
 #define BOARD_BLDCPWM_CMP_INDEX_3         (3U)
 #define BOARD_BLDCPWM_CMP_INDEX_4         (4U)
 #define BOARD_BLDCPWM_CMP_INDEX_5         (5U)
+#define BOARD_BLDCPWM_CMP_TRIG_CMP        (20U)
 
 /*HALL define*/
 
@@ -281,7 +290,7 @@
 #define BOARD_BLDC_ADC_W_BASE                  HPM_ADC2
 #define BOARD_BLDC_ADC_TRIG_FLAG               adc16_event_trig_complete
 
-#define BOARD_BLDC_ADC_CH_U                    (14U)
+#define BOARD_BLDC_ADC_CH_U                    (7U)
 #define BOARD_BLDC_ADC_CH_V                    (12U)
 #define BOARD_BLDC_ADC_CH_W                    (5U)
 #define BOARD_BLDC_ADC_IRQn                    IRQn_ADC1
@@ -330,7 +339,7 @@ void board_init_i2c(I2C_Type *ptr);
 
 void board_init_can(CAN_Type *ptr);
 
-uint32_t board_init_dram_clock(void);
+uint32_t board_init_femc_clock(void);
 
 void board_init_sdram_pins(void);
 void board_init_gpio_pins(void);
@@ -371,11 +380,14 @@ void board_init_usb_pins(void);
 void board_usb_vbus_ctrl(uint8_t usb_index, uint8_t level);
 uint8_t board_get_usb_id_status(void);
 
+void       board_init_enet_pps_pins(ENET_Type *ptr);
+uint8_t    board_get_enet_dma_pbl(ENET_Type *ptr);
 hpm_stat_t board_reset_enet_phy(ENET_Type *ptr);
 hpm_stat_t board_init_enet_pins(ENET_Type *ptr);
 hpm_stat_t board_init_enet_rmii_reference_clock(ENET_Type *ptr, bool internal);
 hpm_stat_t board_init_enet_ptp_clock(ENET_Type *ptr);
-uint8_t board_enet_get_dma_pbl(ENET_Type *ptr);
+hpm_stat_t board_enable_enet_irq(ENET_Type *ptr);
+hpm_stat_t board_disable_enet_irq(ENET_Type *ptr);
 /*
  * @brief Initialize PMP and PMA for but not limited to the following purposes:
  *      -- non-cacheable memory initialization
@@ -390,6 +402,11 @@ void board_ungate_mchtmr_at_lp_mode(void);
 
 /* Initialize the UART clock */
 uint32_t board_init_uart_clock(UART_Type *ptr);
+
+/*
+ * Get GPIO pin level of onboard LED
+ */
+uint8_t board_get_led_gpio_off_level(void);
 
 #if defined(__cplusplus)
 }

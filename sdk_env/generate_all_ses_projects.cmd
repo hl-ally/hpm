@@ -6,7 +6,7 @@ setlocal enabledelayedexpansion
 
 @rem Please modify the following variable
 set VBSCRIPT=Msgbox("Do you want to generate segger project?"+vbcrlf+"This process will cost several minutes." +vbcrlf +"If you choose ok"+vbcrlf +"(1) If LongPathsEnabled registry is not enabled, one cmd window will run"+vbcrlf + ^
-"    You can close it after LongPathsEnabled is set"+vbcrlf +"(2) Three cmd widows will run to generate segger projects"+vbcrlf +"   Please don't close them",1,"Warning")
+"    You can close it after LongPathsEnabled is set"+vbcrlf +"(2) More cmd windows will run to generate segger projects"+vbcrlf +"   Please don't close them",1,"Warning")
 for /f "Delims=" %%a in ('MsHta VBScript:Execute("CreateObject(""Scripting.Filesystemobject"").GetStandardStream(1).Write(%VBSCRIPT:"=""%)"^)(Close^)') do Set "MSHTA_RETURN_VALUE=%%a"
 if not %MSHTA_RETURN_VALUE% == 1 (
     goto EXIT

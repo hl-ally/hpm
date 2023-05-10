@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2016, Freescale Semiconductor, Inc.
  * Copyright 2016-2020 NXP
  * Copyright 2021 ACRIOS Systems s.r.o.
+ * Copyright (c) 2022 HPMicro
  * All rights reserved.
  *
  *
@@ -10,6 +11,7 @@
 #include "erpc_manually_constructed.hpp"
 #include "erpc_rpmsg_lite_rtos_transport.hpp"
 #include "erpc_transport_setup.h"
+#include "hpm_common.h"
 
 using namespace erpc;
 
@@ -27,7 +29,7 @@ char rpmsg_lite_base[SH_MEM_TOTAL_SIZE];
 #elif defined(__CC_ARM) || defined(__ARMCC_VERSION) /* Keil MDK */
 char rpmsg_lite_base[SH_MEM_TOTAL_SIZE] __attribute__((section("rpmsg_sh_mem_section")));
 #elif defined(__GNUC__)
-char rpmsg_lite_base[SH_MEM_TOTAL_SIZE] __attribute__((section(".noinit.$rpmsg_sh_mem")));
+static ATTR_SHARE_MEM char rpmsg_lite_base[SH_MEM_TOTAL_SIZE];
 #else
 #error "RPMsg: Please provide your definition of rpmsg_lite_base[]!"
 #endif
