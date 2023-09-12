@@ -1,5 +1,9 @@
 # Change Log 
 
+## [1.2.0] - 2023-06-30:
+- update SDK to v1.2.0
+- project_generator: support cmake building with custom board path parameter.
+
 ## [1.1.0] - 2023-03-31:
 - update SDK to v1.1.0
 - tools: ft2232 driver update to libusbk

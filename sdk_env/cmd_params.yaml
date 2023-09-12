@@ -30,4 +30,3 @@ build-type:
 default-type: [flash_sdram_xip, flash_xip]
 default-sample: hello_world
 default-board: hpm6750evkmini
-output-directory: C:/Users/JoeYin/Desktop/hpm6750evkmini
