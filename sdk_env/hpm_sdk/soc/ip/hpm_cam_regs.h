@@ -1024,7 +1024,7 @@ typedef struct {
  * 0x0: disable signal
  * 0x1:  high 1, low 15
  * 0x2:  high 2, low 14
- * ¡­...
+ * â€¦...
  * 0xF:   high 15, low 1
  */
 #define CAM_ALARM_SET_SIG_NORMAL_MASK (0xF00000UL)
@@ -1039,7 +1039,7 @@ typedef struct {
  * 0x0: disable signal
  * 0x1:  high 1, low 15
  * 0x2:  high 2, low 14
- * ¡­...
+ * â€¦...
  * 0xF:   high 15, low 1
  */
 #define CAM_ALARM_SET_FATAL_NORMAL_MASK (0xF0000UL)

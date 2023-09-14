@@ -454,7 +454,7 @@ typedef struct {
  * 5'h2: 2 channels
  * 5'h4: 4 channels
  * ...
- * 5¡®h10: 16 channels (max)
+ * 5â€˜h10: 16 channels (max)
  */
 #define I2S_CFGR_CH_MAX_MASK (0x7C0U)
 #define I2S_CFGR_CH_MAX_SHIFT (6U)
