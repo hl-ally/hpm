@@ -76,7 +76,6 @@ int main(void)
     printf("hello world\n");
     printf("now into while loop, enjoy......\n");
     //nLastTime = GetCurrentTimeUs();
-    printf("yes, good fuck you******************");
     while(1)
     {
 #if 0
