@@ -1,8 +1,22 @@
 # Copyright (c) 2021-2022 HPMicro
 # SPDX-License-Identifier: BSD-3-Clause
 
+# 本.cmake文件中主要是定义一些功能函数
 
+#[[
+    cmake_policy：用于管理CMake策略设置，它通常被添加到project的CMakeLists.txt文件中，以改变CMake本身的行为，通常能够用新版本的CMake处理旧版本CMakelists.txt features
+]]
 cmake_policy(SET CMP0079 NEW)
+
+
+#[[
+    CMake中的宏(macro)和(function)都支持动态参数
+    变量ARGC，记录传入的参数个数
+    变量ARGV0、ARGV1、...， 顺序代表传入的参数
+    变量ARGV，一个包含所有传入参数的list
+    变量ARGN，也是一个包含所有传入参数的list，但不是所有参数，而是只marco/function声明的参数之后的所有传入参数
+]]
+
 
 function(sdk_src)
     foreach(file ${ARGN})

@@ -8,4 +8,12 @@ endif()
 set(HPM_SDK_BASE $ENV{HPM_SDK_BASE})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+message("")
+message("****************************************")
+message(STATUS "hpm-sdk-config.cmake message")
+message("HPM_SDK_BASE=${HPM_SDK_BASE}")
+message("CMAKE_EXPORT_COMPILE_COMMANDS=${CMAKE_EXPORT_COMPILE_COMMANDS}")
+message("****************************************")
+message("")
+
 include(${HPM_SDK_BASE}/cmake/application.cmake)
