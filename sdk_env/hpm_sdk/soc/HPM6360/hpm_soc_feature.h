@@ -117,6 +117,7 @@
 /*
 * ADC Section
 */
+#define ADC_SOC_IP_VERSION                         (1U)
 #define ADC_SOC_SEQ_MAX_LEN                        (16U)
 #define ADC_SOC_MAX_TRIG_CH_LEN                    (4U)
 #define ADC_SOC_MAX_TRIG_CH_NUM                    (11U)

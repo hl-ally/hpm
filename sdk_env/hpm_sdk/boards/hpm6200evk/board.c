@@ -120,13 +120,13 @@ void board_print_clock_freq(void)
     printf("==============================\n");
     printf(" %s clock summary\n", BOARD_NAME);
     printf("==============================\n");
-    printf("cpu0:\t\t %dHz\n", clock_get_frequency(clock_cpu0));
+    printf("cpu0:\t\t %luHz\n", clock_get_frequency(clock_cpu0));
     printf("cpu1:\t\t %luHz\n", clock_get_frequency(clock_cpu1));
-    printf("axi:\t\t %dHz\n", clock_get_frequency(clock_axi));
-    printf("ahb:\t\t %dHz\n", clock_get_frequency(clock_ahb));
-    printf("mchtmr0:\t %dHz\n", clock_get_frequency(clock_mchtmr0));
+    printf("axi:\t\t %luHz\n", clock_get_frequency(clock_axi));
+    printf("ahb:\t\t %luHz\n", clock_get_frequency(clock_ahb));
+    printf("mchtmr0:\t %luHz\n", clock_get_frequency(clock_mchtmr0));
     printf("mchtmr1:\t %luHz\n", clock_get_frequency(clock_mchtmr1));
-    printf("xpi0:\t\t %dHz\n", clock_get_frequency(clock_xpi0));
+    printf("xpi0:\t\t %luHz\n", clock_get_frequency(clock_xpi0));
     printf("==============================\n");
 }
 
@@ -254,6 +254,11 @@ uint32_t board_init_spi_clock(SPI_Type *ptr)
         return clock_get_frequency(clock_spi3);
     }
     return 0;
+}
+
+void board_init_lin_pins(LIN_Type *ptr)
+{
+    init_lin_pins(ptr);
 }
 
 uint32_t board_init_lin_clock(LIN_Type *ptr)
@@ -499,39 +504,46 @@ void board_init_clock(void)
     clock_set_source_divider(clock_mchtmr1, clk_src_osc24m, 1);
 }
 
-uint32_t board_init_adc12_clock(ADC16_Type *ptr)
+uint32_t board_init_adc16_clock(ADC16_Type *ptr, bool clk_src_ahb)
 {
     uint32_t freq = 0;
-    switch ((uint32_t)ptr) {
-    case HPM_ADC0_BASE:
-        /* Configure the ADC clock to 200MHz */
-        clock_set_adc_source(clock_adc0, clk_adc_src_ana0);
-        clock_set_source_divider(clock_ana0, clk_src_pll1_clk1, 2U);
+
+    if (ptr == HPM_ADC0) {
+        if (clk_src_ahb) {
+            /* Configure the ADC clock from AHB (@200MHz by default)*/
+            clock_set_adc_source(clock_adc0, clk_adc_src_ahb0);
+        } else {
+            /* Configure the ADC clock from pll0_clk0 divided by 2 (@200MHz by default) */
+            clock_set_adc_source(clock_adc0, clk_adc_src_ana0);
+            clock_set_source_divider(clock_ana0, clk_src_pll0_clk0, 2U);
+        }
+
         freq = clock_get_frequency(clock_adc0);
-        break;
-    case HPM_ADC1_BASE:
-        /* Configure the ADC clock to 200MHz */
-        clock_set_adc_source(clock_adc1, clk_adc_src_ana0);
-        clock_set_source_divider(clock_ana0, clk_src_pll1_clk1, 2U);
+    } else if (ptr == HPM_ADC1) {
+        if (clk_src_ahb) {
+            /* Configure the ADC clock from AHB (@200MHz by default)*/
+            clock_set_adc_source(clock_adc1, clk_adc_src_ahb0);
+        } else {
+            /* Configure the ADC clock from pll0_clk0 divided by 2 (@200MHz by default) */
+            clock_set_adc_source(clock_adc1, clk_adc_src_ana1);
+            clock_set_source_divider(clock_ana1, clk_src_pll0_clk0, 2U);
+        }
+
         freq = clock_get_frequency(clock_adc1);
-        break;
-    case HPM_ADC2_BASE:
-        /* Configure the ADC clock to 200MHz */
-        clock_set_adc_source(clock_adc2, clk_adc_src_ana0);
-        clock_set_source_divider(clock_ana0, clk_src_pll1_clk1, 2U);
+    } else if (ptr == HPM_ADC2) {
+        if (clk_src_ahb) {
+            /* Configure the ADC clock from AHB (@200MHz by default)*/
+            clock_set_adc_source(clock_adc2, clk_adc_src_ahb0);
+        } else {
+            /* Configure the ADC clock from pll0_clk0 divided by 2 (@200MHz by default) */
+            clock_set_adc_source(clock_adc2, clk_adc_src_ana2);
+            clock_set_source_divider(clock_ana2, clk_src_pll0_clk0, 2U);
+        }
+
         freq = clock_get_frequency(clock_adc2);
-        break;
-    default:
-        /* Invalid ADC instance */
-        break;
     }
 
     return freq;
-}
-
-uint32_t board_init_adc16_clock(ADC16_Type *ptr)
-{
-    return 0;
 }
 
 uint32_t board_init_dac_clock(DAC_Type *ptr, bool clk_src_ahb)
@@ -540,7 +552,7 @@ uint32_t board_init_dac_clock(DAC_Type *ptr, bool clk_src_ahb)
 
     if (ptr == HPM_DAC0) {
         if (clk_src_ahb == true) {
-            /* Configure the DAC clock to 133MHz */
+            /* Configure the DAC clock to 200MHz */
             clock_set_dac_source(clock_dac0, clk_dac_src_ahb0);
         } else {
             /* Configure the DAC clock to 166MHz */
@@ -549,6 +561,17 @@ uint32_t board_init_dac_clock(DAC_Type *ptr, bool clk_src_ahb)
         }
 
         freq = clock_get_frequency(clock_dac0);
+    } else if (ptr == HPM_DAC1) {
+        if (clk_src_ahb == true) {
+            /* Configure the DAC clock to 200MHz */
+            clock_set_dac_source(clock_dac1, clk_dac_src_ahb0);
+        } else {
+            /* Configure the DAC clock to 166MHz */
+            clock_set_dac_source(clock_dac1, clk_dac_src_ana4);
+            clock_set_source_divider(clock_ana4, clk_src_pll0_clk1, 2);
+        }
+
+        freq = clock_get_frequency(clock_dac1);
     }
 
     return freq;

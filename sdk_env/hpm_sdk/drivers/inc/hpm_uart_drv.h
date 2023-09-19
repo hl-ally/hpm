@@ -111,6 +111,14 @@ typedef enum uart_intr_enable {
 #if defined(UART_SOC_HAS_RXLINE_IDLE_DETECTION) && (UART_SOC_HAS_RXLINE_IDLE_DETECTION == 1)
     uart_intr_rx_line_idle = UART_IER_ERXIDLE_MASK,
 #endif
+#if defined(UART_SOC_HAS_TXLINE_IDLE_DETECTION) && (UART_SOC_HAS_TXLINE_IDLE_DETECTION == 1)
+    uart_intr_tx_line_idle = UART_IER_ETXIDLE_MASK,
+#endif
+#if defined(UART_SOC_HAS_ADDR_MATCH) && (UART_SOC_HAS_ADDR_MATCH == 1)
+    uart_intr_addr_match = UART_IER_EADDRM_MASK,
+    uart_intr_addr_match_and_rxidle = UART_IER_EADDRM_IDLE_MASK,
+    uart_intr_addr_datalost = UART_IER_EDATLOST_MASK,
+#endif
 } uart_intr_enable_t;
 
 /* @brief UART interrupt IDs */
@@ -145,13 +153,16 @@ typedef struct uart_modem_config {
 
 #if defined(UART_SOC_HAS_RXLINE_IDLE_DETECTION) && (UART_SOC_HAS_RXLINE_IDLE_DETECTION == 1)
 /**
- * @brief UART RX Line Idle detection conditions
+ * @brief UART Idle detection conditions, suitable for RX and TX
  */
 typedef enum hpm_uart_rxline_idle_cond {
     uart_rxline_idle_cond_rxline_logic_one = 0,         /**< Treat as idle if the RX Line high duration exceeds threshold */
     uart_rxline_idle_cond_state_machine_idle = 1        /**< Treat as idle if the RX state machine idle state duration exceeds threshold */
 } uart_rxline_idle_cond_t;
 
+/**
+ * @brief UART Idle config, suitable for RX and TX
+ */
 typedef struct hpm_uart_rxline_idle_detect_config {
     bool detect_enable;                 /**< RX Line Idle detection flag */
     bool detect_irq_enable;             /**< Enable RX Line Idle detection interrupt */
@@ -179,6 +190,9 @@ typedef struct hpm_uart_config {
     uart_modem_config_t modem_config;           /**< Modem config */
 #if defined(UART_SOC_HAS_RXLINE_IDLE_DETECTION) && (UART_SOC_HAS_RXLINE_IDLE_DETECTION == 1)
     uart_rxline_idle_config_t  rxidle_config;   /**< RX Idle configuration */
+#endif
+#if defined(UART_SOC_HAS_TXLINE_IDLE_DETECTION) && (UART_SOC_HAS_TXLINE_IDLE_DETECTION == 1)
+    uart_rxline_idle_config_t  txidle_config;   /**< TX Idle configuration */
 #endif
 #if defined(UART_SOC_HAS_RXEN_CFG) && (UART_SOC_HAS_RXEN_CFG == 1)
     bool rx_enable;                             /**< RX Enable configuration */
@@ -473,6 +487,56 @@ hpm_stat_t uart_init_rxline_idle_detection(UART_Type *ptr, uart_rxline_idle_conf
 
 #endif
 
+#if defined(UART_SOC_HAS_TXLINE_IDLE_DETECTION) && (UART_SOC_HAS_TXLINE_IDLE_DETECTION == 1)
+/**
+ * @brief Determine whether UART TX Line is idle
+ * @param [in] ptr UART base address
+ */
+static inline bool uart_is_txline_idle(UART_Type *ptr)
+{
+    return ((ptr->IIR2 & UART_IIR2_TXIDLE_FLAG_MASK) != 0U) ? true : false;
+}
+
+/**
+ * @brief Clear UART TX Line Idle Flag
+ * @param [in] ptr UART base address
+ */
+static inline void uart_clear_txline_idle_flag(UART_Type *ptr)
+{
+    ptr->IIR2 = UART_IIR2_TXIDLE_FLAG_MASK; /* Write-1-Clear Logic */
+}
+
+/**
+ * @brief Enable UART TX Idle Line detection logic
+ * @param [in] ptr UART base address
+ */
+static inline void uart_enable_txline_idle_detection(UART_Type *ptr)
+{
+    ptr->IDLE_CFG |= UART_IDLE_CFG_TX_IDLE_EN_MASK;
+}
+
+/**
+ * @brief Disable UART TX Idle Line detection logic
+ *
+ * @param [in] ptr UART base address
+ */
+static inline void uart_disable_txline_idle_detection(UART_Type *ptr)
+{
+    ptr->IDLE_CFG &= ~UART_IDLE_CFG_TX_IDLE_EN_MASK;
+}
+
+/**
+ * @brief Configure UART TX Line detection
+ * @param [in] ptr UART base address
+ * @param [in] txidle_config TXLine IDLE detection configuration
+ * @retval status_success if no error occurs
+ */
+hpm_stat_t uart_init_txline_idle_detection(UART_Type *ptr, uart_rxline_idle_config_t txidle_config);
+
+#endif
+
+
+
 /**
  * @brief Get status
  *
@@ -588,24 +652,23 @@ hpm_stat_t uart_set_baudrate(UART_Type *ptr, uint32_t baudrate, uint32_t src_clo
 
 #if defined(UART_SOC_HAS_NEW_FIFO_THR) && (UART_SOC_HAS_NEW_FIFO_THR == 1)
 /**
- * @brief Config uart trigger mode for communication
+ * @brief uart configure transfer trigger mode
  *
- * This function is used to tomagawa communication, uart sent out data in fifo then generate interrupt after
- * received specify count of data into fifo.
+ * This function can configure uart to send data in fifo after being triggered
  *
  * @param ptr UART base address
  * @param uart_trig_config_t config
  */
-void uart_config_trig_mode(UART_Type *ptr, uart_trig_config_t *config);
+void uart_config_transfer_trig_mode(UART_Type *ptr, uart_trig_config_t *config);
 
 /**
- * @brief uart trigger communication
+ * @brief uart software trigger transmit
  *
- * This function triggers uart communication, the communication configed by uart_config_trig_mode()
+ * This function immediately triggers the transfer, the transfer configed by uart_config_transfer_trig_mode()
  *
  * @param ptr UART base address
  */
-static inline void uart_trigger_communication(UART_Type *ptr)
+static inline void uart_software_trig_transfer(UART_Type *ptr)
 {
     ptr->MOTO_CFG &= ~UART_MOTO_CFG_HWTRG_EN_MASK;
     ptr->MOTO_CFG |= UART_MOTO_CFG_SWTRG_MASK;
@@ -614,12 +677,12 @@ static inline void uart_trigger_communication(UART_Type *ptr)
 /**
  * @brief uart enable hardware trigger mode
  *
- * This function configures uart start communication by hardware trigger from motor periphrals
+ * This function enable hardware trigger the transfer, the transfer start when hardware event occured
  *
  * @param ptr UART base address
- * @param bool enable
+ * @param enable true for enable, false for disable
  */
-static inline void uart_enable_hardware_trigger_mode(UART_Type *ptr, bool enable)
+static inline void uart_enable_hardware_trig_transfer(UART_Type *ptr, bool enable)
 {
     if (enable) {
         ptr->MOTO_CFG |= UART_MOTO_CFG_HWTRG_EN_MASK;
@@ -627,6 +690,104 @@ static inline void uart_enable_hardware_trigger_mode(UART_Type *ptr, bool enable
         ptr->MOTO_CFG &= ~UART_MOTO_CFG_HWTRG_EN_MASK;
     }
 }
+
+/**
+ * @brief UART get data count in rx fifo
+ *
+ * @param ptr UART base address
+ * @retval data count
+ */
+static inline uint8_t uart_get_data_count_in_rx_fifo(UART_Type *ptr)
+{
+    return UART_LSR_RFIFO_NUM_GET(ptr->LSR);
+}
+
+/**
+ * @brief UART get data count in tx fifo
+ *
+ * @param ptr UART base address
+ * @retval data count
+ */
+static inline uint8_t uart_get_data_count_in_tx_fifo(UART_Type *ptr)
+{
+    return UART_LSR_TFIFO_NUM_GET(ptr->LSR);
+}
+#endif
+
+#if defined(UART_SOC_HAS_ADDR_MATCH) && (UART_SOC_HAS_ADDR_MATCH == 1)
+/**
+ * @brief uart enable 9bit transmit mode
+ *
+ * @param ptr UART base address
+ * @param enable true for enable, false for disable
+ */
+static inline void uart_enable_9bit_transmit_mode(UART_Type *ptr, bool enable)
+{
+    if (enable) {
+        ptr->ADDR_CFG |= UART_ADDR_CFG_TXEN_9BIT_MASK
+                            | UART_ADDR_CFG_RXEN_ADDR_MSB_MASK
+                            | UART_ADDR_CFG_RXEN_9BIT_MASK;
+    } else {
+        ptr->ADDR_CFG &= ~(UART_ADDR_CFG_TXEN_9BIT_MASK
+                            | UART_ADDR_CFG_RXEN_ADDR_MSB_MASK
+                            | UART_ADDR_CFG_RXEN_9BIT_MASK);
+    }
+}
+
+/**
+ * @brief uart enable address0 match
+ *
+ * @param ptr UART base address
+ * @param addr address value
+ */
+static inline void uart_enable_address0_match(UART_Type *ptr, uint8_t addr)
+{
+    ptr->ADDR_CFG &= ~UART_ADDR_CFG_ADDR0_MASK;
+    ptr->ADDR_CFG |= UART_ADDR_CFG_A0_EN_MASK | UART_ADDR_CFG_ADDR0_SET(addr);
+}
+
+/**
+ * @brief uart enable address1 match
+ *
+ * @param ptr UART base address
+ * @param addr address value
+ */
+static inline void uart_enable_address1_match(UART_Type *ptr, uint8_t addr)
+{
+    ptr->ADDR_CFG &= ~UART_ADDR_CFG_ADDR1_MASK;
+    ptr->ADDR_CFG |= UART_ADDR_CFG_A1_EN_MASK | UART_ADDR_CFG_ADDR1_SET(addr);
+}
+
+/**
+ * @brief uart disable address0 match
+ *
+ * @param ptr UART base address
+ */
+static inline void uart_disable_address0_match(UART_Type *ptr)
+{
+    ptr->ADDR_CFG &= ~UART_ADDR_CFG_A0_EN_MASK;
+}
+
+/**
+ * @brief uart disable address1 match
+ *
+ * @param ptr UART base address
+ */
+static inline void uart_disable_address1_match(UART_Type *ptr)
+{
+    ptr->ADDR_CFG &= ~UART_ADDR_CFG_A1_EN_MASK;
+}
+
+/**
+ * @brief uart disable address match(address0 and address1)
+ *
+ * @param ptr UART base address
+ */
+static inline void uart_disable_address_match(UART_Type *ptr)
+{
+    ptr->ADDR_CFG &= ~(UART_ADDR_CFG_A0_EN_MASK | UART_ADDR_CFG_A1_EN_MASK);
+}
+
 #endif
 
 #ifdef __cplusplus

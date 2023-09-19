@@ -7,6 +7,8 @@
 #ifndef CHERRYUSB_CONFIG_H
 #define CHERRYUSB_CONFIG_H
 
+#include "hpm_soc.h"
+
 #define CHERRYUSB_VERSION 0x000800
 
 /* ================ USB common Configuration ================ */
@@ -163,8 +165,10 @@
 
 /* ================ EHCI Configuration ================ */
 
+#define CONFIG_USB_EHCI_HPMICRO 1
+#define CONFIG_HPM_USB_BASE    HPM_USB0_BASE
 #define CONFIG_USB_EHCI_HCCR_BASE   (0)
-#define CONFIG_USB_EHCI_HCOR_BASE   (0xF2020000UL + 0x140)
+#define CONFIG_USB_EHCI_HCOR_BASE   (CONFIG_HPM_USB_BASE + 0x140)
 #define CONFIG_USB_EHCI_FRAME_LIST_SIZE 1024
 /* #define CONFIG_USB_EHCI_INFO_ENABLE */
 /* #define CONFIG_USB_ECHI_HCOR_RESERVED_DISABLE */

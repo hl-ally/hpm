@@ -17,6 +17,7 @@
 #include "nor_flash.h"
 #include "hpm_romapi.h"
 #include "hpm_ppor_drv.h"
+#include "systick.h"
 
 
 int main(void)
@@ -75,7 +76,7 @@ int main(void)
 #endif
     printf("hello world\n");
     printf("now into while loop, enjoy......\n");
-    //nLastTime = GetCurrentTimeUs();
+    nLastTime = GetCurrentTimeUs();
     while(1)
     {
 #if 0

@@ -170,6 +170,9 @@ typedef struct pwm_fault_source_config {
  *
  */
 typedef struct pwm_config {
+#if PWM_SOC_HRPWM_SUPPORT
+    bool hrpwm_update_mode;             /**< mode one or zero, HR CMP update timing */
+#endif
     bool enable_output;                 /**< enable pwm output */
     bool invert_output;                 /**< invert pwm output level */
     uint8_t update_trigger;             /**< pwm config update trigger */
@@ -463,6 +466,19 @@ static inline void pwm_load_cmp_shadow_on_capture(PWM_Type *pwm_x,
 }
 
 #if PWM_SOC_SHADOW_TRIG_SUPPORT
+
+/**
+ * @brief RLD, STA shadow registers take effect at the reload point
+ *
+ * @param pwm_x pwm_x PWM base address, HPM_PWMx(x=0..n)
+ * @param is_enable true or false
+ */
+static inline void pwm_set_cnt_shadow_trig_reload(PWM_Type *pwm_x, bool is_enable)
+{
+	pwm_x->SHCR = ((pwm_x->SHCR & ~PWM_SHCR_CNT_UPDATE_RELOAD_MASK)
+            | PWM_SHCR_CNT_UPDATE_RELOAD_SET(is_enable));
+}
+
 /**
  * @brief Set the timer shadow register to update the trigger edge
  *
@@ -796,6 +812,9 @@ static inline void pwm_config_pwm(PWM_Type *pwm_x, uint8_t index,
         | PWM_PWMCFG_FAULTRECTIME_SET(config->fault_recovery_trigger)
         | PWM_PWMCFG_FRCSRCSEL_SET(config->force_source)
         | PWM_PWMCFG_PAIR_SET(enable_pair_mode)
+#if PWM_SOC_HRPWM_SUPPORT
+        | PWM_PWMCFG_HR_UPDATE_MODE_SET(config->hrpwm_update_mode)
+#endif
         | PWM_PWMCFG_DEADAREA_SET(config->dead_zone_in_half_cycle);
 }
 

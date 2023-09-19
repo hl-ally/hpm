@@ -15,7 +15,7 @@ void adc16_get_default_config(adc16_config_t *config)
     config->conv_duration      = 0;
     config->wait_dis           = true;
     config->sel_sync_ahb       = true;
-    config->port3_rela_time    = false;
+    config->port3_realtime     = false;
     config->adc_ahb_en         = false;
 }
 
@@ -159,7 +159,8 @@ hpm_stat_t adc16_init(ADC16_Type *ptr, adc16_config_t *config)
     /* Set the duration of the conversion */
     ptr->ADC_CFG0 = ADC16_ADC_CFG0_SEL_SYNC_AHB_SET(config->sel_sync_ahb)
                   | ADC16_ADC_CFG0_ADC_AHB_EN_SET(config->adc_ahb_en)
-                  | ADC16_ADC_CFG0_CONVERT_DURATION_SET(config->conv_duration);
+                  | ADC16_ADC_CFG0_CONVERT_DURATION_SET(config->conv_duration)
+                  | ADC16_ADC_CFG0_PORT3_REALTIME_SET(config->port3_realtime);
 
     /* Set wait_dis */
     if (config->conv_mode == adc16_conv_mode_oneshot) {
@@ -213,6 +214,18 @@ hpm_stat_t adc16_init_channel(ADC16_Type *ptr, adc16_channel_config_t *config)
     return status_success;
 }
 
+#if defined(ADC_SOC_BUSMODE_ENABLE_CTRL_SUPPORT) && ADC_SOC_BUSMODE_ENABLE_CTRL_SUPPORT
+void adc16_enable_oneshot_mode(ADC16_Type *ptr)
+{
+    ptr->BUF_CFG0 |= ADC16_BUF_CFG0_BUS_MODE_EN_MASK;
+}
+
+void adc16_disable_oneshot_mode(ADC16_Type *ptr)
+{
+    ptr->BUF_CFG0 &= ~ADC16_BUF_CFG0_BUS_MODE_EN_MASK;
+}
+#endif
+
 hpm_stat_t adc16_init_seq_dma(ADC16_Type *ptr, adc16_dma_config_t *dma_config)
 {
      /* Check the DMA buffer length  */
@@ -236,11 +249,22 @@ hpm_stat_t adc16_init_seq_dma(ADC16_Type *ptr, adc16_dma_config_t *dma_config)
     ptr->SEQ_DMA_CFG = (ptr->SEQ_DMA_CFG & ~ADC16_SEQ_DMA_CFG_BUF_LEN_MASK)
                      | ADC16_SEQ_DMA_CFG_BUF_LEN_SET(dma_config->buff_len_in_4bytes - 1);
 
+    #if defined(ADC_SOC_SEQ_HCFG_EN) && ADC_SOC_SEQ_HCFG_EN
+    /* Set high-half buffer length */
+    ptr->SEQ_HIGH_CFG = (ptr->SEQ_HIGH_CFG & ~ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_MASK)
+                      | ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_SET(((dma_config->buff_len_in_4bytes - 1) >> 12));
+    #endif
+
     /* Set stop_en and stop_pos */
     if (dma_config->stop_en) {
         ptr->SEQ_DMA_CFG = (ptr->SEQ_DMA_CFG & ~ADC16_SEQ_DMA_CFG_STOP_POS_MASK)
                          | ADC16_SEQ_DMA_CFG_STOP_EN_MASK
                          | ADC16_SEQ_DMA_CFG_STOP_POS_SET(dma_config->stop_pos);
+
+        #if defined(ADC_SOC_SEQ_HCFG_EN) && ADC_SOC_SEQ_HCFG_EN
+        ptr->SEQ_HIGH_CFG = (ptr->SEQ_HIGH_CFG & ~ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_MASK)
+                          | ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_SET(((dma_config->stop_pos) >> 12));
+        #endif
     }
 
     return status_success;

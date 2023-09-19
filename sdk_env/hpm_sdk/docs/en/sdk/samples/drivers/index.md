@@ -28,6 +28,7 @@
     l1c/README
     lcdc/README
     lin/index
+    linv2/index
     mbx/index
     mchtmr/README
     pdma/README
@@ -53,5 +54,9 @@
     pla/index
     ffa/README
     qeo/index
-    mmc/README
+    mmc/index
+    pdgo/README
+    plb/index
+    sei/index
+    qeiv2/index
 :::

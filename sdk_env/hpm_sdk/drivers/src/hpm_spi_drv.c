@@ -304,6 +304,9 @@ void spi_master_get_default_control_config(spi_control_config_t *config)
     config->common_config.trans_mode = spi_trans_write_only;
     config->common_config.data_phase_fmt = spi_single_io_mode;
     config->common_config.dummy_cnt = spi_dummy_count_2;
+#if defined(SPI_SOC_HAS_CS_SELECT) && (SPI_SOC_HAS_CS_SELECT == 1)
+    config->common_config.cs_index = spi_cs_0;
+#endif
 }
 
 void spi_slave_get_default_control_config(spi_control_config_t *config)
@@ -314,6 +317,9 @@ void spi_slave_get_default_control_config(spi_control_config_t *config)
     config->common_config.trans_mode = spi_trans_read_only;
     config->common_config.data_phase_fmt = spi_single_io_mode;
     config->common_config.dummy_cnt = spi_dummy_count_2;
+#if defined(SPI_SOC_HAS_CS_SELECT) && (SPI_SOC_HAS_CS_SELECT == 1)
+    config->common_config.cs_index = spi_cs_0;
+#endif
 }
 
 hpm_stat_t spi_master_timing_init(SPI_Type *ptr, spi_timing_config_t *config)
@@ -371,6 +377,15 @@ hpm_stat_t spi_control_init(SPI_Type *ptr, spi_control_config_t *config, uint32_
                      SPI_TRANSCTRL_TOKENVALUE_SET(config->master_config.token_value) |
                      SPI_TRANSCTRL_DUMMYCNT_SET(config->common_config.dummy_cnt) |
                      SPI_TRANSCTRL_RDTRANCNT_SET(rcount - 1);
+
+#if defined(SPI_SOC_HAS_CS_SELECT) && (SPI_SOC_HAS_CS_SELECT == 1)
+    ptr->CTRL = (ptr->CTRL & ~SPI_CTRL_CS_EN_MASK) | SPI_CTRL_CS_EN_SET(config->common_config.cs_index);
+#endif
+
+#if defined(SPI_SOC_HAS_NEW_TRANS_COUNT) && (SPI_SOC_HAS_NEW_TRANS_COUNT == 1)
+    ptr->WR_TRANS_CNT = wcount - 1;
+    ptr->RD_TRANS_CNT = rcount - 1;
+#endif
 
     /* reset txfifo, rxfifo and control */
     ptr->CTRL |= SPI_CTRL_TXFIFORST_MASK | SPI_CTRL_RXFIFORST_MASK | SPI_CTRL_SPIRST_MASK;

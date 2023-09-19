@@ -69,6 +69,39 @@
 #define SIZE_1KB (1024UL)
 #define SIZE_1MB (1048576UL)
 
+#define BIT0_MASK  (0x00000001UL)
+#define BIT1_MASK  (0x00000002UL)
+#define BIT2_MASK  (0x00000004UL)
+#define BIT3_MASK  (0x00000008UL)
+#define BIT4_MASK  (0x00000010UL)
+#define BIT5_MASK  (0x00000020UL)
+#define BIT6_MASK  (0x00000040UL)
+#define BIT7_MASK  (0x00000080UL)
+#define BIT8_MASK  (0x00000100UL)
+#define BIT9_MASK  (0x00000200UL)
+#define BIT10_MASK (0x00000400UL)
+#define BIT11_MASK (0x00000800UL)
+#define BIT12_MASK (0x00001000UL)
+#define BIT13_MASK (0x00002000UL)
+#define BIT14_MASK (0x00004000UL)
+#define BIT15_MASK (0x00008000UL)
+#define BIT16_MASK (0x00010000UL)
+#define BIT17_MASK (0x00020000UL)
+#define BIT18_MASK (0x00040000UL)
+#define BIT19_MASK (0x00080000UL)
+#define BIT20_MASK (0x00100000UL)
+#define BIT21_MASK (0x00200000UL)
+#define BIT22_MASK (0x00400000UL)
+#define BIT23_MASK (0x00800000UL)
+#define BIT24_MASK (0x01000000UL)
+#define BIT25_MASK (0x02000000UL)
+#define BIT26_MASK (0x04000000UL)
+#define BIT27_MASK (0x08000000UL)
+#define BIT28_MASK (0x10000000UL)
+#define BIT29_MASK (0x20000000UL)
+#define BIT30_MASK (0x40000000UL)
+#define BIT31_MASK (0x80000000UL)
+
 typedef uint32_t hpm_stat_t;
 
 /* @brief Enum definition for the Status group
@@ -108,6 +141,7 @@ enum {
     status_group_pllctlv2,
     status_group_ffa,
     status_group_mcan,
+    status_group_ewdg,
 
     status_group_middleware_start = 500,
     status_group_sdmmc = status_group_middleware_start,

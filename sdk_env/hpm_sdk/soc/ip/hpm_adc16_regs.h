@@ -23,7 +23,8 @@ typedef struct {
     __R  uint32_t SEQ_WR_ADDR;                 /* 0x808:  */
     __RW uint32_t SEQ_DMA_CFG;                 /* 0x80C:  */
     __RW uint32_t SEQ_QUE[16];                 /* 0x810 - 0x84C:  */
-    __R  uint8_t  RESERVED3[944];              /* 0x850 - 0xBFF: Reserved */
+    __RW uint32_t SEQ_HIGH_CFG;                /* 0x850:  */
+    __R  uint8_t  RESERVED3[940];              /* 0x854 - 0xBFF: Reserved */
     struct {
         __RW uint32_t PRD_CFG;                 /* 0xC00:  */
         __RW uint32_t PRD_THSHD_CFG;           /* 0xC04:  */
@@ -388,6 +389,25 @@ typedef struct {
 #define ADC16_SEQ_QUE_CHAN_NUM_4_0_SET(x) (((uint32_t)(x) << ADC16_SEQ_QUE_CHAN_NUM_4_0_SHIFT) & ADC16_SEQ_QUE_CHAN_NUM_4_0_MASK)
 #define ADC16_SEQ_QUE_CHAN_NUM_4_0_GET(x) (((uint32_t)(x) & ADC16_SEQ_QUE_CHAN_NUM_4_0_MASK) >> ADC16_SEQ_QUE_CHAN_NUM_4_0_SHIFT)
 
+/* Bitfield definition for register: SEQ_HIGH_CFG */
+/*
+ * STOP_POS_HIGH (RW)
+ *
+ */
+#define ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_MASK (0xFFF000UL)
+#define ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_SHIFT (12U)
+#define ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_SET(x) (((uint32_t)(x) << ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_SHIFT) & ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_MASK)
+#define ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_GET(x) (((uint32_t)(x) & ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_MASK) >> ADC16_SEQ_HIGH_CFG_STOP_POS_HIGH_SHIFT)
+
+/*
+ * BUF_LEN_HIGH (RW)
+ *
+ */
+#define ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_MASK (0xFFFU)
+#define ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_SHIFT (0U)
+#define ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_SET(x) (((uint32_t)(x) << ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_SHIFT) & ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_MASK)
+#define ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_GET(x) (((uint32_t)(x) & ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_MASK) >> ADC16_SEQ_HIGH_CFG_BUF_LEN_HIGH_SHIFT)
+
 /* Bitfield definition for register of struct array PRD_CFG: PRD_CFG */
 /*
  * PRESCALE (RW)
@@ -467,7 +487,7 @@ typedef struct {
 /*
  * CONVERT_CLOCK_NUMBER (RW)
  *
- * convert clock numbers, set to 21 (0x15) for 16bit mode, which means convert need 22 adc clock cycles(based on clock after divider);
+ * convert clock numbers, set to 21 (0x15) for 16bit mode, which means convert need 21 adc clock cycles(based on clock after divider);
  * user can use small value to get faster convertion, but less accuracy, need to config cov_end_cnt at adc16_config1 also.
  * Ex: use 200MHz bus clock for adc, set sample_clock_number to 4, sample_clock_number_shift to 0, covert_clk_number to 21 for 16bit mode, clock_divder to 3, then each ADC convertion(plus sample) need 25 cycles(50MHz).
  */
@@ -771,6 +791,17 @@ typedef struct {
 #define ADC16_INT_EN_WDOG_GET(x) (((uint32_t)(x) & ADC16_INT_EN_WDOG_MASK) >> ADC16_INT_EN_WDOG_SHIFT)
 
 /* Bitfield definition for register: ANA_CTRL0 */
+/*
+ * MOTO_EN (RW)
+ *
+ * "set to enable moto_soc and moto_valid.
+ * Should use AHB clock for adc, this bit can be used avoid async output"
+ */
+#define ADC16_ANA_CTRL0_MOTO_EN_MASK (0x80000000UL)
+#define ADC16_ANA_CTRL0_MOTO_EN_SHIFT (31U)
+#define ADC16_ANA_CTRL0_MOTO_EN_SET(x) (((uint32_t)(x) << ADC16_ANA_CTRL0_MOTO_EN_SHIFT) & ADC16_ANA_CTRL0_MOTO_EN_MASK)
+#define ADC16_ANA_CTRL0_MOTO_EN_GET(x) (((uint32_t)(x) & ADC16_ANA_CTRL0_MOTO_EN_MASK) >> ADC16_ANA_CTRL0_MOTO_EN_SHIFT)
+
 /*
  * ADC_CLK_ON (RW)
  *

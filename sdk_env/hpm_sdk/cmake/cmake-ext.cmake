@@ -163,9 +163,9 @@ function(get_compiler_version compiler version_text compiler_version)
     endif()
 endfunction()
 
-function(add_subdirectory_ifdef feature dir)
+function(add_subdirectory_ifdef feature)
     if((${feature}) AND (NOT ${${feature}} EQUAL 0))
-        add_subdirectory(${dir})
+        add_subdirectory(${ARGN})
     endif()
 endfunction()
 

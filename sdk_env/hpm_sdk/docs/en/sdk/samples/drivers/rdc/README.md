@@ -1,0 +1,19 @@
+# rdc
+
+## Overview
+
+The rdc example project demo position information from a rotary encoder.
+
+## Board Setting
+
+Connect the rotary encoder driver board to the motor interface, then connect the rotary encoder to the driver board.
+
+- Driver board 14V power supply
+
+## Running the example
+
+Rotate the motor and the serial terminal will output the angle information as follows:
+```console
+ theta: 1.
+ theta: 20.5.
+```

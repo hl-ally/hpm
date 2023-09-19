@@ -149,6 +149,9 @@ int main(void)
     init_board_app_uart();
     init_board_app_dma();
 
+    printf("\nDma used link chain to implement circle transmission example");
+    printf("\nPlease input some characters, the serial port will echo. Please input characters:\n");
+
     board_timer_create(5, task_entry_5ms);
 
     while (1) {

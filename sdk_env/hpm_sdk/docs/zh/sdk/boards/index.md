@@ -50,3 +50,4 @@
 (lab_board_app_dao)=
 (lab_board_app_i2s_pin)=
 (lab_board_app_pla_pin)=
+(lab_board_app_plb_pin)=

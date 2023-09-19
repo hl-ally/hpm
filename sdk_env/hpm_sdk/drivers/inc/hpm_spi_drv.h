@@ -216,7 +216,10 @@ typedef struct {
     uint8_t trans_mode;
     uint8_t data_phase_fmt;
     uint8_t dummy_cnt;
-} spi_common_control_config_t;
+#if defined(SPI_SOC_HAS_CS_SELECT) && (SPI_SOC_HAS_CS_SELECT == 1)
+    uint8_t cs_index;
+#endif
+} spi_common_control_config_t; /*!< value in spi_cs_index_t */
 
 /**
  * @brief spi control config structure
@@ -226,6 +229,15 @@ typedef struct {
     spi_slave_control_config_t  slave_config;
     spi_common_control_config_t common_config;
 } spi_control_config_t;
+
+#if defined(SPI_SOC_HAS_CS_SELECT) && (SPI_SOC_HAS_CS_SELECT == 1)
+typedef enum {
+    spi_cs_0 = 1,
+    spi_cs_1 = 2,
+    spi_cs_2 = 4,
+    spi_cs_3 = 8,
+} spi_cs_index_t;
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
@@ -616,7 +628,11 @@ static inline void spi_disable_rx_dma(SPI_Type *ptr)
  */
 static inline uint32_t spi_slave_get_sent_data_count(SPI_Type *ptr)
 {
+#if defined(SPI_SOC_HAS_NEW_TRANS_COUNT) && (SPI_SOC_HAS_NEW_TRANS_COUNT == 1)
+    return ptr->SLVDATAWCNT;
+#else
     return SPI_SLVDATACNT_WCNT_GET(ptr->SLVDATACNT);
+#endif
 }
 
 /**
@@ -627,7 +643,11 @@ static inline uint32_t spi_slave_get_sent_data_count(SPI_Type *ptr)
  */
 static inline uint32_t spi_slave_get_received_data_count(SPI_Type *ptr)
 {
+#if defined(SPI_SOC_HAS_NEW_TRANS_COUNT) && (SPI_SOC_HAS_NEW_TRANS_COUNT == 1)
+    return ptr->SLVDATARCNT;
+#else
     return SPI_SLVDATACNT_RCNT_GET(ptr->SLVDATACNT);
+#endif
 }
 
 /**

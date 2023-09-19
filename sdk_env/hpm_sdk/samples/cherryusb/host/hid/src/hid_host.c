@@ -19,19 +19,19 @@ void usbh_hid_keyboard_callback(void *arg, int nbytes)
             USB_LOG_RAW("0x%02x ", hid_keyboard_buffer[i]);
         }
         USB_LOG_RAW("nbytes:%d\r\n", nbytes);
-        usbh_submit_urb(&intin_urb[0]);
     }
+    usbh_submit_urb(&intin_urb[0]);
 }
 
 void usbh_hid_mouse_callback(void *arg, int nbytes)
 {
-    if (nbytes >= 0) {
+    if (nbytes > 0) {
         for (int i = 0; i < nbytes; i++) {
             USB_LOG_RAW("0x%02x ", hid_mouse_buffer[i]);
         }
         USB_LOG_RAW("nbytes:%d\r\n", nbytes);
-        usbh_submit_urb(&intin_urb[1]);
     }
+    usbh_submit_urb(&intin_urb[1]);
 }
 
 void usbh_hid_run(struct usbh_hid *hid_class)
@@ -42,12 +42,13 @@ void usbh_hid_run(struct usbh_hid *hid_class)
             usbh_submit_urb(&intin_urb[0]);
             USB_LOG_RAW("mount a keyboard\r\n");
         } else if (hid_class->hport->config.intf[hid_class->intf].altsetting[0].intf_desc.bInterfaceProtocol == HID_PROTOCOL_MOUSE) {
-            usbh_int_urb_fill(&intin_urb[1], hid_class->intin, hid_mouse_buffer, 8, 0, usbh_hid_mouse_callback, hid_class);
+            usbh_int_urb_fill(&intin_urb[1], hid_class->intin, hid_mouse_buffer, 7, 0, usbh_hid_mouse_callback, hid_class);
             usbh_submit_urb(&intin_urb[1]);
             USB_LOG_RAW("mount a mouse\r\n");
         } else {
             ;
         }
+
     }
 }
 

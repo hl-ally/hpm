@@ -15,9 +15,6 @@ if(extram_size)
     sdk_linker_global_symbols("_extram_size=${extram_size}")
 endif()
 
-sdk_linker_global_symbols("_heap_size=${HEAP_SIZE}")
-sdk_linker_global_symbols("_stack_size=${STACK_SIZE}")
-
 if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "")
     string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
     string(FIND ${build_type} "release" found)

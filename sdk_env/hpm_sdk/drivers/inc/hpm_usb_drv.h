@@ -223,6 +223,13 @@ static inline uint8_t usb_get_port_speed(USB_Type *ptr)
 void usb_phy_init(USB_Type *ptr);
 
 /**
+ * @brief USB phy using internal vbus
+ *
+ * @param[in] ptr A USB peripheral base address
+ */
+void usb_phy_using_internal_vbus(USB_Type *ptr);
+
+/**
  * @brief USB device bus reset
  *
  * @param[in] ptr A USB peripheral base address
@@ -441,6 +448,21 @@ static inline uint32_t usb_hcd_get_frame_index(USB_Type *ptr)
 static inline bool usb_hcd_get_port_csc(USB_Type *ptr)
 {
     return USB_PORTSC1_CSC_GET(ptr->PORTSC1);
+}
+
+/**
+ * @brief Set power ctrl polarity
+ *
+ * @param[in] ptr A USB peripheral base address
+ * @param[in] high true - vbus high level enable, false - vbus low level enable
+ */
+static inline void usb_hcd_set_power_ctrl_polarity(USB_Type *ptr, bool high)
+{
+    if (high) {
+        ptr->OTG_CTRL0 |= USB_OTG_CTRL0_OTG_POWER_MASK_MASK;
+    } else {
+        ptr->OTG_CTRL0 &= ~USB_OTG_CTRL0_OTG_POWER_MASK_MASK;
+    }
 }
 
 /**

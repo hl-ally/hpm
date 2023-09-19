@@ -166,7 +166,7 @@ void init_trigger_mux(TRGM_Type * ptr)
     trgm_output_config(ptr, APP_ADC12_PMT_TRGM_OUT, &trgm_output_cfg);
 }
 
-void init_trigger_cfg(ADC12_Type *ptr, uint8_t trig_ch, bool inten)
+void init_trigger_target(ADC12_Type *ptr, uint8_t trig_ch, bool inten)
 {
     adc12_pmt_config_t pmt_cfg;
 
@@ -183,7 +183,7 @@ void init_trigger_cfg(ADC12_Type *ptr, uint8_t trig_ch, bool inten)
     adc12_set_pmt_config(ptr, &pmt_cfg);
 }
 
-void init_common_config(adc12_conversion_mode_t conv_mode)
+hpm_stat_t init_common_config(adc12_conversion_mode_t conv_mode)
 {
     adc12_config_t cfg;
 
@@ -193,16 +193,23 @@ void init_common_config(adc12_conversion_mode_t conv_mode)
     cfg.res            = adc12_res_12_bits;
     cfg.conv_mode      = conv_mode;
     cfg.adc_clk_div    = adc12_clock_divider_3;
-    cfg.sel_sync_ahb   = false;
+    cfg.sel_sync_ahb   = (clk_adc_src_ahb0 == clock_get_source(BOARD_APP_ADC12_CLK_NAME)) ? true : false;
+
     if (cfg.conv_mode == adc12_conv_mode_sequence ||
         cfg.conv_mode == adc12_conv_mode_preemption) {
         cfg.adc_ahb_en = true;
     }
 
-    adc12_init(BOARD_APP_ADC12_BASE, &cfg);
+    if (adc12_init(BOARD_APP_ADC12_BASE, &cfg) == status_success) {
+        /* enable irq */
+        intc_m_enable_irq_with_priority(BOARD_APP_ADC12_IRQn, 1);
+        return status_success;
+    } else {
+        printf("%s initialization failed!\n", BOARD_APP_ADC12_NAME);
+        return status_fail;
+    }
 
-    /* enable irq */
-    intc_m_enable_irq_with_priority(BOARD_APP_ADC12_IRQn, 1);
+
 }
 
 void init_oneshot_config(void)
@@ -282,7 +289,7 @@ void init_sequence_config(void)
     seq_cfg.restart_en = false;
     seq_cfg.cont_en    = true;
     seq_cfg.sw_trig_en = true;
-    seq_cfg.hw_trig_en = true;
+    seq_cfg.hw_trig_en = false;
 
     for (int i = APP_ADC12_SEQ_START_POS; i < seq_cfg.seq_len; i++) {
         seq_cfg.queue[i].seq_int_en = false;
@@ -346,8 +353,8 @@ void init_preemption_config(void)
     /* Trigger mux initialization */
     init_trigger_mux(APP_ADC12_PMT_TRGM);
 
-    /* Trigger config initialization */
-    init_trigger_cfg(BOARD_APP_ADC12_BASE, APP_ADC12_PMT_TRIG_CH, true);
+    /* Trigger target initialization */
+    init_trigger_target(BOARD_APP_ADC12_BASE, APP_ADC12_PMT_TRIG_CH, true);
 
     /* Set DMA start address for preemption mode */
     adc12_init_pmt_dma(BOARD_APP_ADC12_BASE, core_local_mem_to_sys_address(APP_ADC12_CORE, (uint32_t)pmt_buff));
@@ -381,7 +388,7 @@ int main(void)
     board_init_adc12_pins();
 
     /* ADC clock initialization */
-    board_init_adc12_clock(BOARD_APP_ADC12_BASE);
+    board_init_adc12_clock(BOARD_APP_ADC12_BASE, true);
 
     printf("This is an ADC12 demo:\n");
 

@@ -21,7 +21,7 @@
 
 void prepare_soc_low_power(void)
 {
-    pcfg_dcdc_set_lp_current_limit(HPM_PCFG, pcfg_dcdc_lp_current_limit_250ma, false);
+    pcfg_dcdc_set_lp_current_limit(HPM_PCFG, pcfg_dcdc_lp_current_limit_250ma);
     pcfg_dcdc_set_current_hys_range(HPM_PCFG, pcfg_dcdc_current_hys_25mv);
 }
 
@@ -73,7 +73,7 @@ void enter_stop_mode(void)
     /*
      * Keep PUART clock
      */
-    pcfg_set_periph_clock_mode(HPM_PCFG, PCFG_PERIPH_KEEP_CLOCK_ON(pcfg_pmc_periph_uart) | PCFG_PERIPH_KEEP_CLOCK_ON(pcfg_pmc_periph_debug));
+    pcfg_set_periph_clock_mode(HPM_PCFG, PCFG_PERIPH_KEEP_CLOCK_ON(pcfg_pmc_periph_uart));
     sysctl_set_cpu0_lp_retention(HPM_SYSCTL, retention);
     sysctl_clear_cpu0_flags(HPM_SYSCTL, cpu_event_flag_mask_all);
     sysctl_set_cpu0_lp_mode(HPM_SYSCTL, cpu_lp_mode_trigger_system_lp);

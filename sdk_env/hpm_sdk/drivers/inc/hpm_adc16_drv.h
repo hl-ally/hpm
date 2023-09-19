@@ -116,7 +116,7 @@ typedef struct {
     uint8_t conv_mode;
     uint32_t adc_clk_div;
     uint16_t conv_duration;
-    bool port3_rela_time;
+    bool port3_realtime;
     bool wait_dis;
     bool sel_sync_ahb;
     bool adc_ahb_en;
@@ -154,8 +154,13 @@ typedef struct {
     uint32_t result    :16;
     uint32_t seq_num   :2;
     uint32_t           :2;
+#if defined(ADC_SOC_IP_VERSION) && (ADC_SOC_IP_VERSION < 2)
     uint32_t trig_ch   :4;
     uint32_t adc_ch    :5;
+#else
+    uint32_t adc_ch    :5;
+    uint32_t trig_ch   :4;
+#endif
     uint32_t           :2;
     uint32_t cycle_bit :1;
 } adc16_pmt_dma_data_t;
@@ -235,6 +240,22 @@ hpm_stat_t adc16_init(ADC16_Type *ptr, adc16_config_t *config);
  * @retval status_invalid_argument Initialize an ADC16 channel unsuccessfully due to passing one or more invalid arguments. Please refer to @ref hpm_stat_t.
  */
 hpm_stat_t adc16_init_channel(ADC16_Type *ptr, adc16_channel_config_t *config);
+
+#if defined (ADC_SOC_BUSMODE_ENABLE_CTRL_SUPPORT) && ADC_SOC_BUSMODE_ENABLE_CTRL_SUPPORT
+/**
+ * @brief Enable oneshot mode (bus mode)
+ *
+ * @param[in] ptr An ADC16 peripheral base address.
+ */
+void adc16_enable_oneshot_mode(ADC16_Type *ptr);
+
+/**
+ * @brief Disable oneshot mode (bus mode)
+ *
+ * @param[in] ptr An ADC16 peripheral base address.
+ */
+void adc16_disable_oneshot_mode(ADC16_Type *ptr);
+#endif
 
 /**
  * @brief Configure the the period mode for an ADC16 instance.
@@ -486,6 +507,18 @@ void adc16_enable_temp_sensor(ADC16_Type *ptr);
  * @param[in] ptr An ADC16 peripheral base address.
  */
 void adc16_disable_temp_sensor(ADC16_Type *ptr);
+#endif
+
+#if defined(ADC_SOC_MOTO_ENABLE_CTRL_SUPPORT) && ADC_SOC_MOTO_ENABLE_CTRL_SUPPORT
+/**
+ * @brief enable the transmission of adc data to the motor sensor unit.
+ *
+ * @param[in] ptr An ADC16 peripheral base address.
+ */
+static inline void adc16_enable_motor(ADC16_Type *ptr)
+{
+    ptr->ANA_CTRL0 |= ADC16_ANA_CTRL0_MOTO_EN_MASK;
+}
 #endif
 
 /** @} */

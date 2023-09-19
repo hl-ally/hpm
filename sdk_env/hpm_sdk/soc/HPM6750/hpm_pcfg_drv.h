@@ -581,6 +581,31 @@ static inline void pcfg_irc24m_reload_trim(PCFG_Type *ptr)
 }
 
 /**
+ * @brief dcdc switch to dcm mode
+ *
+ * @param[in] ptr base address
+ */
+static inline void pcfg_dcdc_switch_to_dcm_mode(PCFG_Type *ptr)
+{
+    const uint8_t pcfc_dcdc_min_duty_cycle[] = {
+        0x6E, 0x6E, 0x70, 0x70, 0x70, 0x70, 0x72, 0x72,
+        0x72, 0x72, 0x74, 0x74, 0x74, 0x74, 0x76, 0x76,
+        0x76, 0x78, 0x78, 0x78, 0x78, 0x7A, 0x7A, 0x7A,
+        0x7A, 0x7C, 0x7C, 0x7C, 0x7E, 0x7E, 0x7E, 0x7E
+    };
+    uint16_t voltage;
+
+    ptr->DCDC_MODE |= 0x77000u;
+    ptr->DCDC_ADVMODE = (ptr->DCDC_ADVMODE & ~0x73F0067u) | 0x4120067u;
+    ptr->DCDC_PROT &= ~PCFG_DCDC_PROT_SHORT_CURRENT_MASK;
+    ptr->DCDC_PROT |= PCFG_DCDC_PROT_DISABLE_SHORT_MASK;
+    ptr->DCDC_MISC = 0x100000u;
+    voltage = PCFG_DCDC_MODE_VOLT_GET(ptr->DCDC_MODE);
+    voltage = (voltage - 600) / 25;
+    ptr->DCDC_ADVPARAM = (ptr->DCDC_ADVPARAM & ~PCFG_DCDC_ADVPARAM_MIN_DUT_MASK) | PCFG_DCDC_ADVPARAM_MIN_DUT_SET(pcfc_dcdc_min_duty_cycle[voltage]);
+}
+
+/**
  * @brief config irc24m track
  *
  * @param[in] ptr base address

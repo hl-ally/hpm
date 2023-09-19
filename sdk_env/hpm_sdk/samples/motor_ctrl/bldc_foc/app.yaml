@@ -1,5 +1,6 @@
 dependency:
   - motor-control
+  - qei
 
 excluded_targets:
   - flash_sdram_xip_release

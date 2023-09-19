@@ -183,15 +183,25 @@
 #define BOARD_APP_XPI_NOR_CFG_OPT_OPT1        (0x00001000U)
 
 /* ADC section */
-#define BOARD_APP_ADC16_NAME "ADC0"
-#define BOARD_APP_ADC16_BASE HPM_ADC0
-#define BOARD_APP_ADC16_IRQn IRQn_ADC0
-#define BOARD_APP_ADC16_CH_1                     (1U)
+#define BOARD_APP_ADC16_NAME            "ADC0"
+#define BOARD_APP_ADC16_BASE            HPM_ADC0
+#define BOARD_APP_ADC16_IRQn            IRQn_ADC0
+#define BOARD_APP_ADC16_CH_1            (1U)
+#define BOARD_APP_ADC16_CLK_NAME        (clock_adc0)
+
+#ifndef ADC_SOC_PMT_NO_TRIGSOURCE
+#define BOARD_APP_ADC16_PMT_PWM         HPM_PWM0
+#define BOARD_APP_ADC16_PMT_TRGM        HPM_TRGM0
+#define BOARD_APP_ADC16_PMT_TRGM_IN     HPM_TRGM0_INPUT_SRC_PWM0_CH8REF
+#define BOARD_APP_ADC16_PMT_TRGM_OUT    TRGM_TRGOCFG_ADCX_PTRGI0A
+#endif
+
+#define BOARD_APP_ADC16_PMT_TRIG_CH     ADC16_CONFIG_TRG0A
 
 /* DAC section */
-#define BOARD_DAC_BASE       HPM_DAC0
-#define BOARD_DAC_IRQn       IRQn_DAC0
-#define BOARD_DAC_CLOCK_NAME clock_dac0
+#define BOARD_DAC_BASE              HPM_DAC0
+#define BOARD_DAC_IRQn              IRQn_DAC0
+#define BOARD_APP_DAC_CLOCK_NAME    clock_dac0
 
 /* CAN section */
 #define BOARD_APP_CAN_BASE                       HPM_MCAN0
@@ -493,9 +503,10 @@ void board_init_clock(void);
 
 uint32_t board_init_spi_clock(SPI_Type *ptr);
 
+void board_init_lin_pins(LIN_Type *ptr);
 uint32_t board_init_lin_clock(LIN_Type *ptr);
 
-uint32_t board_init_adc16_clock(ADC16_Type *ptr);
+uint32_t board_init_adc16_clock(ADC16_Type *ptr, bool clk_src_ahb);
 
 uint32_t board_init_dac_clock(DAC_Type *ptr, bool clk_src_ahb);
 

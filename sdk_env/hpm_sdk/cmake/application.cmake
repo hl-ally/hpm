@@ -124,13 +124,16 @@ if(NOT extram_size)
     endif()
 endif()
 
-
-if(NOT HEAP_SIZE)
-    SET(HEAP_SIZE 0x4000)
+if(HEAP_SIZE)
+    sdk_linker_global_symbols("_heap_size=${HEAP_SIZE}")
+else()
+    SET(HEAP_SIZE 0x4000)    #segger default heap size
 endif()
 
-if(NOT STACK_SIZE)
-    SET(STACK_SIZE 0x4000)
+if(STACK_SIZE)
+    sdk_linker_global_symbols("_stack_size=${STACK_SIZE}")
+else()
+    SET(STACK_SIZE 0x4000)    #segger default stack size
 endif()
 
 # skip compiler check

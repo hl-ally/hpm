@@ -307,15 +307,26 @@
 #define BOARD_ENET_RMII_PTP_CLOCK       clock_ptp1
 
 /* adc section */
-#define BOARD_APP_ADC12_NAME "ADC0"
-#define BOARD_APP_ADC12_BASE HPM_ADC0
-#define BOARD_APP_ADC12_IRQn IRQn_ADC0
-#define BOARD_APP_ADC12_CH_1                     (7U)
+#define BOARD_APP_ADC12_NAME            "ADC0"
+#define BOARD_APP_ADC12_BASE            HPM_ADC0
+#define BOARD_APP_ADC12_IRQn            IRQn_ADC0
+#define BOARD_APP_ADC12_CH_1            (7U)
+#define BOARD_APP_ADC12_CLK_NAME        (clock_adc0)
 
-#define BOARD_APP_ADC16_NAME "ADC3"
-#define BOARD_APP_ADC16_IRQn IRQn_ADC3
-#define BOARD_APP_ADC16_BASE HPM_ADC3
-#define BOARD_APP_ADC16_CH_1                     (2U)
+#define BOARD_APP_ADC16_NAME            "ADC3"
+#define BOARD_APP_ADC16_IRQn            IRQn_ADC3
+#define BOARD_APP_ADC16_BASE            HPM_ADC3
+#define BOARD_APP_ADC16_CH_1            (2U)
+#define BOARD_APP_ADC16_CLK_NAME        (clock_adc3)
+
+#ifndef ADC_SOC_PMT_NO_TRIGSOURCE
+#define BOARD_APP_ADC16_PMT_PWM         HPM_PWM0
+#define BOARD_APP_ADC16_PMT_TRGM        HPM_TRGM0
+#define BOARD_APP_ADC16_PMT_TRGM_IN     HPM_TRGM0_INPUT_SRC_PWM0_CH8REF
+#define BOARD_APP_ADC16_PMT_TRGM_OUT    TRGM_TRGOCFG_ADCX_PTRGI0A
+#endif
+
+#define BOARD_APP_ADC16_PMT_TRIG_CH     ADC16_CONFIG_TRG0A
 
 /* CAN section */
 #define BOARD_APP_CAN_BASE                       HPM_CAN1
@@ -540,9 +551,9 @@ uint32_t board_init_lcd_clock(void);
 
 uint32_t board_init_spi_clock(SPI_Type *ptr);
 
-uint32_t board_init_adc12_clock(ADC12_Type *ptr);
+uint32_t board_init_adc12_clock(ADC12_Type *ptr, bool clk_src_ahb);
 
-uint32_t board_init_adc16_clock(ADC16_Type *ptr);
+uint32_t board_init_adc16_clock(ADC16_Type *ptr, bool clk_src_ahb);
 
 uint32_t board_init_can_clock(CAN_Type *ptr);
 

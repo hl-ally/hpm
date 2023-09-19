@@ -33,11 +33,20 @@ void uart_default_config(UART_Type *ptr, uart_config_t *config)
     config->modem_config.auto_flow_ctrl_en = false;
     config->modem_config.loop_back_en = false;
     config->modem_config.set_rts_high = false;
+#if defined(UART_SOC_HAS_NEW_FIFO_THR) && (UART_SOC_HAS_NEW_FIFO_THR == 1)
+    config->using_new_fifo_thr = false;
+#endif
 #if defined(UART_SOC_HAS_RXLINE_IDLE_DETECTION) && (UART_SOC_HAS_RXLINE_IDLE_DETECTION == 1)
     config->rxidle_config.detect_enable = false;
     config->rxidle_config.detect_irq_enable = false;
     config->rxidle_config.idle_cond = uart_rxline_idle_cond_rxline_logic_one;
     config->rxidle_config.threshold = 10; /* 10-bit for typical UART configuration (8-N-1) */
+#endif
+#if defined(UART_SOC_HAS_TXLINE_IDLE_DETECTION) && (UART_SOC_HAS_TXLINE_IDLE_DETECTION == 1)
+    config->txidle_config.detect_enable = false;
+    config->txidle_config.detect_irq_enable = false;
+    config->txidle_config.idle_cond = uart_rxline_idle_cond_rxline_logic_one;
+    config->txidle_config.threshold = 10; /* 10-bit for typical UART configuration (8-N-1) */
 #endif
 #if defined(UART_SOC_HAS_RXEN_CFG) && (UART_SOC_HAS_RXEN_CFG == 1)
     config->rx_enable = true;
@@ -307,9 +316,12 @@ hpm_stat_t uart_send_data(UART_Type *ptr, uint8_t *source, uint32_t size_in_byte
 #if defined(UART_SOC_HAS_RXLINE_IDLE_DETECTION) && (UART_SOC_HAS_RXLINE_IDLE_DETECTION == 1)
 hpm_stat_t uart_init_rxline_idle_detection(UART_Type *ptr, uart_rxline_idle_config_t rxidle_config)
 {
-    ptr->IDLE_CFG = UART_IDLE_CFG_RX_IDLE_EN_SET(rxidle_config.detect_enable)
-                      | UART_IDLE_CFG_RX_IDLE_THR_SET(rxidle_config.threshold)
-                      | UART_IDLE_CFG_RX_IDLE_COND_SET(rxidle_config.idle_cond);
+    ptr->IDLE_CFG &= ~(UART_IDLE_CFG_RX_IDLE_EN_MASK
+                    | UART_IDLE_CFG_RX_IDLE_THR_MASK
+                    | UART_IDLE_CFG_RX_IDLE_COND_MASK);
+    ptr->IDLE_CFG |= UART_IDLE_CFG_RX_IDLE_EN_SET(rxidle_config.detect_enable)
+                    | UART_IDLE_CFG_RX_IDLE_THR_SET(rxidle_config.threshold)
+                    | UART_IDLE_CFG_RX_IDLE_COND_SET(rxidle_config.idle_cond);
 
     if (rxidle_config.detect_irq_enable) {
         uart_enable_irq(ptr, uart_intr_rx_line_idle);
@@ -321,11 +333,29 @@ hpm_stat_t uart_init_rxline_idle_detection(UART_Type *ptr, uart_rxline_idle_conf
 }
 #endif
 
-#if defined(UART_SOC_HAS_NEW_FIFO_THR) && (UART_SOC_HAS_NEW_FIFO_THR == 1)
-void uart_config_trig_mode(UART_Type *ptr, uart_trig_config_t *config)
+#if defined(UART_SOC_HAS_TXLINE_IDLE_DETECTION) && (UART_SOC_HAS_TXLINE_IDLE_DETECTION == 1)
+hpm_stat_t uart_init_txline_idle_detection(UART_Type *ptr, uart_rxline_idle_config_t txidle_config)
 {
-    ptr->MOTO_CFG &= ~UART_MOTO_CFG_TXSTP_BITS_MASK;
+    ptr->IDLE_CFG &= ~(UART_IDLE_CFG_TX_IDLE_EN_MASK
+                    | UART_IDLE_CFG_TX_IDLE_THR_MASK
+                    | UART_IDLE_CFG_TX_IDLE_COND_MASK);
+    ptr->IDLE_CFG |= UART_IDLE_CFG_TX_IDLE_EN_SET(txidle_config.detect_enable)
+                    | UART_IDLE_CFG_TX_IDLE_THR_SET(txidle_config.threshold)
+                    | UART_IDLE_CFG_TX_IDLE_COND_SET(txidle_config.idle_cond);
 
+    if (txidle_config.detect_irq_enable) {
+        uart_enable_irq(ptr, uart_intr_tx_line_idle);
+    } else {
+        uart_disable_irq(ptr, uart_intr_tx_line_idle);
+    }
+
+    return status_success;
+}
+#endif
+
+#if defined(UART_SOC_HAS_NEW_FIFO_THR) && (UART_SOC_HAS_NEW_FIFO_THR == 1)
+void uart_config_transfer_trig_mode(UART_Type *ptr, uart_trig_config_t *config)
+{
     ptr->MOTO_CFG = UART_MOTO_CFG_TXSTP_BITS_SET(config->stop_bit_len)
                     | UART_MOTO_CFG_HWTRG_EN_SET(config->hardware_trig)
                     | UART_MOTO_CFG_TRG_MODE_SET(config->trig_mode)
