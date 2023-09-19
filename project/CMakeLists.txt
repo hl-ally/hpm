@@ -10,4 +10,5 @@ find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})
 project(common_procect)
 
 sdk_app_src(src/main.c)
+sdk_app_src(src/systick.c)
 generate_ses_project()
