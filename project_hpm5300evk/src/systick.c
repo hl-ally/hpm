@@ -2,6 +2,18 @@
 #include "systick.h"
 #include "board.h"
 
+
+void _init(void)
+{
+
+}
+
+void _clean_up(void)
+{
+
+}
+
+
 uint64_t GetCurrentTimeUs(void)
 {
 #if 0

@@ -158,11 +158,24 @@ echo WARNING: Currently, Andes toolchain is specified, please make sure cygwin p
 echo.
 popd
 
+set SUPPORTED_BUILD_TYPES=release debug flash_xip flash_xip_release flash_sdram_xip flash_sdram_xip_release flash_uf2 flash_uf2_release flash_sdram_uf2 flash_sdram_uf2_release sec_core_img sec_core_img_release
+set USER_BUILD_TYPE=flash_xip_release
+set run_in_ram=1
+
+if "%run_in_ram%"=="1" (
+    echo "run in ram"
+    set USER_BUILD_TYPE=release
+    
+) else (
+    echo "run in flash"
+    set USER_BUILD_TYP=flash_xip_release
+    
+)
+
 if not "%NEED_EXIT_FLAG%"=="true" (
     cd %~dp0
-    set SUPPORTED_BUILD_TYPES=release debug flash_xip flash_xip_release flash_sdram_xip flash_sdram_xip_release flash_uf2 flash_uf2_release flash_sdram_uf2 flash_sdram_uf2_release sec_core_img sec_core_img_release
-    set USER_BUILD_TYPE=flash_xip_release
-    call generate_project -f -b hpm5300evk -t flash_xip_release
+    echo %USER_BUILD_TYPE%
+    call generate_project -f -b hpm5300evk -t %USER_BUILD_TYPE%
     pause
     ::cmd
     ::C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe

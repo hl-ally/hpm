@@ -64,7 +64,10 @@ int main(void)
 #endif
 
 #if NOR_FLASH_TEST
-    NorFlashTestInit();
+    #if defined(RUN_IN_RAM) && RUN_IN_RAM
+    printf("run in ram\n");
+    norflash_init();
+    #endif
 #endif
 
 #if WDOG_TEST
@@ -88,7 +91,12 @@ int main(void)
 #endif
 
 #if NOR_FLASH_TEST
-        NorFlashTestProcess();
+        static uint8_t norflash_count = 1;
+        if(norflash_count > 0)
+        {
+            norflash_count--;
+            norflash_test();
+        }
 #endif
 
 #if FGPIO_TOGGLE_TEST
@@ -148,6 +156,13 @@ int main(void)
 #if WDOG_TEST
         FeedWatchDog();
 #endif
+
+        if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
+        {
+            nLastTime = GetCurrentTimeUs();
+            printf("heartbeat, %llu\n", nLastTime);
+            //board_led_toggle();
+        }
     }
     return 0;
 }

@@ -9,6 +9,13 @@ find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})
 
 project(hpm5300evk)
 
+set(run_in_ram 1)
+if(run_in_ram)
+    sdk_compile_definitions("-DRUN_IN_RAM=1")
+endif()
+
+sdk_app_inc(src)
 sdk_app_src(src/main.c)
 sdk_app_src(src/systick.c)
+sdk_app_src(src/nor_flash.c)
 generate_ses_project()
