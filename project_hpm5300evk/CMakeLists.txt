@@ -9,7 +9,7 @@ find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})
 
 project(hpm5300evk)
 
-set(run_in_ram 1)
+set(run_in_ram 0)
 if(run_in_ram)
     sdk_compile_definitions("-DRUN_IN_RAM=1")
 endif()

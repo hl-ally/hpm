@@ -160,7 +160,7 @@ popd
 
 set SUPPORTED_BUILD_TYPES=release debug flash_xip flash_xip_release flash_sdram_xip flash_sdram_xip_release flash_uf2 flash_uf2_release flash_sdram_uf2 flash_sdram_uf2_release sec_core_img sec_core_img_release
 set USER_BUILD_TYPE=flash_xip_release
-set run_in_ram=1
+set run_in_ram=0
 
 if "%run_in_ram%"=="1" (
     echo "run in ram"

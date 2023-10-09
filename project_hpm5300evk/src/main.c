@@ -91,12 +91,14 @@ int main(void)
 #endif
 
 #if NOR_FLASH_TEST
+    #if defined(RUN_IN_RAM) && RUN_IN_RAM
         static uint8_t norflash_count = 1;
         if(norflash_count > 0)
         {
             norflash_count--;
             norflash_test();
         }
+    #endif
 #endif
 
 #if FGPIO_TOGGLE_TEST
@@ -161,7 +163,6 @@ int main(void)
         {
             nLastTime = GetCurrentTimeUs();
             printf("heartbeat, %llu\n", nLastTime);
-            //board_led_toggle();
         }
     }
     return 0;
