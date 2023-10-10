@@ -22,6 +22,7 @@
 #define OTP_TEST                    0
 #define NOR_FLASH_TEST              0
 #define WDOG_TEST                   0
+#define SOFTWARE_RESET_TEST         0
 
 #define LED_FLASH_PERIOD_IN_MS      300
 

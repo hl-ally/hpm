@@ -197,7 +197,7 @@ void usbd_configure_done_callback(void)
 
 static void boot_hid_in_callback(uint8_t ep, uint32_t nbytes)
 {
-    USB_LOG_RAW("actual in len:%d\r\n", nbytes);
+    //USB_LOG_RAW("actual in len:%d\r\n", nbytes);
     custom_state = HID_STATE_IDLE;
 }
 
@@ -219,6 +219,9 @@ static struct usbd_endpoint boot_out_ep = {
     .ep_addr = BOOT_OUT_EP
 };
 
+
+struct usbd_interface intf0;
+
 /* function ------------------------------------------------------------------*/
 /**
  * @brief            boot hid init
@@ -229,7 +232,7 @@ static struct usbd_endpoint boot_out_ep = {
 void boot_hid_init(void)
 {
     usbd_desc_register(boot_hid_descriptor);
-    usbd_add_interface(usbd_hid_alloc_intf(boot_hid_report_desc, BOOT_HID_REPORT_DESC_SIZE));
+    usbd_add_interface(usbd_hid_init_intf(&intf0, boot_hid_report_desc, BOOT_HID_REPORT_DESC_SIZE));
     usbd_add_endpoint(&boot_in_ep);
     usbd_add_endpoint(&boot_out_ep);
 

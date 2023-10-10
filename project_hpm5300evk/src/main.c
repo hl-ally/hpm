@@ -14,6 +14,7 @@
 #include "otp_func.h"
 #include "hpm_gpio_drv.h"
 #include "hpm_gpiom_drv.h"
+#include "hpm_pllctlv2_drv.h"
 #include "nor_flash.h"
 #include "hpm_romapi.h"
 #include "hpm_ppor_drv.h"
@@ -25,6 +26,32 @@ int main(void)
     int u = 0;
     uint64_t nLastTime = 0;
     board_init();
+    // 修改主频为480MHz
+    if(status_success != pllctlv2_init_pll_with_freq(HPM_PLLCTLV2, 0, 960000000))
+    {
+        printf("change pll freq fail\n");
+    }
+    else
+    {
+        printf("change pll freq success\n");
+        printf("==============================\n");
+        printf(" %s clock summary\n", BOARD_NAME);
+        printf("==============================\n");
+        printf("cpu0:\t\t %luHz\n", clock_get_frequency(clock_cpu0));
+        printf("ahb:\t\t %luHz\n", clock_get_frequency(clock_ahb));
+        printf("mchtmr0:\t %luHz\n", clock_get_frequency(clock_mchtmr0));
+        printf("xpi0:\t\t %luHz\n", clock_get_frequency(clock_xpi0));
+        printf("==============================\n");
+    }
+
+#if 1
+    // 开机延时等待
+    nLastTime = GetCurrentTimeUs();
+    while(GetCurrentTimeUs() - nLastTime < 3*1000*1000)
+    {
+        ;
+    }
+#endif
 
 #if LED_IO_TEST
     // IO口控制LED
@@ -49,6 +76,7 @@ int main(void)
     printf("cherry usb device test.\n");
     board_init_usb_pins();
     #if USBD_BOOT_TEST
+    uint64_t nUsbBootTime = GetCurrentTimeUs();
     boot_hid_init();
     #endif
     #if USBD_APP_TEST
@@ -68,6 +96,10 @@ int main(void)
     printf("run in ram\n");
     norflash_init();
     #endif
+#endif
+
+#if SOFTWARE_RESET_TEST
+    uint64_t nSortwareResetTime = GetCurrentTimeUs();
 #endif
 
 #if WDOG_TEST
@@ -119,11 +151,10 @@ int main(void)
 
 #if CHERRYUSB_DEVICE_TEST
         #if USBD_BOOT_TEST
-        boot_hid_test();
-        nLastTime = GetCurrentTimeUs();
-        while(GetCurrentTimeUs()- nLastTime < 2000)
+        if(GetCurrentTimeUs()- nUsbBootTime >= 1*1000*1000)
         {
-            ;
+            nUsbBootTime = GetCurrentTimeUs();
+            boot_hid_test();
         }
         #endif
         
@@ -145,12 +176,13 @@ int main(void)
         }
 #endif
 
-#if 0
+#if SOFTWARE_RESET_TEST
         // 复位操作
-        if (GetCurrentTimeUs() - nLastTime > 20*1000*1000)
+        if (GetCurrentTimeUs() - nSortwareResetTime >= 20*1000*1000)
         {
-            printf("softerware reset\r\n");
-            ppor_sw_reset(HPM_PPOR, 5*24*1000*1000);
+            uint32_t resetTime = 5*24*1000*1000; 
+            printf("softerware reset after %ds\r\n", resetTime/(24*1000*1000));
+            ppor_sw_reset(HPM_PPOR, resetTime);
             while(1);
         }
 #endif
