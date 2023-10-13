@@ -23,6 +23,7 @@
 #define NOR_FLASH_TEST              0
 #define WDOG_TEST                   0
 #define SOFTWARE_RESET_TEST         0
+#define DAC_TEST                    1
 
 #define LED_FLASH_PERIOD_IN_MS      300
 

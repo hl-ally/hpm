@@ -19,6 +19,7 @@
 #include "hpm_romapi.h"
 #include "hpm_ppor_drv.h"
 #include "systick.h"
+#include "app_dac.h"
 
 
 int main(void)
@@ -106,6 +107,10 @@ int main(void)
     WatchDogInit();
 #endif
 
+#if DAC_TEST
+    dac_test_init();
+#endif
+
 #if defined(__GNUC__)
     printf("gcc version %d\n", __GNUC__);
 #endif
@@ -114,42 +119,42 @@ int main(void)
     nLastTime = GetCurrentTimeUs();
     while(1)
     {
-#if 0
+    #if 0
         u = getchar();
         if (u == '\r') {
             u = '\n';
         }
         printf("%c", u);
-#endif
+    #endif
 
-#if NOR_FLASH_TEST
-    #if defined(RUN_IN_RAM) && RUN_IN_RAM
+    #if NOR_FLASH_TEST
+        #if defined(RUN_IN_RAM) && RUN_IN_RAM
         static uint8_t norflash_count = 1;
         if(norflash_count > 0)
         {
             norflash_count--;
             norflash_test();
         }
+        #endif
     #endif
-#endif
 
-#if FGPIO_TOGGLE_TEST
+    #if FGPIO_TOGGLE_TEST
         // 测试IO翻转速率
         //clock_cpu_delay_us(1);
         //board_delay_ms(300);
         board_fgpio_toggle_process();
-#endif
+    #endif
 
-#if RGB_LED_PWM_TEST
+    #if RGB_LED_PWM_TEST
         pwm_rgb_led_process();
-#endif
+    #endif
 
-#if PWM_BEEP_TEST
+    #if PWM_BEEP_TEST
         board_delay_ms(10);
         pwm_beep_process();
-#endif
+    #endif
 
-#if CHERRYUSB_DEVICE_TEST
+    #if CHERRYUSB_DEVICE_TEST
         #if USBD_BOOT_TEST
         if(GetCurrentTimeUs()- nUsbBootTime >= 1*1000*1000)
         {
@@ -162,9 +167,9 @@ int main(void)
         app_hid_test();
 //        board_delay_ms(1000);
         #endif
-#endif
+    #endif
 
-#if 0
+    #if 0
         // 运行rom api, run_bootloader测试
         if (GetCurrentTimeUs() - nLastTime > 20*1000*1000)
         {
@@ -174,9 +179,9 @@ int main(void)
                                         .tag = API_BOOT_TAG};
             ROM_API_TABLE_ROOT->run_bootloader(&boot_arg);
         }
-#endif
+    #endif
 
-#if SOFTWARE_RESET_TEST
+    #if SOFTWARE_RESET_TEST
         // 复位操作
         if (GetCurrentTimeUs() - nSortwareResetTime >= 20*1000*1000)
         {
@@ -185,11 +190,15 @@ int main(void)
             ppor_sw_reset(HPM_PPOR, resetTime);
             while(1);
         }
-#endif
+    #endif
 
-#if WDOG_TEST
+    #if WDOG_TEST
         FeedWatchDog();
-#endif
+        #endif
+
+    #if DAC_TEST
+        dac_test_process();
+    #endif
 
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
         {
