@@ -19,11 +19,11 @@
 #define USBD_APP_TEST               0
 #endif
 
-#define OTP_TEST                    0
+#define OTP_TEST                    1
 #define NOR_FLASH_TEST              0
 #define WDOG_TEST                   0
 #define SOFTWARE_RESET_TEST         0
-#define DAC_TEST                    1
+#define DAC_TEST                    0
 
 #define LED_FLASH_PERIOD_IN_MS      300
 
