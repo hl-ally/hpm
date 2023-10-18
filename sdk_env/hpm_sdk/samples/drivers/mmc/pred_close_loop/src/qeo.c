@@ -14,6 +14,7 @@
 #include "moto.h"
 
 #define TEST_QEO HPM_QEO0
+#define TEST_QEO_ABZ_MAX_FREQ (250000U)
 
 void qeo_hardware_trig_into_pwm_safety(void)
 {
@@ -21,7 +22,7 @@ void qeo_hardware_trig_into_pwm_safety(void)
     trgm_output_update_source(HPM_TRGM0, HPM_TRGM0_OUTPUT_SRC_QEO0_TRIG_IN1, HPM_TRGM0_INPUT_SRC_VSS);
 }
 
-void qeo_gen_abz_signal(void)
+hpm_stat_t qeo_gen_abz_signal(void)
 {
     init_qeo_pins(TEST_QEO);
 
@@ -29,11 +30,14 @@ void qeo_gen_abz_signal(void)
     qeo_abz_get_default_mode_config(TEST_QEO, &config);
     qeo_abz_config_mode(TEST_QEO, &config);
 
-    /* TEST_QEO_ABZ_LINES * 4us = 4096us, speed should less than 1s / 4096us ≈ 250 r/s */
+    /* TEST_QEO_ABZ_LINES * 1s / TEST_QEO_ABZ_MAX_FREQ = 4000us, speed should less than 1s / 4000us = 250 r/s */
     qeo_abz_set_resolution_lines(TEST_QEO, 1024U);
-    qeo_abz_set_line_width(TEST_QEO, clock_get_frequency(BOARD_MOTOR_CLK_NAME), 4U);
+    if (status_success != qeo_abz_set_max_frequency(TEST_QEO, clock_get_frequency(BOARD_MOTOR_CLK_NAME), TEST_QEO_ABZ_MAX_FREQ)) {
+        printf("config QEO abz max frequency failed\n");
+        return status_fail;
+    }
 
-    qeo_abz_enable_postion_sync(TEST_QEO);
+    return status_success;
 }
 
 #define QEO_PWM_LINE (50U)

@@ -58,6 +58,7 @@ void usb_phy_init(USB_Type *ptr)
 {
     uint32_t status;
 
+    usb_phy_enable_dp_dm_pulldown(ptr);
     ptr->OTG_CTRL0 |= USB_OTG_CTRL0_OTG_UTMI_RESET_SW_MASK;           /* set otg_utmi_reset_sw for naneng usbphy */
     ptr->OTG_CTRL0 &= ~USB_OTG_CTRL0_OTG_UTMI_SUSPENDM_SW_MASK;       /* clr otg_utmi_suspend_m for naneng usbphy */
     ptr->PHY_CTRL1 &= ~USB_PHY_CTRL1_UTMI_CFG_RST_N_MASK;             /* clr cfg_rst_n */
@@ -83,12 +84,6 @@ void usb_phy_init(USB_Type *ptr)
     ptr->PHY_CTRL1 |= USB_PHY_CTRL1_UTMI_CFG_RST_N_MASK;              /* set cfg_rst_n */
 
     ptr->PHY_CTRL1 |= USB_PHY_CTRL1_UTMI_OTG_SUSPENDM_MASK;           /* set otg_suspendm */
-}
-
-void usb_phy_using_internal_vbus(USB_Type *ptr)
-{
-    ptr->PHY_CTRL0 |= (USB_PHY_CTRL0_VBUS_VALID_OVERRIDE_MASK | USB_PHY_CTRL0_SESS_VALID_OVERRIDE_MASK)
-                    | (USB_PHY_CTRL0_VBUS_VALID_OVERRIDE_EN_MASK | USB_PHY_CTRL0_SESS_VALID_OVERRIDE_EN_MASK);
 }
 
 void usb_dcd_bus_reset(USB_Type *ptr, uint16_t ep0_max_packet_size)

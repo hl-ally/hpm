@@ -7,7 +7,7 @@ MMC闭环预测工程演示了MMC根据其他外设(如SEI等)提供的转子位
 
 ## 硬件设置
 
-(请参考{ref}`引脚描述 <lab_board_resource>`部分)
+请参考{ref}`引脚描述 <lab_board_resource>`部分
 - 连接bissc传感器到开发板SEI接口
 - 连接PWM输出信号到先楫步进电机驱动板
 

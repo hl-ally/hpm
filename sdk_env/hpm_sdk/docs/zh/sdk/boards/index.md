@@ -10,6 +10,7 @@
    hpm6750evkmini/README
    hpm6300evk/README
    hpm6200evk/README
+   hpm5300evk/README
    extension/README
 
 :::
@@ -30,6 +31,9 @@
 :::
 :::{tab} HPM6200EVK
 点击{ref}`此处 <lab_hpm6200_evk_board>`查看HPM6200EVK开发板
+:::
+:::{tab} HPM5300EVK
+点击{ref}`此处 <lab_hpm5300_evk_board>`查看HPM5300EVK开发板
 :::
 
 (lab_board_resource)=

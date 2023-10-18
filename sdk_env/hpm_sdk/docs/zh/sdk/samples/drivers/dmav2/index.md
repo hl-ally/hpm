@@ -1,4 +1,4 @@
-# DMA
+# DMAV2
 
 ```{eval-rst}
 .. toctree::

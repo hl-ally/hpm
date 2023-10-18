@@ -1,8 +1,8 @@
-# SEI SLAVE: SIMULATE ENDAT ENCODER
+# SEI Slave: Simulate ENDAT Encoder
 
 ## 概述
 
-该工程主要演示通过SEI接口模拟Endat编码器，产生编码器位置数据等，并通过串口将信息打印出来。
+该工程主要演示通过SEI接口模拟ENDAT编码器，产生编码器位置数据等，并通过串口将信息打印出来。
 
 ## 配置
 

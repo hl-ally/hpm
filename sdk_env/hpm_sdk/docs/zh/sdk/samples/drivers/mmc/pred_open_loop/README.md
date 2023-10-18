@@ -15,7 +15,8 @@ MMC将预测轨迹的位置信息提供给QEO，QEO可以生成ABZ和PWM等信�
 
 ## 硬件设置
 
-- 观察QEO的ABZ引脚或PWM的引脚的输出波形，(请参考{ref}`引脚描述 <lab_board_resource>`部分)。
+请参考{ref}`引脚描述 <lab_board_resource>`部分
+- 观察QEO的ABZ引脚或PWM的引脚的输出波形。
 - 将PWM输出引脚与先楫步进驱动板相连，可驱动步进电机。
 
 ## 运行现象

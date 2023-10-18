@@ -101,6 +101,33 @@ void qeo_abz_config_mode(QEO_Type *base, qeo_abz_mode_t *config)
     }
 }
 
+hpm_stat_t qeo_abz_set_max_frequency(QEO_Type *base, uint32_t src_freq, uint32_t freq)
+{
+    uint32_t count;
+
+    if ((freq > 0xffffffffU / 4U) || ((src_freq % (freq * 4U)) != 0)) {
+        return status_invalid_argument;
+    }
+    count = src_freq / (freq * 4U);
+    base->ABZ.LINE_WIDTH = QEO_ABZ_LINE_WIDTH_LINE_SET(count);
+
+    return status_success;
+}
+
+hpm_stat_t qeo_abz_set_wdog_frequency(QEO_Type *base, uint32_t src_freq, uint32_t freq)
+{
+    uint32_t count;
+
+    if ((src_freq % freq) != 0) {
+        return status_invalid_argument;
+    }
+    count = src_freq / freq;
+    base->ABZ.WDOG_WIDTH = QEO_ABZ_WDOG_WIDTH_WIDTH_SET(count);
+    base->ABZ.MODE |= QEO_ABZ_MODE_EN_WDOG_MASK;
+
+    return status_success;
+}
+
 void qeo_pwm_get_default_safety_table_config(QEO_Type *base, qeo_pwm_safety_output_table_t *table)
 {
     table->pwm7_output = qeo_pwm_safety_output_highz;
@@ -156,7 +183,16 @@ void qeo_pwm_config_phase_table(QEO_Type *base, uint8_t index, qeo_pwm_phase_out
 
 void qeo_pwm_config_safety_table(QEO_Type *base, qeo_pwm_safety_output_table_t *table)
 {
-    base->PWM.MODE &= 0xffffU; /*< clear safety table */
+    /*< clear safety table */
+    base->PWM.MODE &= ~(QEO_PWM_MODE_PWM7_SAFETY_MASK
+                    | QEO_PWM_MODE_PWM6_SAFETY_MASK
+                    | QEO_PWM_MODE_PWM5_SAFETY_MASK
+                    | QEO_PWM_MODE_PWM4_SAFETY_MASK
+                    | QEO_PWM_MODE_PWM3_SAFETY_MASK
+                    | QEO_PWM_MODE_PWM2_SAFETY_MASK
+                    | QEO_PWM_MODE_PWM1_SAFETY_MASK
+                    | QEO_PWM_MODE_PWM0_SAFETY_MASK);
+    /*< set safety table */
     base->PWM.MODE |= QEO_PWM_MODE_PWM7_SAFETY_SET(table->pwm7_output)
                     | QEO_PWM_MODE_PWM6_SAFETY_SET(table->pwm6_output)
                     | QEO_PWM_MODE_PWM5_SAFETY_SET(table->pwm5_output)
@@ -165,4 +201,34 @@ void qeo_pwm_config_safety_table(QEO_Type *base, qeo_pwm_safety_output_table_t *
                     | QEO_PWM_MODE_PWM2_SAFETY_SET(table->pwm2_output)
                     | QEO_PWM_MODE_PWM1_SAFETY_SET(table->pwm1_output)
                     | QEO_PWM_MODE_PWM0_SAFETY_SET(table->pwm0_output);
+}
+
+/**
+ * If the line step of the position to be synchronized after position value
+ * to ABZ value conversion is the same as the current position, will hang the ABZ.
+ * ABZ value = m lines + n line_steps(0 <= m <= 3)
+ * This API will check the sync_pos and shift it if needed
+ */
+void qeo_abz_position_sync(QEO_Type *base, uint32_t lines, uint32_t sync_pos)
+{
+    uint32_t line_width;
+    uint32_t line_step_width;
+    uint32_t shift_pos;
+    uint32_t current_line_step;
+    uint32_t temp;
+
+    line_width = (uint32_t)(0x100000000UL / lines);
+    line_step_width = line_width / 4U;
+    current_line_step = base->DEBUG2 & 0x3; /* get the lowest two bits */
+    temp = (sync_pos % line_width) / line_step_width;
+    if (temp == current_line_step) {
+        shift_pos = sync_pos - line_step_width;
+    } else {
+        shift_pos = sync_pos;
+    }
+
+    base->ABZ.POSTION_SYNC = QEO_ABZ_POSTION_SYNC_POSTION_MASK;
+    qeo_enable_software_position_inject(base);
+    qeo_software_position_inject(base, shift_pos);
+    qeo_disable_software_position_inject(base);
 }

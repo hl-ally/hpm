@@ -227,5 +227,6 @@ SECTIONS
     __share_mem_start__ = ORIGIN(SHARE_RAM);
     __share_mem_end__ = ORIGIN(SHARE_RAM) + LENGTH(SHARE_RAM);
 
-    ASSERT((STACK_SIZE + HEAP_SIZE) <= 128K, "stack and heap total size larger than 128k")
+    __fw_size__ = SIZEOF(.start) + SIZEOF(.vectors) + SIZEOF(.rel) + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.fast) + SIZEOF(.tdata) + SIZEOF(.noncacheable.init);
+    ASSERT(__fw_size__ <= LENGTH(ILM), "******  FAILED! ILM has not enough space!  ******")
 }

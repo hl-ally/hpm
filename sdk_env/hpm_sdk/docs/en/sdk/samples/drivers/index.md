@@ -11,11 +11,8 @@
     can/README
     crc/README
     dac/README
-    dma/dma_general_transfer/README
-    dma/dma_uart_rx_circle_transfer/README
-    dma/dma_use_gptmr_event_transfer/README
-    dmav2/dmav2_uart_rx_circle_transfer/README
-    dmav2/dmav2_half_tc_irq/README
+    dma/index
+    dmav2/index
     enet/index
     femc/sdram/README
     gpio/README
@@ -59,4 +56,7 @@
     plb/index
     sei/index
     qeiv2/index
+    ewdg/README
+    rdc/README
+    opamp/README
 :::

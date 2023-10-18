@@ -24,6 +24,7 @@
 #define APP_BOARD_GPTMR_CH           BOARD_GPTMR_CHANNEL
 #define APP_BOARD_GPTMR_DMA_SRC      BOARD_GPTMR_DMA_SRC
 #define APP_BOARD_GPTMR_DMA_CH       (0U)
+#define APP_BOARD_GPTMR_DMAMUX_CH    DMA_SOC_CHN_TO_DMAMUX_CHN(APP_GPTMR_DMA, APP_BOARD_GPTMR_DMA_CH)
 #define APP_BOARD_RELOAD_MS          (500U)
 #define APP_BOARD_CMP_MS             (100U)
 
@@ -128,7 +129,7 @@ static void gptmr_config(gptmr_dma_request_event_t event)
     }
     gptmr_channel_reset_count(APP_BOARD_GPTMR, APP_BOARD_GPTMR_CH);
     gptmr_channel_config(APP_BOARD_GPTMR, APP_BOARD_GPTMR_CH, &config, false);
-    dmamux_config(BOARD_APP_DMAMUX, DMAMUX_MUXCFG_HDMA_MUX0, APP_BOARD_GPTMR_DMA_SRC, true);
+    dmamux_config(BOARD_APP_DMAMUX, APP_BOARD_GPTMR_DMAMUX_CH, APP_BOARD_GPTMR_DMA_SRC, true);
 
     dma_enable_channel(APP_GPTMR_DMA, APP_BOARD_GPTMR_DMA_CH);
     gptmr_start_counter(APP_BOARD_GPTMR, APP_BOARD_GPTMR_CH);

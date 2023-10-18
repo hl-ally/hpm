@@ -111,8 +111,8 @@ typedef struct {
 /*
  * FINE_COARSE_SEL (RW)
  *
- * 0: fine update, ns counter add ss_incr[7:0] each time addend counter overflow
- * 1: coarse update, ns counter add ss_incr[7:0] each clk
+ * 0: coarse update, ns counter add ss_incr[7:0] each clk
+ * 1: fine update, ns counter add ss_incr[7:0] each time addend counter overflow
  */
 #define PTPC_PTPC_CTRL0_FINE_COARSE_SEL_MASK (0x2U)
 #define PTPC_PTPC_CTRL0_FINE_COARSE_SEL_SHIFT (1U)

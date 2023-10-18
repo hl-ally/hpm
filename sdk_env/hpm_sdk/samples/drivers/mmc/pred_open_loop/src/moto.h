@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-void qeo_gen_abz_signal(void);
+hpm_stat_t qeo_gen_abz_signal(void);
 void qeo_gen_pwm_output(void);
 
 void pwm_config_output(void);

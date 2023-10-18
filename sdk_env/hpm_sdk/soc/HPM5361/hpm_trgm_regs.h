@@ -21,8 +21,8 @@ typedef struct {
     __RW uint32_t ADC_MATRIX_SEL;              /* 0x510: adc matrix select register */
     __RW uint32_t DAC_MATRIX_SEL;              /* 0x514: dac matrix select register */
     __RW uint32_t POS_MATRIX_SEL0;             /* 0x518: position matrix select register0 */
-    __RW uint32_t POS_MATRIX_SEL1;             /* 0x518: position matrix select register1 */
-    __R  uint8_t  RESERVED4[228];              /* 0x51C - 0x5FF: Reserved */
+    __RW uint32_t POS_MATRIX_SEL1;             /* 0x51C: position matrix select register1 */
+    __R  uint8_t  RESERVED4[224];              /* 0x520 - 0x5FF: Reserved */
     __R  uint32_t TRGM_IN[4];                  /* 0x600 - 0x60C: trigmux input read register0 */
     __R  uint8_t  RESERVED5[16];               /* 0x610 - 0x61F: Reserved */
     __R  uint32_t TRGM_OUT[5];                 /* 0x620 - 0x630: trigmux output read register0 */
@@ -500,14 +500,14 @@ typedef struct {
 #define TRGM_TRGOCFG_TRGM_DMA1 (136UL)
 
 /* DMACFG register group index macro definition */
-#define TRGM_DMACFG_DMACFG0 (0UL)
-#define TRGM_DMACFG_DMACFG1 (1UL)
-#define TRGM_DMACFG_DMACFG2 (2UL)
-#define TRGM_DMACFG_DMACFG3 (3UL)
-#define TRGM_DMACFG_DMACFG4 (4UL)
-#define TRGM_DMACFG_DMACFG5 (5UL)
-#define TRGM_DMACFG_DMACFG6 (6UL)
-#define TRGM_DMACFG_DMACFG7 (7UL)
+#define TRGM_DMACFG_0 (0UL)
+#define TRGM_DMACFG_1 (1UL)
+#define TRGM_DMACFG_2 (2UL)
+#define TRGM_DMACFG_3 (3UL)
+#define TRGM_DMACFG_4 (4UL)
+#define TRGM_DMACFG_5 (5UL)
+#define TRGM_DMACFG_6 (6UL)
+#define TRGM_DMACFG_7 (7UL)
 
 /* TRGM_IN register group index macro definition */
 #define TRGM_TRGM_IN_0 (0UL)

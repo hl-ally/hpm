@@ -1,4 +1,4 @@
-# SEI MASTER: CONNECT BISSC ENCODER
+# SEI Master: Connect BISSC Encoder
 
 ## Overview
 

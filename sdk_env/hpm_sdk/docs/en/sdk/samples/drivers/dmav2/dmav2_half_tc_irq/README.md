@@ -1,4 +1,4 @@
-# DMAV2 half transfer complete interrupt
+# DMAV2 Half Transfer Complete Interrupt
 
 ## Overview
 

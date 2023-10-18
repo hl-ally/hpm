@@ -578,6 +578,19 @@ static inline void sysctl_resource_target_set_mode(SYSCTL_Type *ptr,
 }
 
 /**
+ * @brief Get target mode
+ *
+ * @param[in] ptr SYSCTL_Type base address
+ * @param[in] resource target resource index
+ * @return target resource mode
+ */
+static inline uint8_t sysctl_resource_target_get_mode(SYSCTL_Type *ptr,
+                                                   sysctl_resource_t resource)
+{
+    return SYSCTL_RESOURCE_MODE_GET(ptr->RESOURCE[resource]);
+}
+
+/**
  * @brief Disable resource retention when specific CPU enters stop mode
  *
  * @param[in] ptr SYSCTL_Type base address
@@ -1125,6 +1138,27 @@ hpm_stat_t sysctl_set_dac_clock_mux(SYSCTL_Type *ptr, clock_node_t node, clock_s
  * @return status_success if everything is okay
  */
 hpm_stat_t sysctl_enable_group_resource(SYSCTL_Type *ptr, uint8_t group, sysctl_resource_t resource, bool enable);
+
+/**
+ * @brief Check group resource enable status
+ *
+ * @param[in] ptr SYSCTL_Type base address
+ * @param[in] group target group to be checked
+ * @param[in] resource target resource to be checked from group
+ * @return enable true if resource enable, false if resource disable
+ */
+bool sysctl_check_group_resource_enable(SYSCTL_Type *ptr, uint8_t group, sysctl_resource_t linkable_resource);
+
+/**
+ * @brief Get group resource value
+ *
+ * @param[in] ptr SYSCTL_Type base address
+ * @param[in] group target group to be getted
+ * @param[in] index target group index
+ * @return group index value
+ */
+uint32_t sysctl_get_group_resource_value(SYSCTL_Type *ptr, uint8_t group, uint8_t index);
+
 /**
  * @brief Add resource to CPU0
  *

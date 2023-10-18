@@ -1,4 +1,4 @@
-# 驱动
+# Drivers
 
 :::{eval-rst}
 .. toctree::
@@ -14,6 +14,7 @@
    dma/index
    dmav2/index
    enet/index
+   ewdg/README
    femc/sdram/README
    gpio/README
    gpiom/README
@@ -59,4 +60,5 @@
    rdc/README
    sei/index
    qeiv2/index
+   opamp/README
 :::

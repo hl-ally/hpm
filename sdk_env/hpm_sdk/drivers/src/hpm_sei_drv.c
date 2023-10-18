@@ -252,13 +252,13 @@ hpm_stat_t sei_sample_config_init(SEI_Type *ptr, uint8_t idx, sei_sample_config_
 
     ptr->CTRL[idx].POS.SMP_DAT = SEI_CTRL_POS_SMP_DAT_DAT_SEL_SET(config->data_register_select);
 
-    tmp = SEI_CTRL_POS_SMP_EN_ACC_EN_SET(config->enable_acc)
+    tmp = SEI_CTRL_POS_SMP_EN_ACC_EN_SET(config->acc_data_use_rx)
         | SEI_CTRL_POS_SMP_EN_ACC_SEL_SET(config->acc_data_idx)
-        | SEI_CTRL_POS_SMP_EN_SPD_EN_SET(config->enable_spd)
+        | SEI_CTRL_POS_SMP_EN_SPD_EN_SET(config->spd_data_use_rx)
         | SEI_CTRL_POS_SMP_EN_SPD_SEL_SET(config->spd_data_idx)
-        | SEI_CTRL_POS_SMP_EN_REV_EN_SET(config->enable_rev)
+        | SEI_CTRL_POS_SMP_EN_REV_EN_SET(config->rev_data_use_rx)
         | SEI_CTRL_POS_SMP_EN_REV_SEL_SET(config->rev_data_idx)
-        | SEI_CTRL_POS_SMP_EN_POS_EN_SET(config->enable_pos)
+        | SEI_CTRL_POS_SMP_EN_POS_EN_SET(config->pos_data_use_rx)
         | SEI_CTRL_POS_SMP_EN_POS_SEL_SET(config->pos_data_idx);
     ptr->CTRL[idx].POS.SMP_EN = tmp;
 
@@ -269,30 +269,20 @@ hpm_stat_t sei_update_config_init(SEI_Type *ptr, uint8_t idx, sei_update_config_
 {
     uint32_t tmp;
 
-    tmp = SEI_CTRL_POS_UPD_CFG_OVRD_SET(config->use_override_value)
+    tmp = SEI_CTRL_POS_UPD_CFG_TIME_OVRD_SET(config->time_use_override)
         | SEI_CTRL_POS_UPD_CFG_ONERR_SET(config->update_on_err)
         | SEI_CTRL_POS_UPD_CFG_LAT_SEL_SET(config->latch_select);
     ptr->CTRL[idx].POS.UPD_CFG = tmp;
 
     ptr->CTRL[idx].POS.UPD_DAT = SEI_CTRL_POS_UPD_DAT_DAT_SEL_SET(config->data_register_select);
 
-    ptr->CTRL[idx].POS.UPD_TIME = SEI_CTRL_POS_UPD_TIME_TIME_SET(config->override_time_value);
-
-    ptr->CTRL[idx].POS.UPD_POS = SEI_CTRL_POS_UPD_TIME_TIME_SET(config->override_pos_value);
-
-    ptr->CTRL[idx].POS.UPD_REV = SEI_CTRL_POS_UPD_TIME_TIME_SET(config->override_rev_value);
-
-    ptr->CTRL[idx].POS.UPD_SPD = SEI_CTRL_POS_UPD_TIME_TIME_SET(config->override_spd_value);
-
-    ptr->CTRL[idx].POS.UPD_ACC = SEI_CTRL_POS_UPD_TIME_TIME_SET(config->override_acc_value);
-
-    tmp = SEI_CTRL_POS_UPD_EN_ACC_EN_SET(config->enable_acc)
+    tmp = SEI_CTRL_POS_UPD_EN_ACC_EN_SET(config->acc_data_use_rx)
         | SEI_CTRL_POS_UPD_EN_ACC_SEL_SET(config->acc_data_idx)
-        | SEI_CTRL_POS_UPD_EN_SPD_EN_SET(config->enable_spd)
+        | SEI_CTRL_POS_UPD_EN_SPD_EN_SET(config->spd_data_use_rx)
         | SEI_CTRL_POS_UPD_EN_SPD_SEL_SET(config->spd_data_idx)
-        | SEI_CTRL_POS_UPD_EN_REV_EN_SET(config->enable_rev)
+        | SEI_CTRL_POS_UPD_EN_REV_EN_SET(config->rev_data_use_rx)
         | SEI_CTRL_POS_UPD_EN_REV_SEL_SET(config->rev_data_idx)
-        | SEI_CTRL_POS_UPD_EN_POS_EN_SET(config->enable_pos)
+        | SEI_CTRL_POS_UPD_EN_POS_EN_SET(config->pos_data_use_rx)
         | SEI_CTRL_POS_UPD_EN_POS_SEL_SET(config->pos_data_idx);
     ptr->CTRL[idx].POS.UPD_EN = tmp;
 
@@ -376,6 +366,9 @@ void sei_set_instr(SEI_Type *ptr, uint8_t idx, uint8_t op, uint8_t ck, uint8_t c
 
     if ((op != SEI_INSTR_OP_HALT) && (op != SEI_INSTR_OP_JUMP) && (opr > 0)) {
         opr--;
+    }
+    if (opr > 0x1F) {
+        opr = 0x1F;
     }
     tmp = SEI_INSTR_OP_SET(op)
         | SEI_INSTR_CK_SET(ck)

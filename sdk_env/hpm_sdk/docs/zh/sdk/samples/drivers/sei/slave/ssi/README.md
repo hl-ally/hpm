@@ -1,4 +1,4 @@
-# SEI SLAVE: SIMULATE SSI ENCODER
+# SEI Slave: Simulate SSI Encoder
 
 ## 概述
 

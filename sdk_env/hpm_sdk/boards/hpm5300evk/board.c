@@ -12,6 +12,8 @@
 #include "hpm_usb_drv.h"
 #include "hpm_clock_drv.h"
 #include "hpm_pllctlv2_drv.h"
+#include "hpm_i2c_drv.h"
+#include "hpm_pcfg_drv.h"
 
 static board_timer_cb timer_cb;
 
@@ -142,6 +144,10 @@ void board_print_clock_freq(void)
 
 void board_init(void)
 {
+    init_xtal_pins();
+    init_py_pins_as_pgpio();
+    board_init_usb_dp_dm_pins();
+
     board_init_clock();
     board_init_console();
     board_init_pmp();
@@ -153,9 +159,39 @@ void board_init(void)
 #endif
 }
 
+void board_init_usb_dp_dm_pins(void)
+{
+    /* Disconnect usb dp/dm pins pull down 45ohm resistance */
+
+    while (sysctl_resource_any_is_busy(HPM_SYSCTL)) {
+        ;
+    }
+    if (pllctlv2_xtal_is_stable(HPM_PLLCTLV2) && pllctlv2_xtal_is_enabled(HPM_PLLCTLV2)) {
+        if (clock_check_in_group(clock_usb0, 0)) {
+            usb_phy_disable_dp_dm_pulldown(HPM_USB0);
+        } else {
+            clock_add_to_group(clock_usb0, 0);
+            usb_phy_disable_dp_dm_pulldown(HPM_USB0);
+            clock_remove_from_group(clock_usb0, 0);
+        }
+    } else {
+        uint8_t tmp;
+        tmp = sysctl_resource_target_get_mode(HPM_SYSCTL, sysctl_resource_xtal);
+        sysctl_resource_target_set_mode(HPM_SYSCTL, sysctl_resource_xtal, 0x03);
+        clock_add_to_group(clock_usb0, 0);
+        usb_phy_disable_dp_dm_pulldown(HPM_USB0);
+        clock_remove_from_group(clock_usb0, 0);
+        while (sysctl_resource_target_is_busy(HPM_SYSCTL, sysctl_resource_usb0)) {
+            ;
+        }
+        sysctl_resource_target_set_mode(HPM_SYSCTL, sysctl_resource_xtal, tmp);
+    }
+}
+
 void board_init_clock(void)
 {
     uint32_t cpu0_freq = clock_get_frequency(clock_cpu0);
+
     if (cpu0_freq == PLLCTL_SOC_PLL_REFCLK_FREQ) {
         /* Configure the External OSC ramp-up time: ~9ms */
         pllctlv2_xtal_set_rampup_time(HPM_PLLCTLV2, 32UL * 1000UL * 9U);
@@ -224,6 +260,18 @@ void board_init_clock(void)
     /* Connect Group0 to CPU0 */
     clock_connect_group_to_cpu(0, 0);
 
+    /* Bump up DCDC voltage to 1175mv */
+    pcfg_dcdc_set_voltage(HPM_PCFG, 1175);
+
+    /* Configure CPU to 480MHz, AXI/AHB to 160MHz */
+    sysctl_config_cpu0_domain_clock(HPM_SYSCTL, clock_source_pll0_clk0, 2, 3);
+    /* Configure PLL0 Post Divider */
+    pllctlv2_set_postdiv(HPM_PLLCTLV2, 0, 0, 0);    /* PLL0CLK0: 960MHz */
+    pllctlv2_set_postdiv(HPM_PLLCTLV2, 0, 1, 3);    /* PLL0CLK1: 600MHz */
+    pllctlv2_set_postdiv(HPM_PLLCTLV2, 0, 2, 7);    /* PLL0CLK2: 400MHz */
+    /* Configure PLL0 Frequency to 960MHz */
+    pllctlv2_init_pll_with_freq(HPM_PLLCTLV2, 0, 960000000);
+
     clock_update_core_clock();
 
     /* Configure mchtmr to 24MHz */
@@ -285,7 +333,7 @@ void board_init_usb_pins(void)
     init_usb_pins();
     usb_hcd_set_power_ctrl_polarity(BOARD_USB, true);
 
-    /* As QFN48 has no vbus pin, so should be call usb_phy_using_internal_vbus() API to use internal vbus. */
+    /* As QFN32, QFN48 and LQFP64 has no vbus pin, so should be call usb_phy_using_internal_vbus() API to use internal vbus. */
     /* usb_phy_using_internal_vbus(BOARD_USB); */
 }
 
@@ -517,7 +565,51 @@ void board_init_sei_pins(SEI_Type *ptr, uint8_t sei_ctrl_idx)
     init_sei_pins(ptr, sei_ctrl_idx);
 }
 
-void board_init_qeiv2_abz_uvw_pins(QEIV2_Type *ptr)
+void board_i2c_bus_clear(I2C_Type *ptr)
 {
-    init_qeiv2_abz_uvw_pins(ptr);
+    if (i2c_get_line_scl_status(ptr) == false) {
+        printf("CLK is low, please power cycle the board\n");
+        while (1) {
+        }
+    }
+    if (i2c_get_line_sda_status(ptr) == false) {
+        printf("SDA is low, try to issue I2C bus clear\n");
+    } else {
+        printf("I2C bus is ready\n");
+        return;
+    }
+    i2s_gen_reset_signal(ptr, 9);
+    board_delay_ms(100);
+    printf("I2C bus is cleared\n");
 }
+
+void board_init_i2c(I2C_Type *ptr)
+{
+    i2c_config_t config;
+    hpm_stat_t stat;
+    uint32_t freq;
+    if (ptr == NULL) {
+        return;
+    }
+    init_i2c_pins(ptr);
+    board_i2c_bus_clear(ptr);
+
+    clock_add_to_group(clock_i2c0, 0);
+    clock_add_to_group(clock_i2c1, 0);
+    clock_add_to_group(clock_i2c2, 0);
+    clock_add_to_group(clock_i2c3, 0);
+    /* Configure the I2C clock to 24MHz */
+    clock_set_source_divider(BOARD_APP_I2C_CLK_NAME, clk_src_osc24m, 1U);
+
+    config.i2c_mode = i2c_mode_normal;
+    config.is_10bit_addressing = false;
+    freq = clock_get_frequency(BOARD_APP_I2C_CLK_NAME);
+    stat = i2c_init_master(ptr, freq, &config);
+    if (stat != status_success) {
+        printf("failed to initialize i2c 0x%lx\n", (uint32_t) ptr);
+        while (1) {
+        }
+    }
+
+}
+

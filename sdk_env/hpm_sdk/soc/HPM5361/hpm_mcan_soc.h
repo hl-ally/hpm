@@ -12,6 +12,15 @@
 #include "hpm_mcan_regs.h"
 #include "hpm_soc.h"
 
+#define MCAN_SOC_TSU_SRC_TWO_STAGES     (1U)
+
+#define HPM_MCAN_EXT_TBSEL_NUM  (4U)
+#define HPM_MCAN_TBSEL_BASE (0xF02FF000UL)
+#define HPM_MCAN_TBSEL (*(volatile uint32_t *)HPM_MCAN_TBSEL_BASE)
+#define HPM_MCAN_TBSEL_BITWDITH (6U)
+#define HPM_MCAN_TBSEL_MASK ((1UL << HPM_MCAN_TBSEL_BITWDITH) - 1UL)
+#define HPM_MCAN_TBSEL0_SHIFT (8U)
+
 /**
  * @brief MCAN MSG BUF base address (AHB_RAM)
  */
@@ -22,13 +31,22 @@
 /**
  * @brief TSU External Timebase Sources
  */
-#define MCAN_TSU_EXT_TIMEBASE_SRC_MIN   (0U)
-#define MCAN_TSU_EXT_TIMEBASE_SRC_MCAN0 (MCAN_TSU_EXT_TIMEBASE_SRC_MIN)
-#define MCAN_TSU_EXT_TIMEBASE_SRC_MCAN1 (1U)
-#define MCAN_TSU_EXT_TIMEBASE_SRC_MCAN2 (2U)
-#define MCAN_TSU_EXT_TIMEBASE_SRC_MCAN3 (3U)
-#define MCAN_TSU_EXT_TIMEBASE_SRC_PTP   (4U)
-#define MCAN_TSU_EXT_TIMEBASE_SRC_MAX   (MCAN_TSU_EXT_TIMEBASE_SRC_PTP)
+#define MCAN_TSU_EXT_TIMEBASE_SRC_MIN     (0U)
+#define MCAN_TSU_EXT_TIMEBASE_SRC_TBSEL_0 (MCAN_TSU_EXT_TIMEBASE_SRC_MIN)
+#define MCAN_TSU_EXT_TIMEBASE_SRC_TBSEL_1 (1U)
+#define MCAN_TSU_EXT_TIMEBASE_SRC_TBSEL_2 (2U)
+#define MCAN_TSU_EXT_TIMEBASE_SRC_TBSEL_3 (3U)
+#define MCAN_TSU_EXT_TIMEBASE_SRC_MAX     (MCAN_TSU_EXT_TIMEBASE_SRC_TBSEL_3)
+
+/**
+ * @brief MCAN TSU timebase option for each External Timebase
+ */
+#define MCAN_TSU_TBSEL_PTPC0 (0x20)
+#define MCAN_TSU_TBSEL_MCAN0 (0x00)
+#define MCAN_TSU_TBSEL_MCAN1 (0x01)
+#define MCAN_TSU_TBSEL_MCAN2 (0x02)
+#define MCAN_TSU_TBSEL_MCAN3 (0x03)
+
 
 #ifdef __cpluspus
 extern "C" {
@@ -41,7 +59,25 @@ extern "C" {
  */
 static inline void mcan_set_tsu_ext_timebase_src(MCAN_Type *ptr, uint8_t src)
 {
-    ptr->GLB_CTL = (ptr->GLB_CTL & ~MCAN_GLB_CTL_TSU_TBIN_SEL_MASK) | MCAN_GLB_CTL_TSU_TBIN_SEL_SET(src);
+    if (src < HPM_MCAN_EXT_TBSEL_NUM) {
+        ptr->GLB_CTL = (ptr->GLB_CTL & ~MCAN_GLB_CTL_TSU_TBIN_SEL_MASK) | MCAN_GLB_CTL_TSU_TBIN_SEL_SET(src);
+    }
+}
+
+/**
+ * @brief Set the Source for specified external timebase
+ *
+ * @param [in] ptr MCAN base
+ * @param [in] ext_tbsel External TBSEL index
+ * @param [in] tbsel_src Timebase source selection
+ */
+static inline void mcan_set_tsu_tbsel_option(MCAN_Type *ptr, uint8_t ext_tbsel, uint8_t tbsel_option)
+{
+    if (ext_tbsel < HPM_MCAN_EXT_TBSEL_NUM) {
+        uint32_t tbsel_shift = (ext_tbsel * HPM_MCAN_TBSEL_BITWDITH) + HPM_MCAN_TBSEL0_SHIFT;
+        uint32_t tbsel_mask = HPM_MCAN_TBSEL_MASK << tbsel_shift;
+        HPM_MCAN_TBSEL = (HPM_MCAN_TBSEL & ~tbsel_mask) | (((uint32_t)tbsel_option << tbsel_shift) & tbsel_mask);
+    }
 }
 
 /**

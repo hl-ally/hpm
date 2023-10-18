@@ -7,7 +7,7 @@
 define memory with size = 4G;
 
 /* Regions */
-define region NOR_CFG_OPTION = [ from 0x80000400 size 0xc00 ];
+define region NOR_CFG_OPTION = [ from 0x80000400 size 0x1000 ];
 define region BOOT_HEADER = [ from 0x80001000 size 0x2000 ];
 define region XPI0 = [from 0x80003000 size _flash_size - 0x3000 ];   /* XPI0 */
 define region ILM = [from 0x00000000 size 128k];    /* ILM */
@@ -15,8 +15,6 @@ define region DLM = [from 0x00080000 size 128k];    /* DLM */
 define region AXI_SRAM  = [from 0x01080000 size 256k];
 define region NONCACHEABLE_RAM = [from 0x010C0000 size 256k];
 define region AHB_SRAM = [from 0xF0300000 size 32k];
-
-assert (__STACKSIZE__ + __HEAPSIZE__) <= 128k with error "stack and heap total size larger than 128k";
 
 /* Blocks */
 define block vectors with fixed order       { section .vector_table, section .isr_vector };
@@ -42,12 +40,12 @@ define exported symbol __app_offset__ = __app_load_addr__ - __boot_header_load_a
 define exported symbol __boot_header_length__ = size of block boot_header;
 define exported symbol __fw_size__ = 0x1000;
 
-define exported symbol __noncacheable_start__  = start of region NONCACHEABLE_RAM;
-define exported symbol __noncacheable_end__  = end of region NONCACHEABLE_RAM + 1;
+define exported symbol __noncacheable_start__ = start of region NONCACHEABLE_RAM;
+define exported symbol __noncacheable_end__ = end of region NONCACHEABLE_RAM + 1;
 define exported symbol _stack_safe = end of block stack + 1;
 define exported symbol _stack = end of block stack + 1;
-define exported symbol __usbh_class_info_start__  = start of block cherryusb_usbh_class_info;
-define exported symbol __usbh_class_info_end__  = end of block cherryusb_usbh_class_info + 1;
+define exported symbol __usbh_class_info_start__ = start of block cherryusb_usbh_class_info;
+define exported symbol __usbh_class_info_end__ = end of block cherryusb_usbh_class_info + 1;
 
 /* Initialization */
 do not initialize                           { section .noncacheable };

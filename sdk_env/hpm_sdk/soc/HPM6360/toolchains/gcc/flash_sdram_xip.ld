@@ -75,20 +75,17 @@ SECTIONS
 
         KEEP (*(.init))
         KEEP (*(.fini))
-        . = ALIGN(8);
-    } > XPI0
 
-    .rel : {
-        KEEP(*(.rel*))
-    } > XPI0
-
-    /* section information for usbh class */
-    .usbh_class_info : {
+        /* section information for usbh class */
         . = ALIGN(8);
         __usbh_class_info_start__ = .;
         KEEP(*(.usbh_class_info))
         __usbh_class_info_end__ = .;
         . = ALIGN(8);
+    } > XPI0
+
+    .rel : {
+        KEEP(*(.rel*))
     } > XPI0
 
     PROVIDE (__etext = .);
@@ -243,7 +240,9 @@ SECTIONS
         PROVIDE (_stack_safe = .);
     } > DLM
 
-    __fw_size__ = (etext - __app_load_addr__) + SIZEOF(.data) + SIZEOF(.fast) + SIZEOF(.tdata) + SIZEOF(.noncacheable.init);
     __noncacheable_start__ = ORIGIN(SDRAM_NONCACHEABLE);
     __noncacheable_end__ = ORIGIN(SDRAM_NONCACHEABLE) + LENGTH(SDRAM_NONCACHEABLE);
+
+    __fw_size__ = SIZEOF(.start) + SIZEOF(.vectors) + SIZEOF(.rel) + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.fast) + SIZEOF(.tdata) + SIZEOF(.noncacheable.init);
+    ASSERT(__fw_size__ <= LENGTH(XPI0), "******  FAILED! XPI0 has not enough space!  ******")
 }

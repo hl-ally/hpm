@@ -1,4 +1,4 @@
-# SEI MASTER: CONNECT HIPERFACE ENCODER
+# SEI Master: Connect HIPERFACE Encoder
 
 ## 概述
 

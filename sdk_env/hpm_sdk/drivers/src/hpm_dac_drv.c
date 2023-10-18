@@ -264,7 +264,7 @@ uint32_t dac_get_status_flags(DAC_Type *ptr)
 
 void dac_set_status_flags(DAC_Type *ptr, uint32_t mask)
 {
-    ptr->IRQ_STS |= mask;
+    ptr->IRQ_STS = mask;
 }
 
 uint8_t dac_get_current_buffer_index(DAC_Type *ptr)

@@ -1,4 +1,4 @@
-# SEI MASTER: CONNECT ENDAT ENCODER
+# SEI Master: Connect ENDAT Encoder
 
 ## Overview
 

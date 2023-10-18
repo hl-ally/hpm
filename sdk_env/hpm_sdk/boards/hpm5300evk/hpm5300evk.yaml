@@ -36,3 +36,7 @@ board:
       - i2c
       - usb-otg
       - ptp
+      - motor-control
+      - bldc_hfi
+      - bldc_smc
+      - opamp

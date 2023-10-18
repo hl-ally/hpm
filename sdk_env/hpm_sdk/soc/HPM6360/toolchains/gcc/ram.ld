@@ -220,5 +220,6 @@ SECTIONS
     __noncacheable_start__ = ORIGIN(AXI_SRAM_NONCACHEABLE);
     __noncacheable_end__ = ORIGIN(AXI_SRAM_NONCACHEABLE) + LENGTH(AXI_SRAM_NONCACHEABLE);
 
-    ASSERT((STACK_SIZE + HEAP_SIZE) <= 128K, "stack and heap total size larger than 128k")
+    __fw_size__ = SIZEOF(.start) + SIZEOF(.vectors) + SIZEOF(.rel) + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.fast) + SIZEOF(.tdata) + SIZEOF(.noncacheable.init);
+    ASSERT(__fw_size__ <= LENGTH(ILM), "******  FAILED! ILM has not enough space!  ******")
 }

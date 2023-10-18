@@ -21,6 +21,10 @@
 #define TEST_UART_CLK_NAME BOARD_APP_UART_CLK_NAME
 #define TEST_UART_DMA_CONTROLLER BOARD_APP_HDMA
 #define TEST_UART_DMAMUX_CONTROLLER BOARD_APP_DMAMUX
+#define TEST_UART_RX_DMA_CH 30
+#define TEST_UART_TX_DMA_CH 31
+#define TEST_UART_RX_DMAMUX_CH DMA_SOC_CHN_TO_DMAMUX_CHN(TEST_UART_DMA_CONTROLLER, TEST_UART_RX_DMA_CH)
+#define TEST_UART_TX_DMAMUX_CH DMA_SOC_CHN_TO_DMAMUX_CHN(TEST_UART_DMA_CONTROLLER, TEST_UART_TX_DMA_CH)
 
 #define TEST_BUFFER_SIZE 64
 
@@ -55,8 +59,8 @@ void init_board_app_dma(void)
     dma_handshake_config_t ch_config = { 0 };
 
 /* 1. config uart circle rx dma */
-    dmamux_config(TEST_UART_DMAMUX_CONTROLLER, DMAMUX_MUXCFG_HDMA_MUX30, HPM_DMA_SRC_UART0_RX, true);
-    ch_config.ch_index = 30;
+    dmamux_config(TEST_UART_DMAMUX_CONTROLLER, TEST_UART_RX_DMAMUX_CH, HPM_DMA_SRC_UART0_RX, true);
+    ch_config.ch_index = TEST_UART_RX_DMA_CH;
     ch_config.dst = core_local_mem_to_sys_address(BOARD_RUNNING_CORE, (uint32_t)uart_rx_buf);
     ch_config.dst_fixed = false;
     ch_config.src = (uint32_t)&TEST_UART->RBR;
@@ -68,8 +72,8 @@ void init_board_app_dma(void)
     dma_setup_handshake(TEST_UART_DMA_CONTROLLER, &ch_config, true);
 
 /* 2. config uart normal tx dma */
-    dmamux_config(TEST_UART_DMAMUX_CONTROLLER, DMAMUX_MUXCFG_HDMA_MUX31, HPM_DMA_SRC_UART0_TX, true);
-    ch_config.ch_index = 31;
+    dmamux_config(TEST_UART_DMAMUX_CONTROLLER, TEST_UART_TX_DMAMUX_CH, HPM_DMA_SRC_UART0_TX, true);
+    ch_config.ch_index = TEST_UART_TX_DMA_CH;
     ch_config.dst = (uint32_t)&TEST_UART->THR;
     ch_config.dst_fixed = true;
     ch_config.src = core_local_mem_to_sys_address(BOARD_RUNNING_CORE, (uint32_t)uart_tx_buf);
@@ -84,13 +88,13 @@ void init_board_app_dma(void)
 void task_entry_5ms(void)
 {
     uint32_t rx_data_size;
-    uint32_t dma_residue_size;
+    uint32_t dma_remaining_size;
 
     mchtmr_delay(HPM_MCHTMR, (clock_get_frequency(clock_mchtmr0) / 1000) * 5);
 
-    dma_residue_size = dma_get_residue_transfer_size(TEST_UART_DMA_CONTROLLER, 30);
+    dma_remaining_size = dma_get_remaining_transfer_size(TEST_UART_DMA_CONTROLLER, TEST_UART_RX_DMA_CH);
 
-    rx_rear_index = TEST_BUFFER_SIZE - dma_residue_size;
+    rx_rear_index = TEST_BUFFER_SIZE - dma_remaining_size;
     if (rx_front_index > rx_rear_index) {
         rx_data_size = TEST_BUFFER_SIZE + rx_rear_index - rx_front_index;
     } else {
@@ -107,10 +111,10 @@ void task_entry_5ms(void)
     rx_front_index = rx_rear_index;
 
     if (rx_data_size > 0) {
-        if (!dma_channel_is_enable(TEST_UART_DMA_CONTROLLER, 31)) {
-            dma_set_transfer_size(TEST_UART_DMA_CONTROLLER, 31, rx_data_size);
-            dma_set_source_address(TEST_UART_DMA_CONTROLLER, 31, core_local_mem_to_sys_address(BOARD_RUNNING_CORE, (uint32_t)uart_tx_buf));
-            dma_enable_channel(TEST_UART_DMA_CONTROLLER, 31);
+        if (!dma_channel_is_enable(TEST_UART_DMA_CONTROLLER, TEST_UART_TX_DMA_CH)) {
+            dma_set_transfer_size(TEST_UART_DMA_CONTROLLER, TEST_UART_TX_DMA_CH, rx_data_size);
+            dma_set_source_address(TEST_UART_DMA_CONTROLLER, TEST_UART_TX_DMA_CH, core_local_mem_to_sys_address(BOARD_RUNNING_CORE, (uint32_t)uart_tx_buf));
+            dma_enable_channel(TEST_UART_DMA_CONTROLLER, TEST_UART_TX_DMA_CH);
         }
     }
 }

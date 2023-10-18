@@ -31,6 +31,7 @@
 #define APP_DMA_DST_WIDTH             DMA_TRANSFER_WIDTH_DOUBLE_WORD
 #define APP_GPTMR_DMA_SRC             BOARD_GPTMR_DMA_SRC
 #define APP_DMA_CH                    (0U)
+#define APP_DMAMUX_CH                 DMA_SOC_CHN_TO_DMAMUX_CHN(APP_GPTMR_DMA, APP_DMA_CH)
 #define APP_MEASURE_COUNT             (10U)
 
 typedef struct {
@@ -133,7 +134,7 @@ static void pwm_measure_config(void)
     config.dma_request_event = gptmr_dma_request_on_input_signal_toggle;
     config.mode = gptmr_work_mode_measure_width;
     gptmr_channel_enable_dma_request(APP_BOARD_GPTMR, APP_BOARD_GPTMR_CH, false);
-    dmamux_config(BOARD_APP_DMAMUX, DMAMUX_MUXCFG_XDMA_MUX0, APP_GPTMR_DMA_SRC, true);
+    dmamux_config(BOARD_APP_DMAMUX, APP_DMAMUX_CH, APP_GPTMR_DMA_SRC, true);
     intc_m_enable_irq_with_priority(APP_GPTMR_DMA_IRQ, 4);
 #else
     config.mode = gptmr_work_mode_measure_width;

@@ -1890,16 +1890,16 @@ typedef struct {
 
 /* Bitfield definition for register of struct array CTRL: UPD_CFG */
 /*
- * OVRD (RW)
+ * TIME_OVRD (RW)
  *
- * Use override value
- * 0: use received data
- * 1: use override data
+ * Use override time
+ * 0: use time sample from motor group
+ * 1: use override time
  */
-#define SEI_CTRL_POS_UPD_CFG_OVRD_MASK (0x80000000UL)
-#define SEI_CTRL_POS_UPD_CFG_OVRD_SHIFT (31U)
-#define SEI_CTRL_POS_UPD_CFG_OVRD_SET(x) (((uint32_t)(x) << SEI_CTRL_POS_UPD_CFG_OVRD_SHIFT) & SEI_CTRL_POS_UPD_CFG_OVRD_MASK)
-#define SEI_CTRL_POS_UPD_CFG_OVRD_GET(x) (((uint32_t)(x) & SEI_CTRL_POS_UPD_CFG_OVRD_MASK) >> SEI_CTRL_POS_UPD_CFG_OVRD_SHIFT)
+#define SEI_CTRL_POS_UPD_CFG_TIME_OVRD_MASK (0x80000000UL)
+#define SEI_CTRL_POS_UPD_CFG_TIME_OVRD_SHIFT (31U)
+#define SEI_CTRL_POS_UPD_CFG_TIME_OVRD_SET(x) (((uint32_t)(x) << SEI_CTRL_POS_UPD_CFG_TIME_OVRD_SHIFT) & SEI_CTRL_POS_UPD_CFG_TIME_OVRD_MASK)
+#define SEI_CTRL_POS_UPD_CFG_TIME_OVRD_GET(x) (((uint32_t)(x) & SEI_CTRL_POS_UPD_CFG_TIME_OVRD_MASK) >> SEI_CTRL_POS_UPD_CFG_TIME_OVRD_SHIFT)
 
 /*
  * ONERR (RW)
@@ -2327,7 +2327,7 @@ typedef struct {
 /*
  * PTR1_ST (RW)
  *
- * Pointer 1 end
+ * Pointer 1 start
  */
 #define SEI_CTRL_IRQ_INT_EN_PTR1_ST_MASK (0x20U)
 #define SEI_CTRL_IRQ_INT_EN_PTR1_ST_SHIFT (5U)
@@ -2337,7 +2337,7 @@ typedef struct {
 /*
  * PTR0_ST (RW)
  *
- * Pointer 0 end
+ * Pointer 0 start
  */
 #define SEI_CTRL_IRQ_INT_EN_PTR0_ST_MASK (0x10U)
 #define SEI_CTRL_IRQ_INT_EN_PTR0_ST_SHIFT (4U)
@@ -2588,7 +2588,7 @@ typedef struct {
 /*
  * PTR1_ST (W1C)
  *
- * Pointer 1 end
+ * Pointer 1 start
  */
 #define SEI_CTRL_IRQ_INT_FLAG_PTR1_ST_MASK (0x20U)
 #define SEI_CTRL_IRQ_INT_FLAG_PTR1_ST_SHIFT (5U)
@@ -2598,7 +2598,7 @@ typedef struct {
 /*
  * PTR0_ST (W1C)
  *
- * Pointer 0 end
+ * Pointer 0 start
  */
 #define SEI_CTRL_IRQ_INT_FLAG_PTR0_ST_MASK (0x10U)
 #define SEI_CTRL_IRQ_INT_FLAG_PTR0_ST_SHIFT (4U)
@@ -2828,7 +2828,7 @@ typedef struct {
 /*
  * PTR1_ST (RO)
  *
- * Pointer 1 end
+ * Pointer 1 start
  */
 #define SEI_CTRL_IRQ_INT_STS_PTR1_ST_MASK (0x20U)
 #define SEI_CTRL_IRQ_INT_STS_PTR1_ST_SHIFT (5U)
@@ -2837,7 +2837,7 @@ typedef struct {
 /*
  * PTR0_ST (RO)
  *
- * Pointer 0 end
+ * Pointer 0 start
  */
 #define SEI_CTRL_IRQ_INT_STS_PTR0_ST_MASK (0x10U)
 #define SEI_CTRL_IRQ_INT_STS_PTR0_ST_SHIFT (4U)

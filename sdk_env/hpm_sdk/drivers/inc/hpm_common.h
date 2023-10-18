@@ -49,6 +49,14 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
+#ifndef HPM_ALIGN_DOWN
+#define HPM_ALIGN_DOWN(a, n)                    ((uint32_t)(a) & ~(n-1U))
+#endif
+
+#ifndef HPM_ALIGN_UP
+#define HPM_ALIGN_UP(a, n)                      (((uint32_t)(a) + (n-1U)) & ~(n-1U))
+#endif
+
 #define HPM_BITSMASK(val, offset) ((uint32_t)(val) << (offset))
 #define IS_HPM_BITMASK_SET(val, mask) (((uint32_t)(val) & (uint32_t)(mask)) != 0U)
 #define IS_HPM_BIT_SET(val, offset) (((uint32_t)(val) & (1UL << (offset))) != 0U)
@@ -57,6 +65,9 @@
 
 #define HPM_BREAK_IF(cond)   if (cond) { break; }
 #define HPM_CONTINUE_IF(cond) if (cond) { continue; }
+
+#define HPM_DIV_ROUND_CLOSEST(x, div) (((x) + (div) / 2) / (div))
+#define HPM_DIV_ROUND_UP(x, div) (((x) + (div) - 1) / (div))
 
 #define HPM_CHECK_RET(x)               \
     do {                               \
@@ -147,6 +158,8 @@ enum {
     status_group_sdmmc = status_group_middleware_start,
     status_group_audio_codec,
     status_group_dma_manager,
+    status_group_spi_nor_flash,
+    status_group_touch,
 };
 
 /* @brief Common status code definitions */

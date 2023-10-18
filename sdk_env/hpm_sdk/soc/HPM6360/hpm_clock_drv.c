@@ -550,6 +550,19 @@ void clock_remove_from_group(clock_name_t clock_name, uint32_t group)
     }
 }
 
+bool clock_check_in_group(clock_name_t clock_name, uint32_t group)
+{
+    bool added = false;
+    uint32_t resource = GET_CLK_RESOURCE_FROM_NAME(clock_name);
+
+    if (resource < sysctl_resource_end) {
+        added = sysctl_check_group_resource_enable(HPM_SYSCTL, group, resource);
+    } else if (resource == RESOURCE_SHARED_PTPC) {
+        added = sysctl_check_group_resource_enable(HPM_SYSCTL, group, sysctl_resource_ptpc);
+    }
+    return added;
+}
+
 void clock_connect_group_to_cpu(uint32_t group, uint32_t cpu)
 {
     if (cpu < 2U) {

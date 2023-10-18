@@ -268,6 +268,10 @@ void board_power_cycle_lcd(void)
     gpio_write_pin(BOARD_LCD_BACKLIGHT_GPIO_BASE, BOARD_LCD_BACKLIGHT_GPIO_INDEX, BOARD_LCD_BACKLIGHT_GPIO_PIN, 1);
 
 }
+void board_lcd_backlight(bool is_on)
+{
+    gpio_write_pin(BOARD_LCD_BACKLIGHT_GPIO_BASE, BOARD_LCD_BACKLIGHT_GPIO_INDEX, BOARD_LCD_BACKLIGHT_GPIO_PIN, is_on);
+}
 
 void board_init_lcd(void)
 {
@@ -477,6 +481,7 @@ void board_write_spi_cs(uint32_t pin, uint8_t state)
 
 void board_init_led_pins(void)
 {
+    board_turnoff_rgb_led();
     init_led_pins_as_gpio();
     gpio_set_pin_output_with_initial(BOARD_R_GPIO_CTRL, BOARD_R_GPIO_INDEX, BOARD_R_GPIO_PIN, board_get_led_gpio_off_level());
     gpio_set_pin_output_with_initial(BOARD_G_GPIO_CTRL, BOARD_G_GPIO_INDEX, BOARD_G_GPIO_PIN, board_get_led_gpio_off_level());
@@ -678,8 +683,6 @@ void board_init_clock(void)
     clock_update_core_clock();
 
     clock_set_source_divider(clock_ahb, clk_src_pll1_clk1, 2); /*200m hz*/
-
-    clock_set_source_divider(clock_aud1, clk_src_pll3_clk0, 54); /* config clock_aud1 for 44100*n sample rate */
     clock_set_source_divider(clock_mchtmr0, clk_src_osc24m, 1);
     clock_set_source_divider(clock_mchtmr1, clk_src_osc24m, 1);
 }
@@ -715,8 +718,8 @@ uint32_t board_init_dao_clock(void)
 {
     clock_add_to_group(clock_dao, 0);
 
-    sysctl_config_clock(HPM_SYSCTL, clock_node_aud0, clock_source_pll3_clk0, 25);
-    sysctl_set_adc_i2s_clock_mux(HPM_SYSCTL, clock_node_i2s1, clock_source_i2s_aud0_clk);
+    sysctl_config_clock(HPM_SYSCTL, clock_node_aud1, clock_source_pll3_clk0, 25);
+    sysctl_set_adc_i2s_clock_mux(HPM_SYSCTL, clock_node_i2s1, clock_source_i2s_aud1_clk);
 
     return clock_get_frequency(clock_dao);
 }
@@ -743,34 +746,57 @@ void board_init_i2s_pins(I2S_Type *ptr)
 
 uint32_t board_init_i2s_clock(I2S_Type *ptr)
 {
+    uint32_t freq = 0;
+
     if (ptr == HPM_I2S0) {
         clock_add_to_group(clock_i2s0, 0);
 
         sysctl_config_clock(HPM_SYSCTL, clock_node_aud0, clock_source_pll3_clk0, 25);
         sysctl_set_adc_i2s_clock_mux(HPM_SYSCTL, clock_node_i2s0, clock_source_i2s_aud0_clk);
 
-        return clock_get_frequency(clock_i2s0);
+        freq = clock_get_frequency(clock_i2s0);
+    } else if (ptr == HPM_I2S1) {
+        clock_add_to_group(clock_i2s1, 0);
+
+        sysctl_config_clock(HPM_SYSCTL, clock_node_aud1, clock_source_pll3_clk0, 25);
+        sysctl_set_adc_i2s_clock_mux(HPM_SYSCTL, clock_node_i2s1, clock_source_i2s_aud1_clk);
+
+        freq = clock_get_frequency(clock_i2s1);
     } else {
-        return 0;
+        ;
     }
+
+    return freq;
 }
 
 /* adjust I2S source clock base on sample rate */
 uint32_t board_config_i2s_clock(I2S_Type *ptr, uint32_t sample_rate)
 {
+    uint32_t freq = 0;
+
     if (ptr == HPM_I2S0) {
+        clock_add_to_group(clock_i2s0, 0);
         if ((sample_rate % 22050) == 0) {
-            clock_add_to_group(clock_i2s0, 0);
-            clock_set_source_divider(clock_aud1, clk_src_pll3_clk0, 54); /* config clock_aud1 for 22050*n sample rate */
-            clock_set_i2s_source(clock_i2s0, clk_i2s_src_aud1);
+            clock_set_source_divider(clock_aud0, clk_src_pll3_clk0, 54); /* config clock_aud1 for 22050*n sample rate */
         } else {
-            clock_add_to_group(clock_i2s0, 0);
             clock_set_source_divider(clock_aud0, clk_src_pll3_clk0, 25); /* config clock_aud0 for 8000*n sample rate */
-            clock_set_i2s_source(clock_i2s0, clk_i2s_src_aud0);
         }
-        return clock_get_frequency(clock_i2s0);
+        clock_set_i2s_source(clock_i2s0, clk_i2s_src_aud0);
+        freq = clock_get_frequency(clock_i2s0);
+    } else if (ptr == HPM_I2S1) {
+        clock_add_to_group(clock_i2s1, 0);
+        if ((sample_rate % 22050) == 0) {
+            clock_set_source_divider(clock_aud1, clk_src_pll3_clk0, 54); /* config clock_aud1 for 22050*n sample rate */
+        } else {
+            clock_set_source_divider(clock_aud1, clk_src_pll3_clk0, 25); /* config clock_aud0 for 8000*n sample rate */
+        }
+        clock_set_i2s_source(clock_i2s1, clk_i2s_src_aud1);
+        freq = clock_get_frequency(clock_i2s1);
+    } else {
+        ;
     }
-    return 0;
+
+    return freq;
 }
 
 uint32_t board_init_adc12_clock(ADC12_Type *ptr, bool clk_src_ahb)
@@ -977,8 +1003,38 @@ bool board_sd_detect_card(SDXC_Type *ptr)
     return sdxc_is_card_inserted(ptr);
 }
 
+static void set_rgb_output_off(PWM_Type *ptr, uint8_t pin, uint8_t cmp_index)
+{
+    pwm_cmp_config_t cmp_config = {0};
+    pwm_output_channel_t ch_config = {0};
+
+    pwm_stop_counter(ptr);
+    pwm_get_default_cmp_config(ptr, &cmp_config);
+    pwm_get_default_output_channel_config(ptr, &ch_config);
+
+    pwm_set_reload(ptr, 0, 0xF);
+    pwm_set_start_count(ptr, 0, 0);
+
+    cmp_config.mode = pwm_cmp_mode_output_compare;
+    cmp_config.cmp = 0x10;
+    cmp_config.update_trigger = pwm_shadow_register_update_on_modify;
+    pwm_config_cmp(ptr, cmp_index, &cmp_config);
+
+    ch_config.cmp_start_index = cmp_index;
+    ch_config.cmp_end_index = cmp_index;
+    ch_config.invert_output = !board_get_led_pwm_off_level();
+
+    pwm_config_output_channel(ptr, pin, &ch_config);
+}
+
 void board_init_rgb_pwm_pins(void)
 {
+    board_turnoff_rgb_led();
+
+    set_rgb_output_off(BOARD_RED_PWM, BOARD_RED_PWM_OUT, BOARD_RED_PWM_CMP);
+    set_rgb_output_off(BOARD_GREEN_PWM, BOARD_GREEN_PWM_OUT, BOARD_GREEN_PWM_CMP);
+    set_rgb_output_off(BOARD_BLUE_PWM, BOARD_BLUE_PWM_OUT, BOARD_BLUE_PWM_CMP);
+
     init_led_pins_as_pwm();
 }
 

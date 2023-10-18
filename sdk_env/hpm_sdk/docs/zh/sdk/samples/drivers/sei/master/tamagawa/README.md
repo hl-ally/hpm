@@ -1,4 +1,4 @@
-# SEI MASTER: CONNECT TAMAGAWA ENCODER
+# SEI Master: Connect TAMAGAWA Encoder
 
 ## 概述
 

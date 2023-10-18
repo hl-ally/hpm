@@ -7,13 +7,33 @@
 
 /*
  * Note:
- *   PY and PZ IOs: if any SOC pin function needs to be routed to these IOs,
+ *  PY and PZ IOs: if any SOC pin function needs to be routed to these IOs,
  *  besides of IOC, PIOC/BIOC needs to be configured SOC_GPIO_X_xx, so that
  *  expected SoC function can be enabled on these IOs.
  *
  */
 #include "board.h"
 #include "pinmux.h"
+
+void init_xtal_pins(void)
+{
+    /* Package QFN32 should be set PA30 and PA31 pins as analog type to enable xtal. */
+    /*
+     * HPM_IOC->PAD[IOC_PAD_PA30].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
+     * HPM_IOC->PAD[IOC_PAD_PA31].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
+     */
+}
+
+void init_py_pins_as_pgpio(void)
+{
+    /* Set PY00-PY05 default function to PGPIO */
+    HPM_PIOC->PAD[IOC_PAD_PY00].FUNC_CTL = IOC_PY00_FUNC_CTL_PGPIO_Y_00;
+    HPM_PIOC->PAD[IOC_PAD_PY01].FUNC_CTL = IOC_PY01_FUNC_CTL_PGPIO_Y_01;
+    HPM_PIOC->PAD[IOC_PAD_PY02].FUNC_CTL = IOC_PY02_FUNC_CTL_PGPIO_Y_02;
+    HPM_PIOC->PAD[IOC_PAD_PY03].FUNC_CTL = IOC_PY03_FUNC_CTL_PGPIO_Y_03;
+    HPM_PIOC->PAD[IOC_PAD_PY04].FUNC_CTL = IOC_PY04_FUNC_CTL_PGPIO_Y_04;
+    HPM_PIOC->PAD[IOC_PAD_PY05].FUNC_CTL = IOC_PY05_FUNC_CTL_PGPIO_Y_05;
+}
 
 void init_uart_pins(UART_Type *ptr)
 {
@@ -23,6 +43,7 @@ void init_uart_pins(UART_Type *ptr)
     } else if (ptr == HPM_UART2) {
         HPM_IOC->PAD[IOC_PAD_PB08].FUNC_CTL = IOC_PB08_FUNC_CTL_UART2_TXD;
         HPM_IOC->PAD[IOC_PAD_PB09].FUNC_CTL = IOC_PB09_FUNC_CTL_UART2_RXD;
+        HPM_IOC->PAD[IOC_PAD_PB10].FUNC_CTL = IOC_PB10_FUNC_CTL_UART2_DE;
     } else {
         ;
     }
@@ -81,10 +102,21 @@ void init_spi_pins_with_gpio_as_cs(SPI_Type *ptr)
 
 void init_gptmr_pins(GPTMR_Type *ptr)
 {
+    if (ptr == HPM_GPTMR0) {
+        HPM_IOC->PAD[IOC_PAD_PB06].FUNC_CTL = IOC_PB06_FUNC_CTL_GPTMR0_CAPT_0;
+        HPM_IOC->PAD[IOC_PAD_PB07].FUNC_CTL = IOC_PB07_FUNC_CTL_GPTMR0_COMP_0;
+        HPM_IOC->PAD[IOC_PAD_PB08].FUNC_CTL = IOC_PB08_FUNC_CTL_GPTMR0_COMP_1;
+    }
 }
 
 void init_hall_trgm_pins(void)
 {
+    init_qeiv2_uvw_pins(HPM_QEI1);
+}
+
+void init_qei_trgm_pins(void)
+{
+    init_qeiv2_ab_pins(HPM_QEI1);
 }
 
 void init_butn_pins(void)
@@ -100,6 +132,10 @@ void init_butn_pins(void)
 
 void init_acmp_pins(void)
 {
+    /* configure to ACMP_COMP_1(ALT16) function */
+    HPM_IOC->PAD[IOC_PAD_PB09].FUNC_CTL = IOC_PB09_FUNC_CTL_ACMP_COMP_1;
+    /* configure to CMP1_INN4 function */
+    HPM_IOC->PAD[IOC_PAD_PB11].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
 }
 
 void init_pwm_pins(PWM_Type *ptr)
@@ -112,10 +148,6 @@ void init_pwm_pins(PWM_Type *ptr)
         HPM_IOC->PAD[IOC_PAD_PA30].FUNC_CTL = IOC_PA30_FUNC_CTL_PWM0_P_6;
         HPM_IOC->PAD[IOC_PAD_PA31].FUNC_CTL = IOC_PA31_FUNC_CTL_PWM0_P_7;
     }
-}
-
-void init_hrpwm_pins(PWM_Type *ptr)
-{
 }
 
 void init_adc_pins(void)
@@ -134,14 +166,22 @@ void init_adc_pins(void)
 
 void init_adc_bldc_pins(void)
 {
+    HPM_IOC->PAD[IOC_PAD_PB13].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;         /* ADC_IU:   ADC0.5 /ADC1.5  */
+    HPM_IOC->PAD[IOC_PAD_PB14].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;         /* ADC_IV:   ADC0.6 /ADC1.6  */
 }
 
 void init_usb_pins(void)
 {
-    /* Package QFN48 should be set PA24 and PA25 pins as analog type to enable USB_P and USB_N. */
+    /* Package QFN48 and LQFP64 should be set PA24 and PA25 pins as analog type to enable USB_P and USB_N. */
     /*
      * HPM_IOC->PAD[IOC_PAD_PA24].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
      * HPM_IOC->PAD[IOC_PAD_PA25].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
+     */
+
+    /* Package QFN32 should be set PA26 and PA27 pins as analog type to enable USB_P and USB_N. */
+    /*
+     * HPM_IOC->PAD[IOC_PAD_PA26].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
+     * HPM_IOC->PAD[IOC_PAD_PA27].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
      */
 
     /* USB0_ID */
@@ -157,7 +197,7 @@ void init_usb_pins(void)
     HPM_PIOC->PAD[IOC_PAD_PY02].FUNC_CTL = IOC_PY02_FUNC_CTL_SOC_GPIO_Y_02;
 }
 
-void init_can_pins(MCAN_Type *ptr)  /* FIXME */
+void init_can_pins(MCAN_Type *ptr)
 {
     if (ptr == HPM_MCAN3) {
         HPM_IOC->PAD[IOC_PAD_PY04].FUNC_CTL = IOC_PY04_FUNC_CTL_CAN3_RXD;
@@ -205,7 +245,7 @@ void init_lin_pins(LINV2_Type *ptr)
 
 void init_plb_pins(void)
 {
-    HPM_IOC->PAD[IOC_PAD_PA02].FUNC_CTL = IOC_PA02_FUNC_CTL_TRGM0_P_02;
+    HPM_IOC->PAD[IOC_PAD_PA26].FUNC_CTL = IOC_PA26_FUNC_CTL_TRGM0_P_02;
 }
 
 void init_qeo_pins(QEO_Type *ptr)
@@ -241,11 +281,34 @@ void init_rdc_pin(void)
 #endif
 }
 
-void init_qeiv2_abz_uvw_pins(QEIV2_Type *ptr)
+void init_qeiv2_uvw_pins(QEIV2_Type *ptr)
 {
     if (ptr == HPM_QEI1) {
         HPM_IOC->PAD[IOC_PAD_PA10].FUNC_CTL = IOC_PA10_FUNC_CTL_QEI1_A;
         HPM_IOC->PAD[IOC_PAD_PA11].FUNC_CTL = IOC_PA11_FUNC_CTL_QEI1_B;
         HPM_IOC->PAD[IOC_PAD_PA12].FUNC_CTL = IOC_PA12_FUNC_CTL_QEI1_Z;
     }
+}
+
+void init_qeiv2_ab_pins(QEIV2_Type *ptr)
+{
+    if (ptr == HPM_QEI1) {
+        HPM_IOC->PAD[IOC_PAD_PA10].FUNC_CTL = IOC_PA10_FUNC_CTL_QEI1_A;
+        HPM_IOC->PAD[IOC_PAD_PA11].FUNC_CTL = IOC_PA11_FUNC_CTL_QEI1_B;
+    }
+}
+
+void init_qeiv2_abz_pins(QEIV2_Type *ptr)
+{
+    if (ptr == HPM_QEI1) {
+        HPM_IOC->PAD[IOC_PAD_PA10].FUNC_CTL = IOC_PA10_FUNC_CTL_QEI1_A;
+        HPM_IOC->PAD[IOC_PAD_PA11].FUNC_CTL = IOC_PA11_FUNC_CTL_QEI1_B;
+        HPM_IOC->PAD[IOC_PAD_PA12].FUNC_CTL = IOC_PA12_FUNC_CTL_QEI1_Z;
+    }
+}
+
+void init_opamp_pins(void)
+{
+    HPM_IOC->PAD[IOC_PAD_PB00].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
+    HPM_IOC->PAD[IOC_PAD_PB04].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
 }

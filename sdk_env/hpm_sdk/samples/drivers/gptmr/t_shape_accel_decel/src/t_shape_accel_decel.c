@@ -25,7 +25,8 @@
 #define APP_BOARD_GPTMR_CLOCK         BOARD_GPTMR_PWM_CLK_NAME
 #define APP_DMA_SRC_WIDTH             DMA_TRANSFER_WIDTH_WORD
 #define APP_DMA_DST_WIDTH             DMA_TRANSFER_WIDTH_WORD
-#define APP_BOARD_GPTMR_DMA_CH       (0U)
+#define APP_BOARD_GPTMR_DMA_CH        (0U)
+#define APP_BOARD_GPTMR_DMAMUX_CH     DMA_SOC_CHN_TO_DMAMUX_CHN(APP_GPTMR_DMA, APP_BOARD_GPTMR_DMA_CH)
 
 #define APP_FIXED_PULSE_WIDTH_US      (5U)
 #define APP_MAX_CYCLE_US              (100U)
@@ -129,7 +130,7 @@ static void gptmr_config(void)
     gptmr_enable_irq(APP_BOARD_GPTMR, GPTMR_CH_RLD_IRQ_MASK(APP_BOARD_GPTMR_CH));
     intc_m_enable_irq_with_priority(APP_BOARD_GPTMR_IRQ, 4);
     gptmr_start_counter(APP_BOARD_GPTMR, APP_BOARD_GPTMR_CH);
-    dmamux_config(BOARD_APP_DMAMUX, DMAMUX_MUXCFG_HDMA_MUX0, BOARD_GPTMR_PWM_DMA_SRC, true);
+    dmamux_config(BOARD_APP_DMAMUX, APP_BOARD_GPTMR_DMAMUX_CH, BOARD_GPTMR_PWM_DMA_SRC, true);
     dma_enable_channel(APP_GPTMR_DMA, APP_BOARD_GPTMR_DMA_CH);
     intc_m_enable_irq_with_priority(APP_GPTMR_DMA_IRQ, 4);
 }

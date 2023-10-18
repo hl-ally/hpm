@@ -33,9 +33,6 @@ void uart_default_config(UART_Type *ptr, uart_config_t *config)
     config->modem_config.auto_flow_ctrl_en = false;
     config->modem_config.loop_back_en = false;
     config->modem_config.set_rts_high = false;
-#if defined(UART_SOC_HAS_NEW_FIFO_THR) && (UART_SOC_HAS_NEW_FIFO_THR == 1)
-    config->using_new_fifo_thr = false;
-#endif
 #if defined(UART_SOC_HAS_RXLINE_IDLE_DETECTION) && (UART_SOC_HAS_RXLINE_IDLE_DETECTION == 1)
     config->rxidle_config.detect_enable = false;
     config->rxidle_config.detect_irq_enable = false;
@@ -165,32 +162,27 @@ hpm_stat_t uart_init(UART_Type *ptr, uart_config_t *config)
 
     ptr->LCR = tmp | UART_LCR_WLS_SET(config->word_length);
 
-#if defined(UART_SOC_HAS_NEW_FIFO_THR) && (UART_SOC_HAS_NEW_FIFO_THR == 1)
+#if defined(UART_SOC_HAS_FINE_FIFO_THR) && (UART_SOC_HAS_FINE_FIFO_THR == 1)
+    /* reset TX and RX fifo */
     ptr->FCRR = UART_FCRR_TFIFORST_MASK | UART_FCRR_RFIFORST_MASK;
-    if (config->fifo_enable) {
-        /* Enable FIFO, reset TX and RX. */
-        if (config->using_new_fifo_thr) {
-            ptr->FCRR = UART_FCRR_FIFOT4EN_MASK
-            | UART_FCRR_FIFOE_MASK
-            | UART_FCRR_TFIFOT4_SET(config->tx_fifo_level)
-            | UART_FCRR_RFIFOT4_SET(config->rx_fifo_level)
-            | UART_FCRR_DMAE_SET(config->dma_enable);
-        } else {
-            ptr->FCR = UART_FCRR_FIFOE_MASK
-            | UART_FCRR_TFIFOT_SET(config->tx_fifo_level)
-            | UART_FCRR_RFIFOT_SET(config->rx_fifo_level)
-            | UART_FCRR_DMAE_SET(config->dma_enable);
-        }
-    }
+    /* Enable FIFO */
+    ptr->FCRR = UART_FCRR_FIFOT4EN_MASK
+        | UART_FCRR_FIFOE_SET(config->fifo_enable)
+        | UART_FCRR_TFIFOT4_SET(config->tx_fifo_level)
+        | UART_FCRR_RFIFOT4_SET(config->rx_fifo_level)
+        | UART_FCRR_DMAE_SET(config->dma_enable);
+
 #else
+    /* reset TX and RX fifo */
     ptr->FCR = UART_FCR_TFIFORST_MASK | UART_FCR_RFIFORST_MASK;
-    if (config->fifo_enable) {
-        /* Enable FIFO, reset TX and RX. */
-        ptr->FCR = UART_FCR_FIFOE_MASK
-            | UART_FCR_TFIFOT_SET(config->tx_fifo_level)
-            | UART_FCR_RFIFOT_SET(config->rx_fifo_level)
-            | UART_FCR_DMAE_SET(config->dma_enable);
-    }
+    /* Enable FIFO */
+    tmp = UART_FCR_FIFOE_SET(config->fifo_enable)
+        | UART_FCR_TFIFOT_SET(config->tx_fifo_level)
+        | UART_FCR_RFIFOT_SET(config->rx_fifo_level)
+        | UART_FCR_DMAE_SET(config->dma_enable);
+    ptr->FCR = tmp;
+    /* store FCR register value */
+    ptr->GPR = tmp;
 #endif
 
     uart_modem_config(ptr, &config->modem_config);
@@ -353,7 +345,7 @@ hpm_stat_t uart_init_txline_idle_detection(UART_Type *ptr, uart_rxline_idle_conf
 }
 #endif
 
-#if defined(UART_SOC_HAS_NEW_FIFO_THR) && (UART_SOC_HAS_NEW_FIFO_THR == 1)
+#if defined(UART_SOC_HAS_TRIG_MODE) && (UART_SOC_HAS_TRIG_MODE == 1)
 void uart_config_transfer_trig_mode(UART_Type *ptr, uart_trig_config_t *config)
 {
     ptr->MOTO_CFG = UART_MOTO_CFG_TXSTP_BITS_SET(config->stop_bit_len)
@@ -364,13 +356,28 @@ void uart_config_transfer_trig_mode(UART_Type *ptr, uart_trig_config_t *config)
 }
 #endif
 
-/* FCR is WO register, preprae all bit field to write */
+/* fifo control register(FCR) is WO access, if support FCCR register, it is RW access. */
 void uart_config_fifo_ctrl(UART_Type *ptr, uart_fifo_ctrl_t *ctrl)
 {
+#if defined(UART_SOC_HAS_FINE_FIFO_THR) && (UART_SOC_HAS_FINE_FIFO_THR == 1)
+    ptr->FCRR = UART_FCRR_FIFOT4EN_MASK
+                | UART_FCRR_TFIFOT4_SET(ctrl->tx_fifo_level)
+                | UART_FCRR_RFIFOT4_SET(ctrl->rx_fifo_level)
+                | UART_FCRR_DMAE_SET(ctrl->dma_enable)
+                | UART_FCRR_TFIFORST_SET(ctrl->reset_tx_fifo)
+                | UART_FCRR_RFIFORST_SET(ctrl->reset_rx_fifo)
+                | UART_FCRR_FIFOE_SET(ctrl->fifo_enable);
+#else
     ptr->FCR =  UART_FCR_TFIFOT_SET(ctrl->tx_fifo_level)
                 | UART_FCR_RFIFOT_SET(ctrl->rx_fifo_level)
                 | UART_FCR_TFIFORST_SET(ctrl->reset_tx_fifo)
                 | UART_FCR_RFIFORST_SET(ctrl->reset_rx_fifo)
                 | UART_FCR_DMAE_SET(ctrl->dma_enable)
                 | UART_FCR_FIFOE_SET(ctrl->fifo_enable);
+    /* store FCR to GPR */
+    ptr->GPR =  UART_FCR_TFIFOT_SET(ctrl->tx_fifo_level)
+                | UART_FCR_RFIFOT_SET(ctrl->rx_fifo_level)
+                | UART_FCR_DMAE_SET(ctrl->dma_enable)
+                | UART_FCR_FIFOE_SET(ctrl->fifo_enable);
+#endif
 }

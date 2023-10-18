@@ -332,29 +332,22 @@ static inline void qeo_abz_set_phase_shift(QEO_Type *base, uint8_t index, double
 }
 
 /**
- * @brief QEO set line width for ABZ mode
+ * @brief QEO set max frequency for ABZ mode
  * @param [in] base QEO base address
- * @param [in] freq QEO(MOTO system) frequency
- * @param [in] us line width in us
+ * @param [in] src_freq QEO(MOTO system) frequency
+ * @param [in] freq abz signal frequency (A pulse frequency)
+ * @retval status_success or status_invalid_argument
  */
-static inline void qeo_abz_set_line_width(QEO_Type *base, uint32_t freq, uint32_t us)
-{
-    uint32_t count = freq / 1000000U * us / 4U;
-    base->ABZ.LINE_WIDTH = QEO_ABZ_LINE_WIDTH_LINE_SET(count);
-}
+hpm_stat_t qeo_abz_set_max_frequency(QEO_Type *base, uint32_t src_freq, uint32_t freq);
 
 /**
- * @brief QEO enable wdog for ABZ mode
+ * @brief QEO set wdog frequency for ABZ mode
  * @param [in] base QEO base address
- * @param [in] freq QEO(MOTO system) frequency
- * @param [in] us wdog width in us
+ * @param [in] src_freq QEO(MOTO system) frequency
+ * @param [in] freq wdog frequency
+ * @retval status_success or status_invalid_argument
  */
-static inline void qeo_abz_enable_wdog(QEO_Type *base, uint32_t freq, uint32_t us)
-{
-    uint32_t count = freq / 1000000U * us;
-    base->ABZ.WDOG_WIDTH = QEO_ABZ_WDOG_WIDTH_WIDTH_SET(count);
-    base->ABZ.MODE |= QEO_ABZ_MODE_EN_WDOG_MASK;
-}
+hpm_stat_t qeo_abz_set_wdog_frequency(QEO_Type *base, uint32_t src_freq, uint32_t freq);
 
 /**
  * @brief QEO disable wdog for ABZ mode
@@ -383,13 +376,12 @@ static inline void qeo_abz_config_reverse_edge(QEO_Type *base, bool speed_pulse_
 }
 
 /**
- * @brief QEO sync next position for ABZ mode
+ * @brief QEO sync position for ABZ mode
  * @param [in] base QEO base address
+ * @param [in] lines ABZ line counter
+ * @param [in] sync_pos the position value to be synchronized
  */
-static inline void qeo_abz_enable_postion_sync(QEO_Type *base)
-{
-    base->ABZ.POSTION_SYNC = QEO_ABZ_POSTION_SYNC_POSTION_MASK;
-}
+void qeo_abz_position_sync(QEO_Type *base, uint32_t lines, uint32_t sync_pos);
 
 /**
  * @brief QEO ABZ get default mode config

@@ -32,8 +32,8 @@ hpm_stat_t dma_setup_channel(DMAV2_Type *ptr, uint8_t ch_num, dma_channel_config
 
     dma_clear_transfer_status(ptr, ch_num);
     tmp = DMAV2_CHCTRL_CTRL_INFINITELOOP_SET(ch->en_infiniteloop)
-        | DMAV2_CHCTRL_CTRL_HANDSHAKEOPT_SET(ch->en_handshake_trans_all_data)
-        | DMAV2_CHCTRL_CTRL_BURSTOPT_SET(ch->en_burst_using_new_trans_count)
+        | DMAV2_CHCTRL_CTRL_HANDSHAKEOPT_SET(ch->handshake_opt)
+        | DMAV2_CHCTRL_CTRL_BURSTOPT_SET(ch->burst_opt)
         | DMAV2_CHCTRL_CTRL_PRIORITY_SET(ch->priority)
         | DMAV2_CHCTRL_CTRL_SRCBURSTSIZE_SET(ch->src_burst_size)
         | DMAV2_CHCTRL_CTRL_SRCWIDTH_SET(ch->src_width)
@@ -55,9 +55,9 @@ hpm_stat_t dma_setup_channel(DMAV2_Type *ptr, uint8_t ch_num, dma_channel_config
 void dma_default_channel_config(DMAV2_Type *ptr, dma_channel_config_t *ch)
 {
     ch->en_infiniteloop = false;
-    ch->en_handshake_trans_all_data = false;
-    ch->en_burst_using_new_trans_count = false;
-    ch->priority = 0;
+    ch->handshake_opt = DMA_HANDSHAKE_OPT_ONE_BURST;
+    ch->burst_opt = DMA_SRC_BURST_OPT_STANDAND_SIZE;
+    ch->priority = DMA_CHANNEL_PRIORITY_LOW;
     ch->src_mode = DMA_HANDSHAKE_MODE_NORMAL;
     ch->dst_mode = DMA_HANDSHAKE_MODE_NORMAL;
     ch->src_burst_size = DMA_NUM_TRANSFER_PER_BURST_1T;
@@ -91,8 +91,8 @@ hpm_stat_t dma_config_linked_descriptor(DMAV2_Type *ptr, dma_linked_descriptor_t
     descriptor->req_ctrl = DMAV2_CHCTRL_CHANREQCTRL_SRCREQSEL_SET(ch_num) | DMAV2_CHCTRL_CHANREQCTRL_DSTREQSEL_SET(ch_num);
 
     tmp = DMAV2_CHCTRL_CTRL_INFINITELOOP_SET(false)
-        | DMAV2_CHCTRL_CTRL_HANDSHAKEOPT_SET(config->en_handshake_trans_all_data)
-        | DMAV2_CHCTRL_CTRL_BURSTOPT_SET(config->en_burst_using_new_trans_count)
+        | DMAV2_CHCTRL_CTRL_HANDSHAKEOPT_SET(config->handshake_opt)
+        | DMAV2_CHCTRL_CTRL_BURSTOPT_SET(config->burst_opt)
         | DMAV2_CHCTRL_CTRL_PRIORITY_SET(config->priority)
         | DMAV2_CHCTRL_CTRL_SRCBURSTSIZE_SET(config->src_burst_size)
         | DMAV2_CHCTRL_CTRL_SRCWIDTH_SET(config->src_width)

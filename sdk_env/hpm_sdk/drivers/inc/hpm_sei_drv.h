@@ -99,6 +99,38 @@ typedef enum {
 } sei_trig_in_type_t;      /**< trig input type */
 
 /**
+ * @brief sei irq event
+ */
+typedef enum {
+    sei_irq_stall_event = SEI_CTRL_IRQ_INT_FLAG_STALL_MASK,
+    sei_irq_execpt_event = SEI_CTRL_IRQ_INT_FLAG_EXECPT_MASK,
+    sei_irq_wdog_event = SEI_CTRL_IRQ_INT_FLAG_WDOG_MASK,
+    sei_irq_instr_ptr0_start_event = SEI_CTRL_IRQ_INT_FLAG_PTR0_ST_MASK,
+    sei_irq_instr_ptr1_start_event = SEI_CTRL_IRQ_INT_FLAG_PTR1_ST_MASK,
+    sei_irq_instr_value0_start_event = SEI_CTRL_IRQ_INT_FLAG_INSTR0_ST_MASK,
+    sei_irq_instr_value1_start_event = SEI_CTRL_IRQ_INT_FLAG_INSTR1_ST_MASK,
+    sei_irq_instr_ptr0_end_event = SEI_CTRL_IRQ_INT_FLAG_PTR0_END_MASK,
+    sei_irq_instr_ptr1_end_event = SEI_CTRL_IRQ_INT_FLAG_PTR1_END_MASK,
+    sei_irq_instr_value0_end_event = SEI_CTRL_IRQ_INT_FLAG_INSTR0_END_MASK,
+    sei_irq_instr_value1_end_event = SEI_CTRL_IRQ_INT_FLAG_INSTR1_END_MASK,
+    sei_irq_trx_err_event = SEI_CTRL_IRQ_INT_FLAG_TRX_ERR_MASK,
+    sei_irq_timeout_event = SEI_CTRL_IRQ_INT_FLAG_TIMEOUT_MASK,
+    sei_irq_latch0_event = SEI_CTRL_IRQ_INT_FLAG_LATCH0_MASK,
+    sei_irq_latch1_event = SEI_CTRL_IRQ_INT_FLAG_LATCH1_MASK,
+    sei_irq_latch2_event = SEI_CTRL_IRQ_INT_FLAG_LATCH2_MASK,
+    sei_irq_latch3_event = SEI_CTRL_IRQ_INT_FLAG_LATCH3_MASK,
+    sei_irq_sample_err_event = SEI_CTRL_IRQ_INT_FLAG_SMP_ERR_MASK,
+    sei_irq_trig0_event = SEI_CTRL_IRQ_INT_FLAG_TRIGER0_MASK,
+    sei_irq_trig1_event = SEI_CTRL_IRQ_INT_FLAG_TRIGER1_MASK,
+    sei_irq_trig2_event = SEI_CTRL_IRQ_INT_FLAG_TRIGER2_MASK,
+    sei_irq_trig3_event = SEI_CTRL_IRQ_INT_FLAG_TRIGER3_MASK,
+    sei_irq_trig0_err_event = SEI_CTRL_IRQ_INT_FLAG_TRG_ERR0_MASK,
+    sei_irq_trig1_err_event = SEI_CTRL_IRQ_INT_FLAG_TRG_ERR1_MASK,
+    sei_irq_trig2_err_event = SEI_CTRL_IRQ_INT_FLAG_TRG_ERR2_MASK,
+    sei_irq_trig3_err_event = SEI_CTRL_IRQ_INT_FLAG_TRG_ERR3_MASK,
+} sei_irq_event_t;      /**< irq event type */
+
+/**
  * @brief sei select command or data
  */
 #define SEI_SELECT_CMD true      /**< select cmd */
@@ -302,14 +334,14 @@ typedef struct {
  * @brief sei sample config structure
  */
 typedef struct {
-    bool enable_acc;
     uint8_t acc_data_idx;
-    bool enable_spd;
     uint8_t spd_data_idx;
-    bool enable_rev;
     uint8_t rev_data_idx;
-    bool enable_pos;
     uint8_t pos_data_idx;
+    bool acc_data_use_rx;      /**< true - use rx data, false - use override data */
+    bool spd_data_use_rx;      /**< true - use rx data, false - use override data */
+    bool rev_data_use_rx;      /**< true - use rx data, false - use override data */
+    bool pos_data_use_rx;      /**< true - use rx data, false - use override data */
     uint8_t latch_select;
     bool sample_once;
     uint16_t sample_window;
@@ -320,20 +352,15 @@ typedef struct {
  * @brief sei update config structure
  */
 typedef struct {
-    bool enable_acc;
     uint8_t acc_data_idx;
-    bool enable_spd;
     uint8_t spd_data_idx;
-    bool enable_rev;
     uint8_t rev_data_idx;
-    bool enable_pos;
     uint8_t pos_data_idx;
-    bool use_override_value;
-    uint32_t override_acc_value;
-    uint32_t override_spd_value;
-    uint32_t override_rev_value;
-    uint32_t override_pos_value;
-    uint32_t override_time_value;
+    bool acc_data_use_rx;      /**< true - use rx data, false - use override data */
+    bool spd_data_use_rx;      /**< true - use rx data, false - use override data */
+    bool rev_data_use_rx;      /**< true - use rx data, false - use override data */
+    bool pos_data_use_rx;      /**< true - use rx data, false - use override data */
+    bool time_use_override;    /**< true - use override data, false - use timestamp data */
     bool update_on_err;
     uint8_t latch_select;
     uint32_t data_register_select;
@@ -674,6 +701,61 @@ static inline void sei_set_sample_acc_override_value(SEI_Type *ptr, uint8_t idx,
 }
 
 /**
+ * @brief Set the SEI update position (singleturn) override value
+ * @param [in] ptr SEI base address
+ * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
+ * @param [in] data position (singleturn) override value
+ */
+static inline void sei_set_update_pos_override_value(SEI_Type *ptr, uint8_t idx, uint32_t data)
+{
+    ptr->CTRL[idx].POS.UPD_POS = data;
+}
+
+/**
+ * @brief Set the SEI update revolution (multiturn) override value
+ * @param [in] ptr SEI base address
+ * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
+ * @param [in] data revolution (multiturn) override value
+ */
+static inline void sei_set_update_rev_override_value(SEI_Type *ptr, uint8_t idx, uint32_t data)
+{
+    ptr->CTRL[idx].POS.UPD_REV = data;
+}
+
+/**
+ * @brief Set the SEI update speed override value
+ * @param [in] ptr SEI base address
+ * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
+ * @param [in] data speed override value
+ */
+static inline void sei_set_update_spd_override_value(SEI_Type *ptr, uint8_t idx, uint32_t data)
+{
+    ptr->CTRL[idx].POS.UPD_SPD = data;
+}
+
+/**
+ * @brief Set the SEI update acceleration override value
+ * @param [in] ptr SEI base address
+ * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
+ * @param [in] data acceleration override value
+ */
+static inline void sei_set_update_acc_override_value(SEI_Type *ptr, uint8_t idx, uint32_t data)
+{
+    ptr->CTRL[idx].POS.UPD_ACC = data;
+}
+
+/**
+ * @brief Set the SEI update time override value
+ * @param [in] ptr SEI base address
+ * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
+ * @param [in] data time override value
+ */
+static inline void sei_set_update_time_override_value(SEI_Type *ptr, uint8_t idx, uint32_t data)
+{
+    ptr->CTRL[idx].POS.UPD_TIME = data;
+}
+
+/**
  * @brief Set the SEI irq match pointer0
  * @param [in] ptr SEI base address
  * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
@@ -721,33 +803,7 @@ static inline void sei_set_irq_match_instr1_value(SEI_Type *ptr, uint8_t idx, ui
  * @brief Set the SEI irq enable or disable
  * @param [in] ptr SEI base address
  * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
- * @param [in] irq_mask irq mask
- *  @arg SEI_CTRL_IRQ_INT_EN_STALL_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_EXECPT_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_WDOG_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_PTR0_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_PTR1_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_INSTR0_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_INSTR1_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_PTR0_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_PTR1_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_INSTR0_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_INSTR1_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRX_ERR_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TIMEOUT_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_LATCH0_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_LATCH1_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_LATCH2_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_LATCH3_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_SMP_ERR_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRIGER0_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRIGER1_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRIGER2_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRIGER3_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRG_ERR0_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRG_ERR1_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRG_ERR2_MASK
- *  @arg SEI_CTRL_IRQ_INT_EN_TRG_ERR3_MASK
+ * @param [in] irq_mask irq mask, @ref sei_irq_event_t
  * @param [in] enable enable or disable
  *  @arg true enable
  *  @arg false disable
@@ -765,33 +821,8 @@ static inline void sei_set_irq_enable(SEI_Type *ptr, uint8_t idx, uint32_t irq_m
  * @brief Get the SEI irq status
  * @param [in] ptr SEI base address
  * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
- * @param [in] irq_mask irq mask
- *  @arg SEI_CTRL_IRQ_INT_FLAG_STALL_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_EXECPT_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_WDOG_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR0_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR1_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR0_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR1_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR0_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR1_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR0_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR1_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRX_ERR_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TIMEOUT_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH0_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH1_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH2_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH3_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_SMP_ERR_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER0_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER1_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER2_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER3_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR0_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR1_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR2_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR3_MASK
+ * @param [in] irq_mask irq mask, @ref sei_irq_event_t
+ *
  * @retval true-has irq req, false-no irq req.
  */
 static inline bool sei_get_irq_status(SEI_Type *ptr, uint8_t idx, uint32_t irq_mask)
@@ -803,33 +834,7 @@ static inline bool sei_get_irq_status(SEI_Type *ptr, uint8_t idx, uint32_t irq_m
  * @brief Clear the SEI irq flag
  * @param [in] ptr SEI base address
  * @param [in] idx SEI ctrl index, such as SEI_CTRL_0, SEI_CTRL_1, etc.
- * @param [in] irq_mask irq mask
- *  @arg SEI_CTRL_IRQ_INT_FLAG_STALL_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_EXECPT_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_WDOG_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR0_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR1_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR0_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR1_ST_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR0_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_PTR1_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR0_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_INSTR1_END_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRX_ERR_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TIMEOUT_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH0_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH1_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH2_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_LATCH3_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_SMP_ERR_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER0_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER1_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER2_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRIGER3_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR0_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR1_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR2_MASK
- *  @arg SEI_CTRL_IRQ_INT_FLAG_TRG_ERR3_MASK
+ * @param [in] irq_mask irq mask, @ref sei_irq_event_t
  */
 static inline void sei_clear_irq_flag(SEI_Type *ptr, uint8_t idx, uint32_t irq_mask)
 {

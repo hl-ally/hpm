@@ -1,4 +1,4 @@
-# SEI SLAVE: SIMULATE BISSC ENCODER
+# SEI Slave: Simulate BISSC Encoder
 
 ## 概述
 

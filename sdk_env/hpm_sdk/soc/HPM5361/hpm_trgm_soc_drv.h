@@ -55,8 +55,8 @@ typedef enum  {
 typedef enum {
     trgm_pos_matrix_in_from_sei_pos0 = 0,
     trgm_pos_matrix_in_from_sei_pos1 = 1,
-    trgm_pos_matrix_in_from_qeo0 = 2,
-    trgm_pos_matrix_in_from_qeo1 = 3,
+    trgm_pos_matrix_in_from_qei0 = 2,
+    trgm_pos_matrix_in_from_qei1 = 3,
     trgm_pos_matrix_in_from_mmc0_pos0 = 4,
     trgm_pos_matrix_in_from_mmc0_pos1 = 5,
     trgm_pos_matrix_in_from_mmc1_pos0 = 6,

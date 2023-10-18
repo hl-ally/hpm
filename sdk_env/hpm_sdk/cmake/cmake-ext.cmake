@@ -165,7 +165,9 @@ endfunction()
 
 function(add_subdirectory_ifdef feature)
     if((${feature}) AND (NOT ${${feature}} EQUAL 0))
-        add_subdirectory(${ARGN})
+        foreach(d ${ARGN})
+            add_subdirectory(${d})
+        endforeach()
     endif()
 endfunction()
 
@@ -399,4 +401,17 @@ function(sdk_gcc_src)
         target_sources(${HPM_SDK_GCC_LIB} PRIVATE ${path})
     endforeach()
 endfunction()
+
+function(get_app_min_sdk_version app_yaml result)
+    execute_process(
+        COMMAND
+        ${PYTHON_EXECUTABLE}
+        ${HPM_SDK_BASE}/scripts/get_min_sdk_version.py
+        ${app_yaml}
+        OUTPUT_VARIABLE r
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+    set(${result} ${r} PARENT_SCOPE)
+endfunction()
+
 

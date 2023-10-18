@@ -316,6 +316,13 @@ extern "C"
     void clock_remove_from_group(clock_name_t clock_name, uint32_t group);
 
     /**
+     * @brief Check IP in specified group
+     * @param[in] clock_name IP clock name
+     * @return true if in group, false if not in group
+     */
+    bool clock_check_in_group(clock_name_t clock_name, uint32_t group);
+
+    /**
      * @brief Disconnect the clock group from specified CPU
      * @param[in] group clock group index, value value is 0/1/2/3
      * @param[in] cpu CPU index, valid value is 0/1

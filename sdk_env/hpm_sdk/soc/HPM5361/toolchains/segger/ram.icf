@@ -11,8 +11,6 @@ define region ILM = [from 0x00000000 size 128k];    /* ILM */
 define region DLM = [from 0x00080000 size 128k];    /* DLM */
 define region AHB_SRAM = [from 0xF0400000 size 32k];
 
-assert (__STACKSIZE__ + __HEAPSIZE__) <= 128k with error "stack and heap total size larger than 128k";
-
 /* Blocks */
 define block vectors with fixed order       { section .vector_table, section .isr_vector };
 define block vectors_s with fixed order     { section .vector_s_table, section .isr_s_vector };

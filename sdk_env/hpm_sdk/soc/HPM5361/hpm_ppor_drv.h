@@ -11,9 +11,7 @@
 
 typedef enum {
     ppor_reset_brownout = 1 << 0,
-    ppor_reset_temperature = 1 << 1,
     ppor_reset_debug = 1 << 4,
-    ppor_reset_jtag = 1 << 5,
     ppor_reset_wdog0 = 1 << 16,
     ppor_reset_wdog1 = 1 << 17,
     ppor_reset_pmic_wdog = 1 << 24,

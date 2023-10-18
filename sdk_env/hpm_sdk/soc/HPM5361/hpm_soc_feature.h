@@ -38,19 +38,6 @@
 #define PCFG_SOC_DCDC_MAX_VOLTAGE_IN_MV (1375U)
 
 /*
- * I2S Section
- */
-#define I2S_SOC_MAX_CHANNEL_NUM (16U)
-#define I2S_SOC_MAX_TX_CHANNEL_NUM (8U)
-#define PDM_I2S HPM_I2S0
-#define DAO_I2S HPM_I2S1
-#define PDM_SOC_SAMPLE_RATE_IN_HZ (16000U)
-#define VAD_SOC_SAMPLE_RATE_IN_HZ (16000U)
-#define DAO_SOC_SAMPLE_RATE_IN_HZ (48000U)
-#define DAO_SOC_PDM_SAMPLE_RATE_RATIO (3U)
-#define DAO_SOC_VAD_SAMPLE_RATE_RATIO (3U)
-
-/*
  * PLLCTL Section
  */
 #define PLLCTL_SOC_PLL_MAX_COUNT (2U)
@@ -73,7 +60,6 @@
  */
 #define DMA_SOC_TRANSFER_WIDTH_MAX(x) (DMA_TRANSFER_WIDTH_WORD)
 #define DMA_SOC_TRANSFER_PER_BURST_MAX(x) (DMA_NUM_TRANSFER_PER_BURST_128T)
-#define DMA_SOC_BUS_NUM (1U)
 #define DMA_SOC_CHANNEL_NUM (32U)
 #define DMA_SOC_MAX_COUNT (1U)
 #define DMA_SOC_CHN_TO_DMAMUX_CHN(x, n) (DMAMUX_MUXCFG_HDMA_MUX0 + n)
@@ -111,7 +97,6 @@
 #define ADC_SOC_DMA_ADDR_ALIGNMENT                 (4U)
 #define ADC_SOC_CONFIG_INTEN_CHAN_BIT_SIZE         (8U)
 #define ADC_SOC_BUSMODE_ENABLE_CTRL_SUPPORT        (1U)
-#define ADC_SOC_MOTO_ENABLE_CTRL_SUPPORT           (1U)
 #define ADC_SOC_PREEMPT_ENABLE_CTRL_SUPPORT        (1U)
 #define ADC_SOC_SEQ_MAX_DMA_BUFF_LEN_IN_4BYTES     (16777216U)
 #define ADC_SOC_PMT_MAX_DMA_BUFF_LEN_IN_4BYTES     (48U)
@@ -142,7 +127,7 @@
 /*
  * SOC Privilege mdoe
  */
-#define SOC_HAS_S_MODE              (1U)
+#define SOC_HAS_S_MODE              (0U)
 
 /*
  * DAC Section
@@ -159,17 +144,21 @@
 #define UART_SOC_FIFO_SIZE       (16U)
 #define UART_SOC_HAS_RXLINE_IDLE_DETECTION (1U)
 #define UART_SOC_HAS_RXEN_CFG    (1U)
-#define UART_SOC_HAS_NEW_FIFO_THR (1U)
+#define UART_SOC_HAS_FINE_FIFO_THR (1U)
+#define UART_SOC_HAS_FCCR_REG     (1U) /* has FCRR register */
 #define UART_SOC_HAS_TXLINE_IDLE_DETECTION (1U)
 #define UART_SOC_HAS_ADDR_MATCH   (1U)
+#define UART_SOC_HAS_IIR2_REG     (1U) /* has IIR2 register */
+#define UART_SOC_HAS_TRIG_MODE    (1U)
 
 /*
  * SPI Section
  */
 #define SPI_SOC_TRANSFER_COUNT_MAX  (0xFFFFFFFFU)
-#define SPI_SOC_FIFO_DEPTH          (4U)
+#define SPI_SOC_FIFO_DEPTH          (8U)
 #define SPI_SOC_HAS_NEW_TRANS_COUNT (1U)
 #define SPI_SOC_HAS_CS_SELECT       (1U)
+#define SPI_SOC_SUPPORT_DIRECTIO    (1U)
 
 /*
  * OTP Section
@@ -212,6 +201,16 @@
  * Sync Timer
  */
 #define SYNT_SOC_HAS_TIMESTAMP             (1U)
+
+/*
+ * GPIO
+ */
+#define GPIO_SOC_HAS_EDGE_BOTH_INTERRUPT   (1U)
+
+/**
+ * OPAMP
+ */
+#define OPAMP_SOC_HAS_MAX_PRESET_CHN_NUM    (7U)
 
 
 #endif /* HPM_SOC_FEATURE_H */

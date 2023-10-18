@@ -1,4 +1,4 @@
-# SEI MASTER: CONNECT SSI ENCODER
+# SEI Master: Connect SSI Encoder
 
 ## Overview
 

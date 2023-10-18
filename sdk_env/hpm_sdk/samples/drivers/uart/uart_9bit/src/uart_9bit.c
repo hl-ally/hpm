@@ -71,10 +71,6 @@ int main(void)
     config.baudrate = 115200U;
     config.src_freq_in_hz = clock_get_frequency(TEST_UART_CLK_NAME);
     config.fifo_enable = true;
-    config.using_new_fifo_thr = true;
-    config.rx_fifo_level = uart_fifo_16_bytes;
-    config.tx_fifo_level = uart_fifo_16_bytes;
-
     stat = uart_init(TEST_UART, &config);
     if (stat != status_success) {
         /* uart failed to be initialized */

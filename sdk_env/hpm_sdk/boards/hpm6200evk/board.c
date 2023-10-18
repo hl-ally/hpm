@@ -226,10 +226,62 @@ void board_timer_create(uint32_t ms, board_timer_cb cb)
 void board_i2c_bus_clear(I2C_Type *ptr)
 {
     init_i2c_pins_as_gpio(ptr);
+    if (ptr == BOARD_APP_I2C_BASE) {
+        gpio_set_pin_input(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SDA_GPIO_INDEX, BOARD_I2C_SDA_GPIO_PIN);
+        gpio_set_pin_input(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN);
+        if (!gpio_read_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN)) {
+            printf("CLK is low, please power cycle the board\n");
+            while (1) {
+            }
+        }
+        if (!gpio_read_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SDA_GPIO_INDEX, BOARD_I2C_SDA_GPIO_PIN)) {
+            printf("SDA is low, try to issue I2C bus clear\n");
+        } else {
+            printf("I2C bus is ready\n");
+            return;
+        }
+
+        gpio_set_pin_output(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN);
+        while (1) {
+            for (uint32_t i = 0; i < 9; i++) {
+                gpio_write_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN, 1);
+                board_delay_ms(10);
+                gpio_write_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN, 0);
+                board_delay_ms(10);
+            }
+            board_delay_ms(100);
+        }
+        printf("I2C bus is cleared\n");
+    }
 }
 
 void board_init_i2c(I2C_Type *ptr)
 {
+    i2c_config_t config;
+    hpm_stat_t stat;
+    uint32_t freq;
+    if (ptr == NULL) {
+        return;
+    }
+
+    board_i2c_bus_clear(ptr);
+    init_i2c_pins(ptr);
+    clock_add_to_group(clock_i2c0, 0);
+    clock_add_to_group(clock_i2c1, 0);
+    clock_add_to_group(clock_i2c2, 0);
+    clock_add_to_group(clock_i2c3, 0);
+    /* Configure the I2C clock to 24MHz */
+    clock_set_source_divider(BOARD_APP_I2C_CLK_NAME, clk_src_osc24m, 1U);
+
+    config.i2c_mode = i2c_mode_normal;
+    config.is_10bit_addressing = false;
+    freq = clock_get_frequency(BOARD_APP_I2C_CLK_NAME);
+    stat = i2c_init_master(ptr, freq, &config);
+    if (stat != status_success) {
+        printf("failed to initialize i2c 0x%lx\n", (uint32_t) ptr);
+        while (1) {
+        }
+    }
 }
 
 uint32_t board_init_spi_clock(SPI_Type *ptr)
@@ -485,19 +537,16 @@ void board_init_clock(void)
     /* Bump up DCDC voltage to 1275mv */
     pcfg_dcdc_set_voltage(HPM_PCFG, 1275);
 
-    /* Configure CPU to 600MHz, AXI/AHB to 200MHz */
-    sysctl_config_cpu0_domain_clock(HPM_SYSCTL, clk_src_pll1_clk0, 1, 3, 3);
     /* Connect CAN2/CAN3 to pll0clk0*/
     clock_set_source_divider(clock_can2, clk_src_pll0_clk0, 1);
     clock_set_source_divider(clock_can3, clk_src_pll0_clk0, 1);
 
+    /* Configure CPU to 600MHz, AXI/AHB to 200MHz */
+    sysctl_config_cpu0_domain_clock(HPM_SYSCTL, clock_source_pll1_clk0, 1, 3, 3);
     /* Configure PLL1_CLK0 Post Divider to 1 */
     pllctlv2_set_postdiv(HPM_PLLCTLV2, 1, 0, 0);
     pllctlv2_init_pll_with_freq(HPM_PLLCTLV2, 1, 600000000);
     clock_update_core_clock();
-
-    /* Configure AHB to 200MHz */
-    clock_set_source_divider(clock_ahb, clk_src_pll1_clk1, 2);
 
     /* Configure mchtmr to 24MHz */
     clock_set_source_divider(clock_mchtmr0, clk_src_osc24m, 1);

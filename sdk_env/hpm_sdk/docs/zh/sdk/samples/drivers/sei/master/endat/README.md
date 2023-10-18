@@ -1,8 +1,8 @@
-# SEI SLAVE: CONNECT ENDAT ENCODER
+# SEI Master: Connect ENDAT Encoder
 
 ## 概述
 
-该工程主要演示通过SEI接口获取Endat编码器位置数据，自动计算采样/更新延时，并通过串口将信息打印出来。
+该工程主要演示通过SEI接口获取ENDAT编码器位置数据，自动计算采样/更新延时，并通过串口将信息打印出来。
 
 ## 配置
 

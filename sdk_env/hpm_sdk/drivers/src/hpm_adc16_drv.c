@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 HPMicro
+ * Copyright (c) 2021-2023 HPMicro
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -10,6 +10,7 @@
 
 void adc16_get_default_config(adc16_config_t *config)
 {
+    config->res                = adc16_res_16_bits;
     config->conv_mode          = adc16_conv_mode_oneshot;
     config->adc_clk_div        = adc16_clock_divider_1;
     config->conv_duration      = 0;
@@ -24,8 +25,9 @@ void adc16_get_channel_default_config(adc16_channel_config_t *config)
     config->ch                 = 0;
     config->sample_cycle       = 10;
     config->sample_cycle_shift = 0;
-    config->thshdh             = 0;
-    config->thshdl             = 0;
+    config->thshdh             = 0xffff;
+    config->thshdl             = 0x0000;
+    config->wdog_int_en        = false;
 }
 
 static hpm_stat_t adc16_do_calibration(ADC16_Type *ptr)
@@ -142,6 +144,14 @@ static hpm_stat_t adc16_do_calibration(ADC16_Type *ptr)
     return status_success;
 }
 
+hpm_stat_t adc16_deinit(ADC16_Type *ptr)
+{
+    /* disable all interrupts */
+    ptr->INT_EN = 0;
+
+    return status_success;
+}
+
 hpm_stat_t adc16_init(ADC16_Type *ptr, adc16_config_t *config)
 {
     uint32_t clk_div_temp;
@@ -163,10 +173,7 @@ hpm_stat_t adc16_init(ADC16_Type *ptr, adc16_config_t *config)
                   | ADC16_ADC_CFG0_PORT3_REALTIME_SET(config->port3_realtime);
 
     /* Set wait_dis */
-    if (config->conv_mode == adc16_conv_mode_oneshot) {
-        /* Set wait_dis */
-        ptr->BUF_CFG0 = ADC16_BUF_CFG0_WAIT_DIS_SET(config->wait_dis);
-    }
+    ptr->BUF_CFG0 = ADC16_BUF_CFG0_WAIT_DIS_SET(config->wait_dis);
 
     /* Get input clock divider */
     clk_div_temp = ADC16_CONV_CFG1_CLOCK_DIVIDER_GET(ptr->CONV_CFG1);
@@ -210,6 +217,26 @@ hpm_stat_t adc16_init_channel(ADC16_Type *ptr, adc16_channel_config_t *config)
     /* Set ADC sample cycles */
     ptr->SAMPLE_CFG[config->ch] = ADC16_SAMPLE_CFG_SAMPLE_CLOCK_NUMBER_SHIFT_SET(config->sample_cycle_shift)
                                 | ADC16_SAMPLE_CFG_SAMPLE_CLOCK_NUMBER_SET(config->sample_cycle);
+
+    /* Enable watchdog interrupt */
+    if (config->wdog_int_en) {
+        ptr->INT_EN |= 1 << config->ch;
+    }
+
+
+    return status_success;
+}
+
+hpm_stat_t adc16_get_channel_threshold(ADC16_Type *ptr, uint8_t ch, adc16_channel_threshold_t *config)
+{
+    /* Check the specified channel number */
+    if (ADC16_IS_CHANNEL_INVALID(ch)) {
+        return status_invalid_argument;
+    }
+
+    config->ch     = ch;
+    config->thshdh = ADC16_PRD_CFG_PRD_THSHD_CFG_THSHDH_GET(ptr->PRD_CFG[ch].PRD_THSHD_CFG);
+    config->thshdl = ADC16_PRD_CFG_PRD_THSHD_CFG_THSHDL_GET(ptr->PRD_CFG[ch].PRD_THSHD_CFG);
 
     return status_success;
 }

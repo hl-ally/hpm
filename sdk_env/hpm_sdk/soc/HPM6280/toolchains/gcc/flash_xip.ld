@@ -76,20 +76,17 @@ SECTIONS
 
         KEEP (*(.init))
         KEEP (*(.fini))
-        . = ALIGN(8);
-    } > XPI0
 
-    .rel : {
-        KEEP(*(.rel*))
-    } > XPI0
-
-    /* section information for usbh class */
-    .usbh_class_info : {
+        /* section information for usbh class */
         . = ALIGN(8);
         __usbh_class_info_start__ = .;
         KEEP(*(.usbh_class_info))
         __usbh_class_info_end__ = .;
         . = ALIGN(8);
+    } > XPI0
+
+    .rel : {
+        KEEP(*(.rel*))
     } > XPI0
 
     PROVIDE (__etext = .);
@@ -249,11 +246,11 @@ SECTIONS
         PROVIDE (_stack_safe = .);
     } > DLM
 
-    __fw_size__ = (etext - __app_load_addr__) + SIZEOF(.data) + SIZEOF(.fast) + SIZEOF(.tdata) + SIZEOF(.noncacheable.init);
     __noncacheable_start__ = ORIGIN(AXI_SRAM_NONCACHEABLE);
     __noncacheable_end__ = ORIGIN(AXI_SRAM_NONCACHEABLE) + LENGTH(AXI_SRAM_NONCACHEABLE);
     __share_mem_start__ = ORIGIN(SHARE_RAM);
     __share_mem_end__ = ORIGIN(SHARE_RAM) + LENGTH(SHARE_RAM);
 
-    ASSERT((STACK_SIZE + HEAP_SIZE) <= 128K, "stack and heap total size larger than 128k")
+    __fw_size__ = SIZEOF(.start) + SIZEOF(.vectors) + SIZEOF(.rel) + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.fast) + SIZEOF(.tdata) + SIZEOF(.noncacheable.init);
+    ASSERT(__fw_size__ <= LENGTH(XPI0), "******  FAILED! XPI0 has not enough space!  ******")
 }

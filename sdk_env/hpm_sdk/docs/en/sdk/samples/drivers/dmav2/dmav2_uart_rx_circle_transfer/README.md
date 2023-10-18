@@ -1,4 +1,4 @@
-# DMAV2 circularly receives uart data example
+# DMAV2 Circularly Receives Uart Data
 
 ## Overview
 

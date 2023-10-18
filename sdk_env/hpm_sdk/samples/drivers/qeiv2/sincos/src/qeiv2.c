@@ -13,14 +13,14 @@
 #include "hpm_adc16_drv.h"
 #include "hpm_qeiv2_drv.h"
 
-#ifndef BOARD_APP_QEI_BASE
-#define BOARD_APP_QEI_BASE BOARD_BLDC_QEI_BASE
+#ifndef APP_QEI_BASE
+#define APP_QEI_BASE BOARD_BLDC_QEIV2_BASE
 #endif
-#ifndef BOARD_APP_QEI_IRQ
-#define BOARD_APP_QEI_IRQ  BOARD_BLDC_QEI_IRQ
+#ifndef APP_QEI_IRQ
+#define APP_QEI_IRQ  BOARD_BLDC_QEIV2_IRQ
 #endif
-#ifndef BOARD_APP_MOTOR_CLK
-#define BOARD_APP_MOTOR_CLK BOARD_BLDC_QEI_CLOCK_SOURCE
+#ifndef APP_MOTOR_CLK
+#define APP_MOTOR_CLK BOARD_BLDC_QEI_CLOCK_SOURCE
 #endif
 
 #define BOARD_ADC_COS_BASE  HPM_ADC0
@@ -59,9 +59,9 @@ int main(void)
     for (uint16_t i = 0; i < 500; i++) {
         s_record_data[0][i] = s_cos_adc_data[0] & 0xFFFF;
         s_record_data[1][i] = s_sin_adc_data[0] & 0xFFFF;
-        s_record_data[2][i] = qeiv2_get_postion(BOARD_APP_QEI_BASE);
-        s_record_data[3][i] = qeiv2_get_angle(BOARD_APP_QEI_BASE);
-        s_record_data[4][i] = qeiv2_get_phase_cnt(BOARD_APP_QEI_BASE);
+        s_record_data[2][i] = qeiv2_get_postion(APP_QEI_BASE);
+        s_record_data[3][i] = qeiv2_get_angle(APP_QEI_BASE);
+        s_record_data[4][i] = qeiv2_get_phase_cnt(APP_QEI_BASE);
     }
 
     for (uint16_t i = 0; i < 500; i++) {
@@ -82,27 +82,27 @@ int main(void)
 
 void isr_qei(void)
 {
-    uint32_t status = qeiv2_get_status(BOARD_APP_QEI_BASE);
+    uint32_t status = qeiv2_get_status(APP_QEI_BASE);
 
-    qeiv2_clear_status(BOARD_APP_QEI_BASE, status);
+    qeiv2_clear_status(APP_QEI_BASE, status);
     if ((status & QEIV2_EVENT_POSITION_COMPARE_FLAG_MASK) != 0) {
         if (!s_qei_data_ready) {
             s_qei_data_ready = true;
-            z = qeiv2_get_count_on_read_event(BOARD_APP_QEI_BASE, qeiv2_counter_type_z);
-            ph = qeiv2_get_count_on_read_event(BOARD_APP_QEI_BASE, qeiv2_counter_type_phase);
-            pos = qeiv2_get_count_on_read_event(BOARD_APP_QEI_BASE, qeiv2_counter_type_speed);
-            ang = qeiv2_get_count_on_read_event(BOARD_APP_QEI_BASE, qeiv2_counter_type_timer);
+            z = qeiv2_get_count_on_read_event(APP_QEI_BASE, qeiv2_counter_type_z);
+            ph = qeiv2_get_count_on_read_event(APP_QEI_BASE, qeiv2_counter_type_phase);
+            pos = qeiv2_get_count_on_read_event(APP_QEI_BASE, qeiv2_counter_type_speed);
+            ang = qeiv2_get_count_on_read_event(APP_QEI_BASE, qeiv2_counter_type_timer);
         }
     }
 }
-SDK_DECLARE_EXT_ISR_M(BOARD_APP_QEI_IRQ, isr_qei)
+SDK_DECLARE_EXT_ISR_M(APP_QEI_IRQ, isr_qei)
 
 static void pwm_init(void)
 {
     pwm_cmp_config_t pwm_cmp_cfg;
     pwm_output_channel_t pwm_output_ch_cfg;
 
-    pwm_set_reload(HPM_PWM0, 0, clock_get_frequency(BOARD_APP_MOTOR_CLK) / PWM_FREQ - 1);
+    pwm_set_reload(HPM_PWM0, 0, clock_get_frequency(APP_MOTOR_CLK) / PWM_FREQ - 1);
 
     /* Set a comparator */
     memset(&pwm_cmp_cfg, 0x00, sizeof(pwm_cmp_config_t));
@@ -111,7 +111,7 @@ static void pwm_init(void)
     pwm_cmp_cfg.update_trigger = pwm_shadow_register_update_on_shlk;
 
     /* Select comp8 and trigger at the middle of a pwm cycle */
-    pwm_cmp_cfg.cmp = clock_get_frequency(BOARD_APP_MOTOR_CLK) / (PWM_FREQ * 2) - 1;
+    pwm_cmp_cfg.cmp = clock_get_frequency(APP_MOTOR_CLK) / (PWM_FREQ * 2) - 1;
     pwm_config_cmp(HPM_PWM0, 8, &pwm_cmp_cfg);
 
     /* Issue a shadow lock */
@@ -187,6 +187,7 @@ static void adc_init(void)
 static void qeiv2_init(void)
 {
     qeiv2_adc_config_t adc_config;
+    qeiv2_pos_cmp_match_config_t pos_cmp_config = {0};
 
     trgm_adc_matrix_config(BOARD_BLDC_QEI_TRGM, BOARD_BLDC_QEI_ADC_MATRIX_ADCX, trgm_adc_matrix_in_from_adc0, false);
     trgm_adc_matrix_config(BOARD_BLDC_QEI_TRGM, BOARD_BLDC_QEI_ADC_MATRIX_ADCY, trgm_adc_matrix_in_from_adc1, false);
@@ -196,31 +197,32 @@ static void qeiv2_init(void)
     adc_config.offset      = 0x80000000;
     adc_config.param0      = 0x4000;
     adc_config.param1      = 0;
-    qeiv2_config_adcx(BOARD_APP_QEI_BASE, &adc_config, true);
+    qeiv2_config_adcx(APP_QEI_BASE, &adc_config, true);
     adc_config.adc_select  = 1;
     adc_config.adc_channel = BOARD_ADC_SIN_CHN;
     adc_config.offset      = 0x80000000;
     adc_config.param0      = 0;
     adc_config.param1      = 0x4000;
-    qeiv2_config_adcy(BOARD_APP_QEI_BASE, &adc_config, true);
-    qeiv2_set_adc_xy_delay(BOARD_APP_QEI_BASE, 0xFFFFFF);
+    qeiv2_config_adcy(APP_QEI_BASE, &adc_config, true);
+    qeiv2_set_adc_xy_delay(APP_QEI_BASE, 0xFFFFFF);
 
-    qeiv2_reset_counter(BOARD_APP_QEI_BASE);
+    qeiv2_reset_counter(APP_QEI_BASE);
 
-    qeiv2_set_work_mode(BOARD_APP_QEI_BASE, qeiv2_work_mode_sincos);
-    qeiv2_select_spd_tmr_register_content(BOARD_APP_QEI_BASE, qeiv2_spd_tmr_as_pos_angle);
-    qeiv2_config_z_phase_counter_mode(BOARD_APP_QEI_BASE, qeiv2_z_count_inc_on_phase_count_max);
-    qeiv2_config_phmax_phparam(BOARD_APP_QEI_BASE, 128);
-    qeiv2_pause_pos_counter_on_fault(BOARD_APP_QEI_BASE, true);
+    qeiv2_set_work_mode(APP_QEI_BASE, qeiv2_work_mode_sincos);
+    qeiv2_select_spd_tmr_register_content(APP_QEI_BASE, qeiv2_spd_tmr_as_pos_angle);
+    qeiv2_config_z_phase_counter_mode(APP_QEI_BASE, qeiv2_z_count_inc_on_phase_count_max);
+    qeiv2_config_phmax_phparam(APP_QEI_BASE, 128);
+    qeiv2_pause_pos_counter_on_fault(APP_QEI_BASE, true);
 
-    intc_m_enable_irq_with_priority(BOARD_APP_QEI_IRQ, 1);
+    intc_m_enable_irq_with_priority(APP_QEI_IRQ, 1);
 
-    qeiv2_set_spd_pos_cmp_value(BOARD_APP_QEI_BASE, 0x80000000);
-    qeiv2_config_cmp_match_option(BOARD_APP_QEI_BASE, true, true, false, true, true, false, false);
-    qeiv2_enable_load_read_trigger_event(BOARD_APP_QEI_BASE, QEIV2_EVENT_POSITION_COMPARE_FLAG_MASK);
-    qeiv2_enable_irq(BOARD_APP_QEI_BASE, QEIV2_EVENT_POSITION_COMPARE_FLAG_MASK);
+    pos_cmp_config.pos_cmp_value = 0x80000000;
+    pos_cmp_config.ignore_pos_dir = true;
+    qeiv2_config_position_cmp_match_condition(APP_QEI_BASE, &pos_cmp_config);
+    qeiv2_enable_load_read_trigger_event(APP_QEI_BASE, QEIV2_EVENT_POSITION_COMPARE_FLAG_MASK);
+    qeiv2_enable_irq(APP_QEI_BASE, QEIV2_EVENT_POSITION_COMPARE_FLAG_MASK);
 
-    qeiv2_release_counter(BOARD_APP_QEI_BASE);
+    qeiv2_release_counter(APP_QEI_BASE);
 }
 
 

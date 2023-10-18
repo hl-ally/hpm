@@ -1,4 +1,4 @@
-# SPI
+# QEIV2
 
 :::{eval-rst}
 .. toctree::

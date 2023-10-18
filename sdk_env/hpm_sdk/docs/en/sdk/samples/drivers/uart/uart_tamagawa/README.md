@@ -5,12 +5,15 @@
 This example shows UART communicate with tamarawa encoder.
 In this example, configure UART sending to be triggered by hardware. UART first writes the command data, which is then saved in the FIFO. After a hardware trigger event occurs, UART will issue the command and receive the encoder's return data. After receiving the specified length of data, an interrupt is generated to complete a communication.
 
-## Port Settings
+## Note
 
-- Serial port baud rate is set to ``25000000bps``, with ``one stop bit`` and ``no parity bit``
+The Tamagawa sensor outputs RS485 signals, which requires to use a suitable RS485 to TTL module (supporting 2.5Mbps) to convert the signal and connect it to the corresponding pins of the UART.
+
 ## Board Setting
 
-- connect uart tx/rx pin to tamagawa encoder(Please refer to [Pin Description](lab_board_resource)) 
+- connect Tamagawa sensor output signals to RS485 port of the RS485 to TTL module and power to Tamagawa sensor.
+- connect uart tx/rx pin to (Please refer to [Pin Description](lab_board_resource)) to TTL port of the RS485 to TTL module.
+- according to whether the RS485 to TTL module requires a directional selection signal, choose to connect the DE pin of UART to it.
 
 ## Running the example
 

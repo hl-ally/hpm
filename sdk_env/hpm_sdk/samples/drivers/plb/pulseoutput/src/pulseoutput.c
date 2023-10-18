@@ -17,7 +17,7 @@ uint32_t reload;
 
 void plb_set_counter(uint32_t val)
 {
-    plb_type_b_set_cmp_val(BOARD_PLB_COUNTER, BOARD_PLB_CHN, plb_type_b_cmp0, val);
+    plb_type_b_set_cmp_val(BOARD_PLB_COUNTER, BOARD_PLB_CHN, plb_type_b_cmp0, val + 1);
 }
 
 void plb_reset_counter(void)
@@ -71,7 +71,7 @@ void init_pwm_plb_trgm(TRGM_Type *ptr)
 
 
     trgm_output_cfg.invert = false;
-    trgm_output_cfg.type   = trgm_output_pulse_at_input_falling_edge;
+    trgm_output_cfg.type   = trgm_output_pulse_at_input_rising_edge;
     trgm_output_cfg.input  = BOARD_PLB_PWM_TRG;
     trgm_output_config(ptr, BOARD_PLB_IN_PWM_PULSE_TRG_NUM, &trgm_output_cfg);
 
@@ -80,8 +80,7 @@ void init_pwm_plb_trgm(TRGM_Type *ptr)
     trgm_output_cfg.input  = HPM_TRGM0_INPUT_SRC_PLB_OUT01;
     trgm_output_config(ptr, TRGM_TRGOCFG_PLB_IN_16, &trgm_output_cfg);
 
-    /* trig0 p5 */
-    trgm_output_cfg.invert = true;
+    trgm_output_cfg.invert = false;
     trgm_output_cfg.type   = trgm_output_same_as_input;
     trgm_output_cfg.input  = BOARD_PLB_OUT_TRG;
     trgm_output_config(ptr, BOARD_PLB_IO_TRG_NUM, &trgm_output_cfg);

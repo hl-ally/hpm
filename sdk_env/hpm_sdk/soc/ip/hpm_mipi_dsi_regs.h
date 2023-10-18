@@ -32,7 +32,8 @@ typedef struct {
     __RW uint32_t VID_VBP_LINES;               /* 0x58: configures the vbp period */
     __RW uint32_t VID_VFP_LINES;               /* 0x5C: configures the vfp period */
     __RW uint32_t VID_VACTIVE_LINES;           /* 0x60: configures the vertical resolution of video */
-    __R  uint8_t  RESERVED1[8];                /* 0x64 - 0x6B: Reserved */
+    __R  uint8_t  RESERVED1[4];                /* 0x64 - 0x67: Reserved */
+    __RW uint32_t CMD_MODE_CFG;                /* 0x68: This register configures several aspect of command mode operation, tearing effect, acknowledge for each packet and the speed mode to transmit each Data Type related to commands. */
     __RW uint32_t GEN_HDR;                     /* 0x6C: sets the header for new packets sent using the generic interface */
     __RW uint32_t GEN_PLD_DATA;                /* 0x70: sets the payload for packets sent using the generic interface */
     __R  uint32_t CMD_PKT_STATUS;              /* 0x74: information about the status of FIFOs related to DBI and Generic interface */
@@ -137,7 +138,7 @@ typedef struct {
 /*
  * DPI_VCID (RW)
  *
- * the DPI virtual channel id to the video mode pachets
+ * the DPI virtual channel id to the video mode packets
  */
 #define MIPI_DSI_DPI_VCID_DPI_VCID_MASK (0x3U)
 #define MIPI_DSI_DPI_VCID_DPI_VCID_SHIFT (0U)
@@ -575,6 +576,171 @@ typedef struct {
 #define MIPI_DSI_VID_VACTIVE_LINES_V_ACTIVE_LINES_SET(x) (((uint32_t)(x) << MIPI_DSI_VID_VACTIVE_LINES_V_ACTIVE_LINES_SHIFT) & MIPI_DSI_VID_VACTIVE_LINES_V_ACTIVE_LINES_MASK)
 #define MIPI_DSI_VID_VACTIVE_LINES_V_ACTIVE_LINES_GET(x) (((uint32_t)(x) & MIPI_DSI_VID_VACTIVE_LINES_V_ACTIVE_LINES_MASK) >> MIPI_DSI_VID_VACTIVE_LINES_V_ACTIVE_LINES_SHIFT)
 
+/* Bitfield definition for register: CMD_MODE_CFG */
+/*
+ * MAX_RD_PKT_SIZE (RW)
+ *
+ * This bit configures the maximum read packet size command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_MASK (0x1000000UL)
+#define MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_SHIFT (24U)
+#define MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_SHIFT) & MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_MASK) >> MIPI_DSI_CMD_MODE_CFG_MAX_RD_PKT_SIZE_SHIFT)
+
+/*
+ * DCS_LW_TX (RW)
+ *
+ * This bit configures the DCS long write packet command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_MASK (0x80000UL)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_SHIFT (19U)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_DCS_LW_TX_SHIFT)
+
+/*
+ * DCS_SR_0P_TX (RW)
+ *
+ * This bit configures the DCS short read packet with zero parameter command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_MASK (0x40000UL)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_SHIFT (18U)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_DCS_SR_0P_TX_SHIFT)
+
+/*
+ * DCS_SW_1P_TX (RW)
+ *
+ * This bit configures the DCS short write packet with one parameter command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_MASK (0x20000UL)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_SHIFT (17U)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_DCS_SW_1P_TX_SHIFT)
+
+/*
+ * DCS_SW_0P_TX (RW)
+ *
+ * This bit configures the DCS short write packet with zero parameter command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_MASK (0x10000UL)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_SHIFT (16U)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_DCS_SW_0P_TX_SHIFT)
+
+/*
+ * GEN_LW_TX (RW)
+ *
+ * This bit configures the Generic long write packet command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_MASK (0x4000U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_SHIFT (14U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_GEN_LW_TX_SHIFT)
+
+/*
+ * GEN_SR_2P_TX (RW)
+ *
+ * This bit configures the Generic short read packet with two parameters command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_MASK (0x2000U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_SHIFT (13U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_GEN_SR_2P_TX_SHIFT)
+
+/*
+ * GEN_SR_1P_TX (RW)
+ *
+ * This bit configures the Generic short read packet with two parameters command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_MASK (0x1000U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_SHIFT (12U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_GEN_SR_1P_TX_SHIFT)
+
+/*
+ * GEN_SR_0P_TX (RW)
+ *
+ * This bit configures the Generic short read packet with two parameters command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_MASK (0x800U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_SHIFT (11U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_GEN_SR_0P_TX_SHIFT)
+
+/*
+ * GEN_SW_2P_TX (RW)
+ *
+ * This bit configures the Generic short read packet with two parameters command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_MASK (0x400U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_SHIFT (10U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_GEN_SW_2P_TX_SHIFT)
+
+/*
+ * GEN_SW_1P_TX (RW)
+ *
+ * This bit configures the Generic short read packet with two parameters command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_MASK (0x200U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_SHIFT (9U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_GEN_SW_1P_TX_SHIFT)
+
+/*
+ * GEN_SW_0P_TX (RW)
+ *
+ * This bit configures the Generic short read packet with two parameters command transmission type:
+ * 0x0 (HIGHSPEED): Transition type is High Speed
+ * 0x1 (LOWPOWER): Transition type is Low Power
+ */
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_MASK (0x100U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_SHIFT (8U)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_SHIFT) & MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_MASK) >> MIPI_DSI_CMD_MODE_CFG_GEN_SW_0P_TX_SHIFT)
+
+/*
+ * ACK_RQST_EN (RW)
+ *
+ * When set to 1, this bit enables the acknowledge request after each packet transmission.
+ */
+#define MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_MASK (0x2U)
+#define MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_SHIFT (1U)
+#define MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_SHIFT) & MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_MASK) >> MIPI_DSI_CMD_MODE_CFG_ACK_RQST_EN_SHIFT)
+
+/*
+ * TEAR_FX_EN (RW)
+ *
+ * When set to 1, this bit enables the tearing effect acknowledge request.
+ */
+#define MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_MASK (0x1U)
+#define MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_SHIFT (0U)
+#define MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_SET(x) (((uint32_t)(x) << MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_SHIFT) & MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_MASK)
+#define MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_GET(x) (((uint32_t)(x) & MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_MASK) >> MIPI_DSI_CMD_MODE_CFG_TEAR_FX_EN_SHIFT)
+
 /* Bitfield definition for register: GEN_HDR */
 /*
  * GEN_WC_MSBYTE (RW)
@@ -802,15 +968,6 @@ typedef struct {
 
 /* Bitfield definition for register: HS_WR_TO_CNT */
 /*
- * PRESP_TO_MODE (RW)
- *
- */
-#define MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_MASK (0x1000000UL)
-#define MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_SHIFT (24U)
-#define MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_SET(x) (((uint32_t)(x) << MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_SHIFT) & MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_MASK)
-#define MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_GET(x) (((uint32_t)(x) & MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_MASK) >> MIPI_DSI_HS_WR_TO_CNT_PRESP_TO_MODE_SHIFT)
-
-/*
  * HS_WR_TO_CNT (RW)
  *
  * sets the period for which dwc_mipi_dsi_host keeps the link still after sending a high speed wirte operation
@@ -940,6 +1097,9 @@ typedef struct {
 /*
  * PHY_HS2LP_TIME (RW)
  *
+ * This field configures the maximum time that the D-PHY data
+ * lanes take to go from high-speed to low-power transmission
+ * measured in lane byte clock cycles
  */
 #define MIPI_DSI_PHY_TMR_CFG_PHY_HS2LP_TIME_MASK (0x3FF0000UL)
 #define MIPI_DSI_PHY_TMR_CFG_PHY_HS2LP_TIME_SHIFT (16U)
@@ -949,6 +1109,9 @@ typedef struct {
 /*
  * PHY_LP2HS_TIME (RW)
  *
+ * This field configures the maximum time that the D-PHY data
+ * lanes take to go from low-power to high-speed transmission
+ * measured in lane byte clock cycles.
  */
 #define MIPI_DSI_PHY_TMR_CFG_PHY_LP2HS_TIME_MASK (0x3FFU)
 #define MIPI_DSI_PHY_TMR_CFG_PHY_LP2HS_TIME_SHIFT (0U)
@@ -1082,6 +1245,8 @@ typedef struct {
 /*
  * PHY_STOPSTATE3LANE (R)
  *
+ * This bit indicates the status of phystopstate3lane D-PHY
+ * signal.
  */
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE3LANE_MASK (0x800U)
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE3LANE_SHIFT (11U)
@@ -1090,6 +1255,8 @@ typedef struct {
 /*
  * PHY_ULPSACTIVENOT2LANE (R)
  *
+ * This bit indicates the status of ulpsactivenot2lane D-PHY
+ * signa
  */
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOT2LANE_MASK (0x400U)
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOT2LANE_SHIFT (10U)
@@ -1098,6 +1265,8 @@ typedef struct {
 /*
  * PHY_STOPSTATE2LANE (R)
  *
+ * This bit indicates the status of phystopstate2lane D-PHY
+ * signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE2LANE_MASK (0x200U)
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE2LANE_SHIFT (9U)
@@ -1106,6 +1275,8 @@ typedef struct {
 /*
  * PHY_ULPSACTIVENOT1LANE (R)
  *
+ * This bit indicates the status of ulpsactivenot1lane D-PHY
+ * signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOT1LANE_MASK (0x100U)
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOT1LANE_SHIFT (8U)
@@ -1114,6 +1285,8 @@ typedef struct {
 /*
  * PHY_STOPSTATE1LANE (R)
  *
+ * This bit indicates the status of phystopstate1lane D-PHY
+ * signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE1LANE_MASK (0x80U)
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE1LANE_SHIFT (7U)
@@ -1122,6 +1295,7 @@ typedef struct {
 /*
  * PHY_RXULPSESC0LANE (R)
  *
+ * This bit indicates the status of rxulpsesc0lane D-PHY signa
  */
 #define MIPI_DSI_PHY_STATUS_PHY_RXULPSESC0LANE_MASK (0x40U)
 #define MIPI_DSI_PHY_STATUS_PHY_RXULPSESC0LANE_SHIFT (6U)
@@ -1130,6 +1304,8 @@ typedef struct {
 /*
  * PHY_ULPSACTIVENOT0LANE (R)
  *
+ * This bit indicates the status of ulpsactivenot0lane D-PHY
+ * signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOT0LANE_MASK (0x20U)
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOT0LANE_SHIFT (5U)
@@ -1138,6 +1314,8 @@ typedef struct {
 /*
  * PHY_STOPSTATE0LANE (R)
  *
+ * This bit indicates the status of phystopstate0lane D-PHY
+ * signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE0LANE_MASK (0x10U)
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATE0LANE_SHIFT (4U)
@@ -1146,6 +1324,8 @@ typedef struct {
 /*
  * PHY_ULPSACTIVENOTCLK (R)
  *
+ * This bit indicates the status of phyulpsactivenotclk D-PHY
+ * signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOTCLK_MASK (0x8U)
 #define MIPI_DSI_PHY_STATUS_PHY_ULPSACTIVENOTCLK_SHIFT (3U)
@@ -1154,6 +1334,8 @@ typedef struct {
 /*
  * PHY_STOPSTATECLKLANE (R)
  *
+ * This bit indicates the status of phystopstateclklane D-PHY
+ * signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATECLKLANE_MASK (0x4U)
 #define MIPI_DSI_PHY_STATUS_PHY_STOPSTATECLKLANE_SHIFT (2U)
@@ -1162,6 +1344,7 @@ typedef struct {
 /*
  * PHY_DIRECTION (R)
  *
+ * This bit indicates the status of phydirection D-PHY signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_DIRECTION_MASK (0x2U)
 #define MIPI_DSI_PHY_STATUS_PHY_DIRECTION_SHIFT (1U)
@@ -1170,6 +1353,7 @@ typedef struct {
 /*
  * PHY_LOCK (R)
  *
+ * This bit indicates the status of phylock D-PHY signal
  */
 #define MIPI_DSI_PHY_STATUS_PHY_LOCK_MASK (0x1U)
 #define MIPI_DSI_PHY_STATUS_PHY_LOCK_SHIFT (0U)
@@ -1179,6 +1363,7 @@ typedef struct {
 /*
  * PHY_TESTCLK (RW)
  *
+ * reserve
  */
 #define MIPI_DSI_PHY_TST_CTRL0_PHY_TESTCLK_MASK (0x2U)
 #define MIPI_DSI_PHY_TST_CTRL0_PHY_TESTCLK_SHIFT (1U)
@@ -1188,6 +1373,7 @@ typedef struct {
 /*
  * PHY_TESTCLR (RW)
  *
+ * reserve
  */
 #define MIPI_DSI_PHY_TST_CTRL0_PHY_TESTCLR_MASK (0x1U)
 #define MIPI_DSI_PHY_TST_CTRL0_PHY_TESTCLR_SHIFT (0U)
@@ -1198,6 +1384,7 @@ typedef struct {
 /*
  * PHY_TESTEN (RW)
  *
+ * reserve
  */
 #define MIPI_DSI_PHY_TST_CTRL1_PHY_TESTEN_MASK (0x10000UL)
 #define MIPI_DSI_PHY_TST_CTRL1_PHY_TESTEN_SHIFT (16U)
@@ -1207,6 +1394,7 @@ typedef struct {
 /*
  * PHY_TESTDOUT (R)
  *
+ * reserve
  */
 #define MIPI_DSI_PHY_TST_CTRL1_PHY_TESTDOUT_MASK (0xFF00U)
 #define MIPI_DSI_PHY_TST_CTRL1_PHY_TESTDOUT_SHIFT (8U)
@@ -1215,6 +1403,7 @@ typedef struct {
 /*
  * PHY_TESTDIN (RW)
  *
+ * reserve
  */
 #define MIPI_DSI_PHY_TST_CTRL1_PHY_TESTDIN_MASK (0xFFU)
 #define MIPI_DSI_PHY_TST_CTRL1_PHY_TESTDIN_SHIFT (0U)
@@ -1551,6 +1740,7 @@ typedef struct {
 /*
  * MASK_DPHY_ERRORS_4 (RW)
  *
+ * disable LP1 contention error ErrContentionLP1 from lane0
  */
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_4_MASK (0x100000UL)
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_4_SHIFT (20U)
@@ -1560,6 +1750,7 @@ typedef struct {
 /*
  * MASK_DPHY_ERRORS_3 (RW)
  *
+ * disable LP0 contention error ErrContentionLP0 from lane0
  */
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_3_MASK (0x80000UL)
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_3_SHIFT (19U)
@@ -1569,6 +1760,7 @@ typedef struct {
 /*
  * MASK_DPHY_ERRORS_2 (RW)
  *
+ * disable control error ErrControl from lane0
  */
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_2_MASK (0x40000UL)
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_2_SHIFT (18U)
@@ -1578,6 +1770,7 @@ typedef struct {
 /*
  * MASK_DPHY_ERRORS_1 (RW)
  *
+ * disable ErrSyncEsc low-power data transmission synchronization error from lane 0
  */
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_1_MASK (0x20000UL)
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_1_SHIFT (17U)
@@ -1587,6 +1780,7 @@ typedef struct {
 /*
  * MASK_DPHY_ERRORS_0 (RW)
  *
+ * disable ErrEsc escape entry error from lane0
  */
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_0_MASK (0x10000UL)
 #define MIPI_DSI_INT_MSK0_MASK_DPHY_ERRORS_0_SHIFT (16U)
@@ -1596,6 +1790,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR_15 (RW)
  *
+ * disable the DSI protocal violation from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_15_MASK (0x8000U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_15_SHIFT (15U)
@@ -1605,6 +1800,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR_14 (RW)
  *
+ * disable the reserved from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_14_MASK (0x4000U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_14_SHIFT (14U)
@@ -1614,6 +1810,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR_13 (RW)
  *
+ * disable the invalid transmission length from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_13_MASK (0x2000U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_13_SHIFT (13U)
@@ -1623,6 +1820,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR_12 (RW)
  *
+ * disable the dsi vc id invalid from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_12_MASK (0x1000U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_12_SHIFT (12U)
@@ -1632,6 +1830,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR_11 (RW)
  *
+ * disable the not recongnized dsi data type from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_11_MASK (0x800U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_11_SHIFT (11U)
@@ -1641,6 +1840,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR_10 (RW)
  *
+ * disable the checksum error from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_10_MASK (0x400U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_10_SHIFT (10U)
@@ -1650,6 +1850,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR_9 (RW)
  *
+ * disable the ECC error multi-bit from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_9_MASK (0x200U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR_9_SHIFT (9U)
@@ -1659,6 +1860,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR8 (RW)
  *
+ * disable the ecc error sigle-bit from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR8_MASK (0x100U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR8_SHIFT (8U)
@@ -1668,6 +1870,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR7 (RW)
  *
+ * disable the reserved from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR7_MASK (0x80U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR7_SHIFT (7U)
@@ -1677,6 +1880,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR6 (RW)
  *
+ * disable the false control error fro the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR6_MASK (0x40U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR6_SHIFT (6U)
@@ -1686,6 +1890,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR5 (RW)
  *
+ * disable the peripheral timeout error from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR5_MASK (0x20U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR5_SHIFT (5U)
@@ -1695,6 +1900,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR4 (RW)
  *
+ * disable the LP transmit sync error from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR4_MASK (0x10U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR4_SHIFT (4U)
@@ -1704,6 +1910,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR3 (RW)
  *
+ * disable the Escap mode entry command error from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR3_MASK (0x8U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR3_SHIFT (3U)
@@ -1713,6 +1920,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR2 (RW)
  *
+ * disable the EoT sync error from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR2_MASK (0x4U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR2_SHIFT (2U)
@@ -1722,6 +1930,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR1 (RW)
  *
+ * disable the SoT sync error from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR1_MASK (0x2U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR1_SHIFT (1U)
@@ -1731,6 +1940,7 @@ typedef struct {
 /*
  * MASK_ACK_WITH_ERR0 (RW)
  *
+ * disable the SoT serror from the acknowledge error report
  */
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR0_MASK (0x1U)
 #define MIPI_DSI_INT_MSK0_MASK_ACK_WITH_ERR0_SHIFT (0U)
@@ -1741,6 +1951,7 @@ typedef struct {
 /*
  * MASK_TEAR_REQUEST_ERR (RW)
  *
+ * disable tear_request has occurred but tear effect is not active in dsi host and device
  */
 #define MIPI_DSI_INT_MSK1_MASK_TEAR_REQUEST_ERR_MASK (0x100000UL)
 #define MIPI_DSI_INT_MSK1_MASK_TEAR_REQUEST_ERR_SHIFT (20U)
@@ -1750,6 +1961,7 @@ typedef struct {
 /*
  * MASK_DPI_BUFF_PLD_UNDER (RW)
  *
+ * disable an underflow when reading payload to build dsi packet for video mode
  */
 #define MIPI_DSI_INT_MSK1_MASK_DPI_BUFF_PLD_UNDER_MASK (0x80000UL)
 #define MIPI_DSI_INT_MSK1_MASK_DPI_BUFF_PLD_UNDER_SHIFT (19U)
@@ -1759,6 +1971,7 @@ typedef struct {
 /*
  * MASK_GEN_PLD_RECEV_ERR (RW)
  *
+ * disable that during a generic interface packet read back, the payload FIFO full
  */
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_RECEV_ERR_MASK (0x1000U)
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_RECEV_ERR_SHIFT (12U)
@@ -1768,6 +1981,7 @@ typedef struct {
 /*
  * MASK_GEN_PLD_RD_ERR (RW)
  *
+ * disable that during a DCS read data, the payload FIFO becomes empty
  */
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_RD_ERR_MASK (0x800U)
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_RD_ERR_SHIFT (11U)
@@ -1777,6 +1991,7 @@ typedef struct {
 /*
  * MASK_GEN_PLD_SEND_ERR (RW)
  *
+ * disable the payload FIFO become empty when packet build
  */
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_SEND_ERR_MASK (0x400U)
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_SEND_ERR_SHIFT (10U)
@@ -1786,6 +2001,7 @@ typedef struct {
 /*
  * MASK_GEN_PLD_WR_ERR (RW)
  *
+ * disable the system tried to write a payload and FIFO is full
  */
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_WR_ERR_MASK (0x200U)
 #define MIPI_DSI_INT_MSK1_MASK_GEN_PLD_WR_ERR_SHIFT (9U)
@@ -1795,6 +2011,7 @@ typedef struct {
 /*
  * MASK_GEN_CMD_WR_ERR (RW)
  *
+ * disable the system tried to write a command and FIFO is full
  */
 #define MIPI_DSI_INT_MSK1_MASK_GEN_CMD_WR_ERR_MASK (0x100U)
 #define MIPI_DSI_INT_MSK1_MASK_GEN_CMD_WR_ERR_SHIFT (8U)
@@ -1804,6 +2021,7 @@ typedef struct {
 /*
  * MASK_DPI_BPLD_WR_ERR (RW)
  *
+ * disable the payload FIFO is full during a DPI pixel line storage
  */
 #define MIPI_DSI_INT_MSK1_MASK_DPI_BPLD_WR_ERR_MASK (0x80U)
 #define MIPI_DSI_INT_MSK1_MASK_DPI_BPLD_WR_ERR_SHIFT (7U)
@@ -1813,6 +2031,7 @@ typedef struct {
 /*
  * MASK_EOPT_ERR (RW)
  *
+ * disable that the EoTp packet has not been received at the end of the incoming peripheral transmission
  */
 #define MIPI_DSI_INT_MSK1_MASK_EOPT_ERR_MASK (0x40U)
 #define MIPI_DSI_INT_MSK1_MASK_EOPT_ERR_SHIFT (6U)
@@ -1822,6 +2041,7 @@ typedef struct {
 /*
  * MASK_PKT_SIZE_ERR (RW)
  *
+ * disable that the packet size error has been detected during the packet reception
  */
 #define MIPI_DSI_INT_MSK1_MASK_PKT_SIZE_ERR_MASK (0x20U)
 #define MIPI_DSI_INT_MSK1_MASK_PKT_SIZE_ERR_SHIFT (5U)
@@ -1831,6 +2051,7 @@ typedef struct {
 /*
  * MASK_CRC_ERR (RW)
  *
+ * disable that the CRC error has been detected in the reveived packet payload
  */
 #define MIPI_DSI_INT_MSK1_MASK_CRC_ERR_MASK (0x10U)
 #define MIPI_DSI_INT_MSK1_MASK_CRC_ERR_SHIFT (4U)
@@ -1840,6 +2061,7 @@ typedef struct {
 /*
  * MASK_ECC_MULTI_ERR (RW)
  *
+ * disable that the ECC multiple error has been detected in a revieved packet
  */
 #define MIPI_DSI_INT_MSK1_MASK_ECC_MULTI_ERR_MASK (0x8U)
 #define MIPI_DSI_INT_MSK1_MASK_ECC_MULTI_ERR_SHIFT (3U)
@@ -1849,6 +2071,7 @@ typedef struct {
 /*
  * MASK_ECC_SIGLE_ERR (RW)
  *
+ * disable that the ECC single error has been detected and corrected in a reveived packet
  */
 #define MIPI_DSI_INT_MSK1_MASK_ECC_SIGLE_ERR_MASK (0x4U)
 #define MIPI_DSI_INT_MSK1_MASK_ECC_SIGLE_ERR_SHIFT (2U)
@@ -1858,6 +2081,7 @@ typedef struct {
 /*
  * MASK_TO_LP_TX (RW)
  *
+ * disable that the low-power reception timeout counter reached the end and contention has been detected
  */
 #define MIPI_DSI_INT_MSK1_MASK_TO_LP_TX_MASK (0x2U)
 #define MIPI_DSI_INT_MSK1_MASK_TO_LP_TX_SHIFT (1U)
@@ -1867,6 +2091,7 @@ typedef struct {
 /*
  * MASK_TO_HS_TX (RW)
  *
+ * disable that the high-speed transmission timeout counter reached the end and contention has been detected
  */
 #define MIPI_DSI_INT_MSK1_MASK_TO_HS_TX_MASK (0x1U)
 #define MIPI_DSI_INT_MSK1_MASK_TO_HS_TX_SHIFT (0U)
@@ -1877,6 +2102,8 @@ typedef struct {
 /*
  * TXSKEWCALHS (RW)
  *
+ * High-speed skew calibration is started when txskewcalhs is
+ * set high (assuming that PHY is in Stop state)
  */
 #define MIPI_DSI_PHY_CAL_TXSKEWCALHS_MASK (0x1U)
 #define MIPI_DSI_PHY_CAL_TXSKEWCALHS_SHIFT (0U)
@@ -1887,6 +2114,7 @@ typedef struct {
 /*
  * FORCE_DPHY_ERRORS_4 (RW)
  *
+ * force LP1 contention error ErrContentionLP1 from lane0
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_4_MASK (0x100000UL)
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_4_SHIFT (20U)
@@ -1896,6 +2124,7 @@ typedef struct {
 /*
  * FORCE_DPHY_ERRORS_3 (RW)
  *
+ * force LP0 contention error ErrContentionLP0 from lane0
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_3_MASK (0x80000UL)
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_3_SHIFT (19U)
@@ -1905,6 +2134,7 @@ typedef struct {
 /*
  * FORCE_DPHY_ERRORS_2 (RW)
  *
+ * force control error ErrControl from lane0
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_2_MASK (0x40000UL)
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_2_SHIFT (18U)
@@ -1914,6 +2144,7 @@ typedef struct {
 /*
  * FORCE_DPHY_ERRORS_1 (RW)
  *
+ * force ErrSyncEsc low-power data transmission synchronization error from lane 0
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_1_MASK (0x20000UL)
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_1_SHIFT (17U)
@@ -1923,6 +2154,7 @@ typedef struct {
 /*
  * FORCE_DPHY_ERRORS_0 (RW)
  *
+ * force ErrEsc escape entry error from lane0
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_0_MASK (0x10000UL)
 #define MIPI_DSI_INT_FORCE0_FORCE_DPHY_ERRORS_0_SHIFT (16U)
@@ -1932,6 +2164,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR_15 (RW)
  *
+ * force the DSI protocal violation from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_15_MASK (0x8000U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_15_SHIFT (15U)
@@ -1941,6 +2174,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR_14 (RW)
  *
+ * force the reserved from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_14_MASK (0x4000U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_14_SHIFT (14U)
@@ -1950,6 +2184,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR_13 (RW)
  *
+ * force the invalid transmission length from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_13_MASK (0x2000U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_13_SHIFT (13U)
@@ -1959,6 +2194,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR_12 (RW)
  *
+ * force the dsi vc id invalid from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_12_MASK (0x1000U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_12_SHIFT (12U)
@@ -1968,6 +2204,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR_11 (RW)
  *
+ * force the not recongnized dsi data type from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_11_MASK (0x800U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_11_SHIFT (11U)
@@ -1977,6 +2214,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR_10 (RW)
  *
+ * force the checksum error from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_10_MASK (0x400U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_10_SHIFT (10U)
@@ -1986,6 +2224,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR_9 (RW)
  *
+ * force the ECC error multi-bit from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_9_MASK (0x200U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR_9_SHIFT (9U)
@@ -1995,6 +2234,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR8 (RW)
  *
+ * force the ecc error sigle-bit from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR8_MASK (0x100U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR8_SHIFT (8U)
@@ -2004,6 +2244,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR7 (RW)
  *
+ * force the reserved from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR7_MASK (0x80U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR7_SHIFT (7U)
@@ -2013,6 +2254,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR6 (RW)
  *
+ * force the false control error fro the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR6_MASK (0x40U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR6_SHIFT (6U)
@@ -2022,6 +2264,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR5 (RW)
  *
+ * force the peripheral timeout error from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR5_MASK (0x20U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR5_SHIFT (5U)
@@ -2031,6 +2274,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR4 (RW)
  *
+ * force the LP transmit sync error from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR4_MASK (0x10U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR4_SHIFT (4U)
@@ -2040,6 +2284,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR3 (RW)
  *
+ * force the Escap mode entry command error from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR3_MASK (0x8U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR3_SHIFT (3U)
@@ -2049,6 +2294,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR2 (RW)
  *
+ * force the EoT sync error from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR2_MASK (0x4U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR2_SHIFT (2U)
@@ -2058,6 +2304,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR1 (RW)
  *
+ * force the SoT sync error from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR1_MASK (0x2U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR1_SHIFT (1U)
@@ -2067,6 +2314,7 @@ typedef struct {
 /*
  * FORCE_ACK_WITH_ERR0 (RW)
  *
+ * force the SoT serror from the acknowledge error report
  */
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR0_MASK (0x1U)
 #define MIPI_DSI_INT_FORCE0_FORCE_ACK_WITH_ERR0_SHIFT (0U)
@@ -2077,6 +2325,7 @@ typedef struct {
 /*
  * FORCE_TEAR_REQUEST_ERR (RW)
  *
+ * force tear_request has occurred but tear effect is not active in dsi host and device
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_TEAR_REQUEST_ERR_MASK (0x100000UL)
 #define MIPI_DSI_INT_FORCE1_FORCE_TEAR_REQUEST_ERR_SHIFT (20U)
@@ -2086,6 +2335,7 @@ typedef struct {
 /*
  * FORCE_DPI_BUFF_PLD_UNDER (RW)
  *
+ * force an underflow when reading payload to build dsi packet for video mode
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_DPI_BUFF_PLD_UNDER_MASK (0x80000UL)
 #define MIPI_DSI_INT_FORCE1_FORCE_DPI_BUFF_PLD_UNDER_SHIFT (19U)
@@ -2095,6 +2345,7 @@ typedef struct {
 /*
  * FORCE_GEN_PLD_RECEV_ERR (RW)
  *
+ * force that during a generic interface packet read back, the payload FIFO full
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_RECEV_ERR_MASK (0x1000U)
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_RECEV_ERR_SHIFT (12U)
@@ -2104,6 +2355,7 @@ typedef struct {
 /*
  * FORCE_GEN_PLD_RD_ERR (RW)
  *
+ * force that during a DCS read data, the payload FIFO becomes empty
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_RD_ERR_MASK (0x800U)
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_RD_ERR_SHIFT (11U)
@@ -2113,6 +2365,7 @@ typedef struct {
 /*
  * FORCE_GEN_PLD_SEND_ERR (RW)
  *
+ * force the payload FIFO become empty when packet build
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_SEND_ERR_MASK (0x400U)
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_SEND_ERR_SHIFT (10U)
@@ -2122,6 +2375,7 @@ typedef struct {
 /*
  * FORCE_GEN_PLD_WR_ERR (RW)
  *
+ * force the system tried to write a payload and FIFO is full
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_WR_ERR_MASK (0x200U)
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_PLD_WR_ERR_SHIFT (9U)
@@ -2131,6 +2385,7 @@ typedef struct {
 /*
  * FORCE_GEN_CMD_WR_ERR (RW)
  *
+ * force the system tried to write a command and FIFO is full
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_CMD_WR_ERR_MASK (0x100U)
 #define MIPI_DSI_INT_FORCE1_FORCE_GEN_CMD_WR_ERR_SHIFT (8U)
@@ -2140,6 +2395,7 @@ typedef struct {
 /*
  * FORCE_DPI_BPLD_WR_ERR (RW)
  *
+ * force the payload FIFO is full during a DPI pixel line storage
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_DPI_BPLD_WR_ERR_MASK (0x80U)
 #define MIPI_DSI_INT_FORCE1_FORCE_DPI_BPLD_WR_ERR_SHIFT (7U)
@@ -2149,6 +2405,7 @@ typedef struct {
 /*
  * FORCE_EOPT_ERR (RW)
  *
+ * force that the EoTp packet has not been received at the end of the incoming peripheral transmission
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_EOPT_ERR_MASK (0x40U)
 #define MIPI_DSI_INT_FORCE1_FORCE_EOPT_ERR_SHIFT (6U)
@@ -2158,6 +2415,7 @@ typedef struct {
 /*
  * FORCE_PKT_SIZE_ERR (RW)
  *
+ * force that the packet size error has been detected during the packet reception
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_PKT_SIZE_ERR_MASK (0x20U)
 #define MIPI_DSI_INT_FORCE1_FORCE_PKT_SIZE_ERR_SHIFT (5U)
@@ -2167,6 +2425,7 @@ typedef struct {
 /*
  * FORCE_CRC_ERR (RW)
  *
+ * force that the CRC error has been detected in the reveived packet payload
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_CRC_ERR_MASK (0x10U)
 #define MIPI_DSI_INT_FORCE1_FORCE_CRC_ERR_SHIFT (4U)
@@ -2176,6 +2435,7 @@ typedef struct {
 /*
  * FORCE_ECC_MULTI_ERR (RW)
  *
+ * force that the ECC multiple error has been detected in a revieved packet
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_ECC_MULTI_ERR_MASK (0x8U)
 #define MIPI_DSI_INT_FORCE1_FORCE_ECC_MULTI_ERR_SHIFT (3U)
@@ -2185,6 +2445,7 @@ typedef struct {
 /*
  * FORCE_ECC_SIGLE_ERR (RW)
  *
+ * force that the ECC single error has been detected and corrected in a reveived packet
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_ECC_SIGLE_ERR_MASK (0x4U)
 #define MIPI_DSI_INT_FORCE1_FORCE_ECC_SIGLE_ERR_SHIFT (2U)
@@ -2194,6 +2455,7 @@ typedef struct {
 /*
  * FORCE_TO_LP_TX (RW)
  *
+ * force that the low-power reception timeout counter reached the end and contention has been detected
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_TO_LP_TX_MASK (0x2U)
 #define MIPI_DSI_INT_FORCE1_FORCE_TO_LP_TX_SHIFT (1U)
@@ -2203,6 +2465,7 @@ typedef struct {
 /*
  * FORCE_TO_HS_TX (RW)
  *
+ * force that the high-speed transmission timeout counter reached the end and contention has been detected
  */
 #define MIPI_DSI_INT_FORCE1_FORCE_TO_HS_TX_MASK (0x1U)
 #define MIPI_DSI_INT_FORCE1_FORCE_TO_HS_TX_SHIFT (0U)
@@ -2507,6 +2770,8 @@ typedef struct {
 /*
  * DPI_BUFF_PLD_FULL (R)
  *
+ * This bit indicates the full status of the payload internal buffer
+ * for video Mode. This bit is set to 0 for command Mode
  */
 #define MIPI_DSI_VID_PKT_STATUS_DPI_BUFF_PLD_FULL_MASK (0x20000UL)
 #define MIPI_DSI_VID_PKT_STATUS_DPI_BUFF_PLD_FULL_SHIFT (17U)
@@ -2515,6 +2780,8 @@ typedef struct {
 /*
  * DPI_BUFF_PLD_EMPTY (R)
  *
+ * This bit indicates the empty status of the payload internal
+ * buffer for video Mode. This bit is set to 0 for command Mod
  */
 #define MIPI_DSI_VID_PKT_STATUS_DPI_BUFF_PLD_EMPTY_MASK (0x10000UL)
 #define MIPI_DSI_VID_PKT_STATUS_DPI_BUFF_PLD_EMPTY_SHIFT (16U)
@@ -2523,6 +2790,8 @@ typedef struct {
 /*
  * DPI_PLD_W_FULL (R)
  *
+ * This bit indicates the full status of write payload FIFO for
+ * video Mode. This bit is set to 0 for command Mode
  */
 #define MIPI_DSI_VID_PKT_STATUS_DPI_PLD_W_FULL_MASK (0x8U)
 #define MIPI_DSI_VID_PKT_STATUS_DPI_PLD_W_FULL_SHIFT (3U)
@@ -2531,6 +2800,8 @@ typedef struct {
 /*
  * DPI_PLD_W_EMPTY (R)
  *
+ * This bit indicates the empty status of write payload FIFO for
+ * video Mode. This bit is set to 0 for command Mode
  */
 #define MIPI_DSI_VID_PKT_STATUS_DPI_PLD_W_EMPTY_MASK (0x4U)
 #define MIPI_DSI_VID_PKT_STATUS_DPI_PLD_W_EMPTY_SHIFT (2U)
@@ -2539,6 +2810,8 @@ typedef struct {
 /*
  * DPI_CMD_W_FULL (R)
  *
+ * This bit indicates the full status of write command FIFO for
+ * video Mode. This bit is set to 0 for command Mode
  */
 #define MIPI_DSI_VID_PKT_STATUS_DPI_CMD_W_FULL_MASK (0x2U)
 #define MIPI_DSI_VID_PKT_STATUS_DPI_CMD_W_FULL_SHIFT (1U)
@@ -2547,6 +2820,8 @@ typedef struct {
 /*
  * DPI_CMD_W_EMPTY (R)
  *
+ * This bit indicates the empty status of write command FIFO
+ * for video Mode. This bit is set to 0 for command Mode
  */
 #define MIPI_DSI_VID_PKT_STATUS_DPI_CMD_W_EMPTY_MASK (0x1U)
 #define MIPI_DSI_VID_PKT_STATUS_DPI_CMD_W_EMPTY_SHIFT (0U)
@@ -2556,6 +2831,8 @@ typedef struct {
 /*
  * SEND_3D_CFG (R)
  *
+ * When set, causes the next VSS packet to include 3D control
+ * payload in every VSS packet.
  */
 #define MIPI_DSI_SDF_3D_ACT_SEND_3D_CFG_MASK (0x10000UL)
 #define MIPI_DSI_SDF_3D_ACT_SEND_3D_CFG_SHIFT (16U)
@@ -2564,6 +2841,7 @@ typedef struct {
 /*
  * RIGHT_FIRST (R)
  *
+ * This bit specifies the left/right order
  */
 #define MIPI_DSI_SDF_3D_ACT_RIGHT_FIRST_MASK (0x20U)
 #define MIPI_DSI_SDF_3D_ACT_RIGHT_FIRST_SHIFT (5U)
@@ -2572,6 +2850,9 @@ typedef struct {
 /*
  * SECOND_VSYNC (R)
  *
+ * This field specifies whether there is a second VSYNC pulse
+ * between Left and Right Images, when 3D Image Format is
+ * Frame-based
  */
 #define MIPI_DSI_SDF_3D_ACT_SECOND_VSYNC_MASK (0x10U)
 #define MIPI_DSI_SDF_3D_ACT_SECOND_VSYNC_SHIFT (4U)
@@ -2580,6 +2861,7 @@ typedef struct {
 /*
  * FORMAT_3D (R)
  *
+ * This field specifies 3D Image Format
  */
 #define MIPI_DSI_SDF_3D_ACT_FORMAT_3D_MASK (0xCU)
 #define MIPI_DSI_SDF_3D_ACT_FORMAT_3D_SHIFT (2U)
@@ -2588,6 +2870,7 @@ typedef struct {
 /*
  * MODE_3D (R)
  *
+ * This field specifies 3D Mode On/Off and Display Orientation
  */
 #define MIPI_DSI_SDF_3D_ACT_MODE_3D_MASK (0x3U)
 #define MIPI_DSI_SDF_3D_ACT_MODE_3D_SHIFT (0U)

@@ -494,6 +494,13 @@ void clock_remove_from_group(clock_name_t clock_name, uint32_t group)
     }
 }
 
+bool clock_check_in_group(clock_name_t clock_name, uint32_t group)
+{
+    uint32_t resource = GET_CLK_RESOURCE_FROM_NAME(clock_name);
+
+    return sysctl_check_group_resource_enable(HPM_SYSCTL, group, resource);
+}
+
 void clock_connect_group_to_cpu(uint32_t group, uint32_t cpu)
 {
     if (cpu < 2U) {

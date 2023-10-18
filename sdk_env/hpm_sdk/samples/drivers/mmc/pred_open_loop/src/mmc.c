@@ -138,7 +138,9 @@ void test_mmc_to_qeo(void)
 {
     trgm_pos_matrix_config(HPM_TRGM0, trgm_pos_matrix_output_to_qeo0, trgm_pos_matrix_in_from_mmc0_pos0, false);
 
-    qeo_gen_abz_signal();
+    if (status_success != qeo_gen_abz_signal()) {
+        printf("config QEO abz signal failed\n");
+    }
     qeo_gen_pwm_output();
 
     test_mmc_open_loop_pred();

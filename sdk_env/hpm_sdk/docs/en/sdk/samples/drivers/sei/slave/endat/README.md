@@ -1,4 +1,4 @@
-# SEI SLAVE: SIMULATE ENDAT ENCODER
+# SEI Slave: Simulate ENDAT Encoder
 
 ## Overview
 

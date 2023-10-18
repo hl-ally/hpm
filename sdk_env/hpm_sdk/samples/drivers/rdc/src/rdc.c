@@ -34,7 +34,6 @@ void adc_init(void)
 {
     adc16_config_t cfg;
     adc16_channel_config_t ch_cfg;
-    adc16_prd_config_t prd_cfg;
 
     /* initialize an ADC instance */
     adc16_get_default_config(&cfg);
@@ -123,7 +122,7 @@ void rdc_cfg(RDC_Type *rdc)
     rdc_acc_enable(rdc);
 }
 
-#if DAC_MODE
+#ifdef DAC_MODE
 #define TEST_DAC HPM_DAC0
 void init_dac(void)
 {
@@ -147,16 +146,17 @@ void init_dac(void)
 int main(void)
 {
     uint32_t freq;
-    int32_t val_acc_i, val_max_i, val_min_i, adc_val_i = 0;
-    uint32_t val_delay_i, val_delay_i_r, val_delay__i_f;
-    int32_t val_acc_q, val_max_q, val_min_q, adc_val_q = 0;
-    uint32_t val_delay_q, val_delay_q_r, val_delay__q_f;
+    int32_t val_acc_i, val_max_i, val_min_i;
+    uint32_t val_delay_i;
+    int32_t val_acc_q, val_max_q, val_min_q;
+    uint32_t val_delay_q;
     int32_t val_middle_i, val_middle_q;
     uint8_t num;
     float theta;
+    float init_theta  = -1;
 
     board_init();
-#if DAC_MODE
+#ifdef DAC_MODE
     init_dac();
     trgm_dac_matrix_config(HPM_TRGM0, trgm_dac_matrix_output_to_dac0, trgm_dac_matrix_in_from_rdc_dac0, false);
 #endif
@@ -213,15 +213,18 @@ int main(void)
     } while (num < 100);
     val_delay_q /= num;
     rdc_set_acc_sync_delay(HPM_RDC, rdc_acc_chn_q, val_delay_q >> 1);
-
+    board_delay_ms(100);
     while (1) {
         val_acc_i = rdc_get_acc_avl(HPM_RDC, rdc_acc_chn_i);
         val_acc_q = rdc_get_acc_avl(HPM_RDC, rdc_acc_chn_q);
-        val_delay_i_r = rdc_get_rise_delay_i(HPM_RDC);
-        val_delay__i_f = rdc_get_fall_delay_i(HPM_RDC);
-        val_delay_q_r = rdc_get_rise_delay_q(HPM_RDC);
-        val_delay__q_f = rdc_get_fall_delay_q(HPM_RDC);
         theta = (atanf(((float)val_acc_i)/val_acc_q) * 180 / 3.141592) + 90;
+        if (init_theta < 0) {
+          init_theta = theta;
+        }
+        theta -= init_theta;
+        if (theta < 0) {
+          theta += 180;
+        }
         printf("theta:%f.\r\n", theta);
     };
 }

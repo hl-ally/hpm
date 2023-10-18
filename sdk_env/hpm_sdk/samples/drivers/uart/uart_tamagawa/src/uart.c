@@ -65,7 +65,6 @@ int main(void)
     config.baudrate = 2500000U;
     config.fifo_enable = true;
     config.src_freq_in_hz = clock_get_frequency(TEST_UART_CLK_NAME);
-    config.using_new_fifo_thr = true;
     config.rx_fifo_level = uart_fifo_6_bytes;
     config.tx_fifo_level = uart_fifo_16_bytes;
 

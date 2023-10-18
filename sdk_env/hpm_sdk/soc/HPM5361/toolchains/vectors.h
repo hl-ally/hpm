@@ -96,3 +96,4 @@ __vector_table:
     IRQ_HANDLER 70 /* PAD_WAKEUP IRQ handler */
     IRQ_HANDLER 71 /* DEBUG0 IRQ handler */
     IRQ_HANDLER 72 /* DEBUG1 IRQ handler */
+

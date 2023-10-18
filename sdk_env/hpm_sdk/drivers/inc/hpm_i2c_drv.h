@@ -263,7 +263,7 @@ static inline bool i2c_get_line_scl_status(I2C_Type *ptr)
  */
 static inline void i2c_clear_status(I2C_Type *ptr, uint32_t mask)
 {
-    ptr->STATUS |= (mask & I2C_EVENT_ALL_MASK);
+    ptr->STATUS = mask;
 }
 
 /**
