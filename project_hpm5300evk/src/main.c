@@ -10,7 +10,7 @@
 #include "user_config.h"
 #include "hpm_debug_console.h"
 #include "pwm_rgb_led.h"
-#include "pwm_beep.h"
+#include "app_pwm.h"
 #include "otp_func.h"
 #include "hpm_gpio_drv.h"
 #include "hpm_gpiom_drv.h"
@@ -109,6 +109,11 @@ int main(void)
 
 #if DAC_TEST
     dac_test_init();
+#endif
+
+#if PWM_TEST
+    pwm_test_init();
+    generate_edge_aligned_waveform();
 #endif
 
 #if defined(__GNUC__)

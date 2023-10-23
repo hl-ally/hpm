@@ -70,7 +70,8 @@ void ShowUuid(void)
 
     uint32_t word_idx = 0;
     for (uint32_t i = OTP_CHIP_UUID_IDX_START; i <= OTP_CHIP_UUID_IDX_END; i++) {
-        uuid_words[word_idx++] = ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow(i);
+        //uuid_words[word_idx++] = ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow(i);
+        uuid_words[word_idx++] = READ_OPT_VALUE(i);
     }
 
     printf("UUID: ");
@@ -87,7 +88,8 @@ void ShowUid(void)
 
     uint32_t word_idx = 0;
     for (uint32_t i = OTP_CHIP_UID_IDX_START; i <= OTP_CHIP_UID_IDX_END; i++) {
-        uid_words[word_idx++] = ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow(i);
+        //uid_words[word_idx++] = ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow(i);
+        uid_words[word_idx++] = READ_OPT_VALUE(i);
     }
 
     printf("UID:  ");

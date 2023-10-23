@@ -26,4 +26,7 @@ sdk_app_src(src/usb_dev_app.c)
 sdk_app_src(src/usb_dev_boot.c)
 sdk_app_src(src/otp_func.c)
 sdk_app_src(src/app_dac.c)
+sdk_app_src(src/app_pwm.c)
+
+sdk_ses_opt_debug_connection(J-Link)
 generate_ses_project()
