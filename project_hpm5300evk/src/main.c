@@ -20,6 +20,7 @@
 #include "hpm_ppor_drv.h"
 #include "systick.h"
 #include "app_dac.h"
+#include "app_adc.h"
 
 
 int main(void)
@@ -39,6 +40,7 @@ int main(void)
         printf(" %s clock summary\n", BOARD_NAME);
         printf("==============================\n");
         printf("cpu0:\t\t %luHz\n", clock_get_frequency(clock_cpu0));
+        printf("hpm_core_clock:\t %luHz\n", hpm_core_clock);
         printf("ahb:\t\t %luHz\n", clock_get_frequency(clock_ahb));
         printf("mchtmr0:\t %luHz\n", clock_get_frequency(clock_mchtmr0));
         printf("xpi0:\t\t %luHz\n", clock_get_frequency(clock_xpi0));
@@ -114,6 +116,12 @@ int main(void)
 #if PWM_TEST
     pwm_test_init();
     generate_edge_aligned_waveform();
+#endif
+
+#if ADC_TEST
+    adc_test_init();
+    uint64_t nAdcTime = GetCurrentTimeUs();;
+
 #endif
 
 #if defined(__GNUC__)
@@ -203,6 +211,14 @@ int main(void)
 
     #if DAC_TEST
         dac_test_process();
+    #endif
+
+    #if ADC_TEST
+        if(GetCurrentTimeUs() - nAdcTime >= 2*1000*1000)
+        {
+            nAdcTime = GetCurrentTimeUs();
+            adc_test_process();
+        }
     #endif
 
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)

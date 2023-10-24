@@ -24,7 +24,8 @@
 #define WDOG_TEST                   0
 #define SOFTWARE_RESET_TEST         0
 #define DAC_TEST                    0
-#define PWM_TEST                    1
+#define PWM_TEST                    0
+#define ADC_TEST                    1
 
 #define LED_FLASH_PERIOD_IN_MS      300
 

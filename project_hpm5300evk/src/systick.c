@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "systick.h"
 #include "board.h"
+#include "hpm_mchtmr_drv.h"
 
 
 void _init(void)
@@ -16,8 +17,8 @@ void _clean_up(void)
 
 uint64_t GetCurrentTimeUs(void)
 {
-#if 0
-    // 利用MTIMER获取当前的时间
+#if 1
+    // 利用机器定时器MCHTMR获取当前的时间
     static int is_inited = 0;
     static uint32_t div;
     uint32_t freq = 0;
@@ -25,7 +26,7 @@ uint64_t GetCurrentTimeUs(void)
 
     if (!is_inited) {
         is_inited = 1;
-        board_ungate_mchtmr_at_lp_mode();
+        //board_ungate_mchtmr_at_lp_mode();
         freq = clock_get_frequency(clock_mchtmr0);
         div = freq / 1000000;
     }

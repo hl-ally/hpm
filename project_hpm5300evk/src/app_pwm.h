@@ -1,5 +1,5 @@
-#ifndef _PWM_BEEP_H
-#define _PWM_BEEP_H
+#ifndef _APP_PWM_H
+#define _APP_PWM_H
 
 void pwm_beep_init(void);
 void pwm_beep_process(void);
