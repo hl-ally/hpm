@@ -106,7 +106,7 @@ int main(void)
 #endif
 
 #if WDOG_TEST
-    WatchDogInit();
+    WatchDogInit(10*1000);
 #endif
 
 #if DAC_TEST

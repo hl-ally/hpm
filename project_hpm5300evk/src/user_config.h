@@ -21,11 +21,11 @@
 
 #define OTP_TEST                    0
 #define NOR_FLASH_TEST              0
-#define WDOG_TEST                   0
+#define WDOG_TEST                   1
 #define SOFTWARE_RESET_TEST         0
 #define DAC_TEST                    0
 #define PWM_TEST                    0
-#define ADC_TEST                    1
+#define ADC_TEST                    0
 
 #define LED_FLASH_PERIOD_IN_MS      300
 
@@ -42,7 +42,7 @@ extern void app_hid_test(void);
 #endif
 
 #if WDOG_TEST
-extern void WatchDogInit(void);
+extern void WatchDogInit(uint32_t nMs);
 extern void FeedWatchDog(void);
 #endif
 
