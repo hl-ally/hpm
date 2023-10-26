@@ -21,6 +21,7 @@
 #include "systick.h"
 #include "app_dac.h"
 #include "app_adc.h"
+#include "app_tim.h"
 
 
 int main(void)
@@ -59,8 +60,7 @@ int main(void)
 #if LED_IO_TEST
     // IO口控制LED
     board_init_led_pins();
-
-    board_timer_create(LED_FLASH_PERIOD_IN_MS, board_led_toggle);
+    uint64_t nLedToggleTime = GetCurrentTimeUs();
 #endif
 
 #if FGPIO_TOGGLE_TEST
@@ -121,7 +121,10 @@ int main(void)
 #if ADC_TEST
     adc_test_init();
     uint64_t nAdcTime = GetCurrentTimeUs();;
+#endif
 
+#if TIM_TEST
+    tim_test_init();
 #endif
 
 #if defined(__GNUC__)
@@ -149,6 +152,14 @@ int main(void)
             norflash_test();
         }
         #endif
+    #endif
+
+    #if LED_IO_TEST
+        if(GetCurrentTimeUs()- nLedToggleTime >= LED_FLASH_PERIOD_IN_MS*1000)
+        {
+            nLedToggleTime = GetCurrentTimeUs();
+            board_led_toggle();
+        }
     #endif
 
     #if FGPIO_TOGGLE_TEST
@@ -219,6 +230,10 @@ int main(void)
             nAdcTime = GetCurrentTimeUs();
             adc_test_process();
         }
+    #endif
+
+    #if TIM_TEST
+        tim_test_process();
     #endif
 
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)

@@ -29,6 +29,7 @@ sdk_app_src(src/watch_dog.c)
 sdk_app_src(src/app_dac.c)
 sdk_app_src(src/app_pwm.c)
 sdk_app_src(src/app_adc.c)
+sdk_app_src(src/app_tim.c)
 
 sdk_ses_opt_debug_connection(J-Link)
 generate_ses_project()

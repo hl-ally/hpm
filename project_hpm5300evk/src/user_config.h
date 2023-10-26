@@ -6,7 +6,7 @@
 #define ZLG_FAE_FGPIO_TEST          1       // ZLG 陈工验证GPIO翻转速率时的代码
 #endif
 
-#define LED_IO_TEST                 1       // IO口控制LED测试
+#define LED_IO_TEST                 0       // IO口控制LED测试
 #define RGB_LED_PWM_TEST            0       // PWM控制RGB LED测试
 #define PWM_BEEP_TEST               0       // PWM控制蜂鸣器测试
 
@@ -21,11 +21,12 @@
 
 #define OTP_TEST                    0
 #define NOR_FLASH_TEST              0
-#define WDOG_TEST                   1
+#define WDOG_TEST                   0
 #define SOFTWARE_RESET_TEST         0
 #define DAC_TEST                    0
 #define PWM_TEST                    0
 #define ADC_TEST                    0
+#define TIM_TEST                    1
 
 #define LED_FLASH_PERIOD_IN_MS      300
 #define USER_TEST_WDOG              HPM_WDG0
