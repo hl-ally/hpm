@@ -28,6 +28,7 @@
 #define ADC_TEST                    0
 
 #define LED_FLASH_PERIOD_IN_MS      300
+#define USER_TEST_WDOG              HPM_WDG0
 
 
 
@@ -42,8 +43,8 @@ extern void app_hid_test(void);
 #endif
 
 #if WDOG_TEST
-extern void WatchDogInit(uint32_t nMs);
-extern void FeedWatchDog(void);
+extern void WatchDogInit(EWDG_Type *ptr, uint32_t nMs);
+extern void FeedWatchDog(EWDG_Type *ptr);
 #endif
 
 #endif

@@ -27,7 +27,7 @@ void isr_dac(void)
         buf0_cmpt_flag = 1;
     }
 }
-SDK_DECLARE_EXT_ISR_M(BOARD_DAC_IRQn, isr_dac)
+SDK_DECLARE_EXT_ISR_M(BOARD_DAC_IRQn, isr_dac);
 
 static void init_common_config(dac_mode_t mode)
 {
