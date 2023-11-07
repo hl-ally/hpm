@@ -1,5 +1,5 @@
-#ifndef _OTP_FUNC_H
-#define _OTP_FUNC_H
+#ifndef _APP_OTP_H
+#define _APP_OTP_H
 
 void OtpValuePrint(void);
 void ShowUuid(void);

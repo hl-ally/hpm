@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "otp_func.h"
+#include "app_otp.h"
 #include "hpm_otp_drv.h"
 #include "hpm_romapi.h"
 #include "hpm_romapi_xpi_def.h"

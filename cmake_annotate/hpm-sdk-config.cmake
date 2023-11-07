@@ -16,4 +16,5 @@ message("CMAKE_EXPORT_COMPILE_COMMANDS=${CMAKE_EXPORT_COMPILE_COMMANDS}")
 message("****************************************")
 message("")
 
+# include指令用来载入并运行来自文件或模块得cmake代码
 include(${HPM_SDK_BASE}/cmake/application.cmake)

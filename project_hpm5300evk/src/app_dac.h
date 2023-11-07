@@ -1,5 +1,5 @@
-#ifndef __APP_DAC_H
-#define __APP_DAC_H
+#ifndef _APP_DAC_H
+#define _APP_DAC_H
 #include <math.h>
 #include "board.h"
 #include "hpm_dac_drv.h"

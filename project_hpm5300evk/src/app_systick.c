@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "systick.h"
+#include "app_systick.h"
 #include "board.h"
 #include "hpm_mchtmr_drv.h"
 

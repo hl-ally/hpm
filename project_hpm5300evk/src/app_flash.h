@@ -1,5 +1,5 @@
-#ifndef _NOR_FLASH_H
-#define _NOR_FLASH_H
+#ifndef _APP_FLASH_H
+#define _APP_FLASH_H
 
 #include <stdint.h>
 

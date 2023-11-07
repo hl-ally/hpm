@@ -11,14 +11,14 @@
 #include "hpm_debug_console.h"
 #include "pwm_rgb_led.h"
 #include "app_pwm.h"
-#include "otp_func.h"
+#include "app_otp.h"
 #include "hpm_gpio_drv.h"
 #include "hpm_gpiom_drv.h"
 #include "hpm_pllctlv2_drv.h"
-#include "nor_flash.h"
+#include "app_flash.h"
 #include "hpm_romapi.h"
 #include "hpm_ppor_drv.h"
-#include "systick.h"
+#include "app_systick.h"
 #include "app_dac.h"
 #include "app_adc.h"
 #include "app_tim.h"
@@ -29,6 +29,8 @@ int main(void)
     int u = 0;
     uint64_t nLastTime = 0;
     board_init();
+
+    #if 0
     // 修改主频为480MHz
     if(status_success != pllctlv2_init_pll_with_freq(HPM_PLLCTLV2, 0, 960000000))
     {
@@ -47,6 +49,7 @@ int main(void)
         printf("xpi0:\t\t %luHz\n", clock_get_frequency(clock_xpi0));
         printf("==============================\n");
     }
+    #endif
 
 #if 1
     // 开机延时等待

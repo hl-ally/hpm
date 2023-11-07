@@ -11,7 +11,7 @@
 #include "hpm_romapi.h"
 #include "hpm_clock_drv.h"
 #include "hpm_mchtmr_drv.h"
-#include "nor_flash.h"
+#include "app_flash.h"
 
 #define NORFLASH_LOG(...)            printf(__VA_ARGS__)
 
