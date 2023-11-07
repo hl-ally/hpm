@@ -27,6 +27,7 @@
 #define PWM_TEST                    0
 #define ADC_TEST                    0
 #define TIM_TEST                    0
+#define TSNS_TEST                   0
 
 #define LED_FLASH_PERIOD_IN_MS      300
 #define USER_TEST_WDOG              HPM_WDG0

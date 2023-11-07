@@ -22,6 +22,7 @@
 #include "app_dac.h"
 #include "app_adc.h"
 #include "app_tim.h"
+#include "app_tsns.h"
 
 
 int main(void)
@@ -128,6 +129,10 @@ int main(void)
 
 #if TIM_TEST
     tim_test_init();
+#endif
+
+#if TSNS_TEST
+    tsns_test_init();
 #endif
 
 #if defined(__GNUC__)
@@ -243,6 +248,7 @@ int main(void)
         {
             nLastTime = GetCurrentTimeUs();
             printf("heartbeat, %llu\n", nLastTime);
+            show_temperature();
         }
     }
     return 0;
