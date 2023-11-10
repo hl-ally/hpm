@@ -124,7 +124,7 @@ int main(void)
 
 #if ADC_TEST
     adc_test_init();
-    uint64_t nAdcTime = GetCurrentTimeUs();;
+    uint64_t nAdcTime = GetCurrentTimeUs();
 #endif
 
 #if TIM_TEST
@@ -248,7 +248,7 @@ int main(void)
         {
             nLastTime = GetCurrentTimeUs();
             printf("heartbeat, %llu\n", nLastTime);
-            show_temperature();
+            //show_temperature();
         }
     }
     return 0;

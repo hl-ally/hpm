@@ -41,6 +41,14 @@ __IO uint8_t seq_complete_flag;
 __IO uint8_t trig_complete_flag;
 __IO uint32_t res_out_of_thr_flag;
 
+/*
+typedef enum {
+    adc16_conv_mode_oneshot = 0,    // 读取转换模式
+    adc16_conv_mode_period,         // 周期转换模式
+    adc16_conv_mode_sequence,       // 序列转换模式
+    adc16_conv_mode_preemption      // 抢占转换模式
+} adc16_conversion_mode_t;
+*/
 adc16_conversion_mode_t conv_mode = adc16_conv_mode_sequence;
 
 void isr_adc16(void)
@@ -188,7 +196,7 @@ void init_trigger_target(ADC16_Type *ptr, uint8_t trig_ch)
     adc16_set_pmt_queue_enable(ptr, trig_ch, true);
 }
 
-hpm_stat_t init_common_config(adc16_conversion_mode_t conv_mode)
+hpm_stat_t init_adc_config(adc16_conversion_mode_t conv_mode)
 {
     adc16_config_t cfg;
 
@@ -454,7 +462,7 @@ void adc_test_init(void)
     freq = board_init_adc16_clock(BOARD_APP_ADC16_BASE, false); // ADC clock init
     printf("adc clock is %d\n", freq);
 
-    init_common_config(conv_mode);
+    init_adc_config(conv_mode);
 
     switch(conv_mode)
     {

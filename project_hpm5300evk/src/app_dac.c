@@ -29,7 +29,7 @@ void isr_dac(void)
 }
 SDK_DECLARE_EXT_ISR_M(BOARD_DAC_IRQn, isr_dac);
 
-static void init_common_config(dac_mode_t mode)
+static void init_dac_config(dac_mode_t mode)
 {
     dac_config_t config;
 
@@ -186,7 +186,7 @@ void dac_test_init(void)
     output_mode = get_dac_mode();
 
     /* Initialize a DAC peripheral with a common config */
-    init_common_config(output_mode);
+    init_dac_config(output_mode);
 
     /* Enable the DAC IRQ */
     intc_m_enable_irq(BOARD_DAC_IRQn);
