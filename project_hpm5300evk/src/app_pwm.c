@@ -234,6 +234,7 @@ void pwm_test_init(void)
 
     freq = clock_get_frequency(PWM_CLOCK_NAME);
     reload = freq / 10000000*nPwmPeriodIn100ns;
+    reload = reload*20;
 
     printf("%s, freq = %d, reload = %d\n", __func__, freq, reload);
 
@@ -277,7 +278,7 @@ void generate_edge_aligned_waveform(void)
 
     pwm_config.enable_output = true;
     pwm_config.dead_zone_in_half_cycle = 0;
-    pwm_config.invert_output = false;
+    pwm_config.invert_output = true;
 
     /*
      * reload and start counter
@@ -289,8 +290,8 @@ void generate_edge_aligned_waveform(void)
      * config cmp
      */
     cmp_config[0].mode = pwm_cmp_mode_output_compare;
-    cmp_config[0].cmp = reload/2;
-    cmp_config[0].update_trigger = pwm_shadow_register_update_on_hw_event;
+    cmp_config[0].cmp = 3;//reload/2;
+    cmp_config[0].update_trigger = pwm_shadow_register_update_on_modify;
 
     //cmp_config[1].mode = pwm_cmp_mode_output_compare;
     //cmp_config[1].cmp = reload /2;
