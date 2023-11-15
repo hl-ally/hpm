@@ -23,6 +23,7 @@
 #include "app_adc.h"
 #include "app_tim.h"
 #include "app_tsns.h"
+#include "app_dma_mgr.h"
 
 
 int main(void)
@@ -135,6 +136,11 @@ int main(void)
     tsns_test_init();
 #endif
 
+#if DMA_MGR_TEST
+    dma_mgr_test_init();
+    uint64_t nDmaTime = GetCurrentTimeUs();
+#endif
+
 #if defined(__GNUC__)
     printf("gcc version %d\n", __GNUC__);
 #endif
@@ -242,6 +248,14 @@ int main(void)
 
     #if TIM_TEST
         tim_test_process();
+    #endif
+
+    #if DMA_MGR_TEST
+        if(GetCurrentTimeUs() - nDmaTime >= 3*1000*1000)
+        {
+            nDmaTime = GetCurrentTimeUs();
+            dma_mgr_test_process();
+        }
     #endif
 
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
