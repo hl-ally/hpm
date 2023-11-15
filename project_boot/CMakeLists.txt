@@ -18,9 +18,12 @@ sdk_app_src(user/src/main.c)
 sdk_app_src(user/src/app_systick.c)
 sdk_app_src(user/src/app_usb_boot.c)
 sdk_app_src(user/src/app_watch_dog.c)
+sdk_app_src(user/src/Upgrade.c)
 
 sdk_app_inc(API/inc)
 sdk_app_src(API/src/Api_Flash.c)
+sdk_app_src(API/src/Api_Math.c)
+sdk_app_src(API/src/Api_Crc.c)
 
 sdk_ses_opt_debug_connection(J-Link)
 generate_ses_project()

@@ -3,6 +3,25 @@
 #include <stdint.h>
 
 
+#define SIZE_256B                       ((uint32_t)0x000000FFU)
+#define SIZE_4KB                        ((uint32_t)0x00001000U)
+#define SIZE_64KB                       ((uint32_t)0x00010000U)
+
+#define FLASH_PAGE_SIZE                 SIZE_256B
+#define FLASH_SECTOR_SIZE               SIZE_4KB
+#define FLASH_BLOCK_SIZE                SIZE_64KB
+
+#define BOOTLOADER_ADDRESS              ((uint32_t)0x08000000)            //Boot的启动地址
+#define BOOTLOADER_MAX_SIZE             (32 * 1024)                      // 32K
+
+#define APPLICATION_ADDRESS             ((uint32_t)0x08010000)
+#define APPLICATION_MAX_LEN             (SIZE_64KB+SIZE_64KB)
+
+
+
+#define INFO_OFFSET                     (0x200)
+#define INFO_LEN                        (0x100)
+
 //boot跳转行为定义
 typedef enum
 {
@@ -57,9 +76,16 @@ struct flashstress_context {
     uint8_t data_buf[CONFIG_DATA_BUF_SIZE];
 };
 
+int FlashInit(void);
 
-int norflash_init(void);
-int norflash_test(void);
+int32_t GetBootPara(stStartBootPara_t *pPara);
+int32_t BootParaInit(stStartBootPara_t *pDefault);
+eAppUpgradeFlag_t GetUpgradeFlag(void);
+uint32_t GetFwCheckSum(void);
+
+
+
+
 
 
 #endif //API_FLASH_H
