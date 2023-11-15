@@ -1,6 +1,8 @@
 #ifndef _USER_CONFIG_H
 #define _USER_CONFIG_H
 
+#define HPM_5300EVK_BOARD           0       // 当前是否在HPM 5300EVK开发板上执行程序
+
 #define FGPIO_TOGGLE_TEST           0       // 高速GPIO翻转测试
 #if FGPIO_TOGGLE_TEST
 #define ZLG_FAE_FGPIO_TEST          1       // ZLG 陈工验证GPIO翻转速率时的代码
@@ -28,7 +30,7 @@
 #define ADC_TEST                    0
 #define TIM_TEST                    0
 #define TSNS_TEST                   0
-#define DMA_MGR_TEST                1
+#define DMA_MGR_TEST                0
 
 #define LED_FLASH_PERIOD_IN_MS      300
 #define USER_TEST_WDOG              HPM_WDG0

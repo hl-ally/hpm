@@ -62,81 +62,86 @@ int main(void)
     }
 #endif
 
-#if LED_IO_TEST
+#if (1 == LED_IO_TEST)
     // IO口控制LED
+    #if HPM_5300EVK_BOARD
     board_init_led_pins();
+    #else
+    HPM_IOC->PAD[IOC_PAD_PA12].FUNC_CTL = IOC_PA12_FUNC_CTL_GPIO_A_12;
+    gpio_set_pin_output_with_initial(HPM_GPIO0, GPIO_DI_GPIOA, 12, 0);
+    #endif
     uint64_t nLedToggleTime = GetCurrentTimeUs();
 #endif
 
-#if FGPIO_TOGGLE_TEST
+#if (1 == FGPIO_TOGGLE_TEST)
     board_init_fgpio_pin();
 #endif
 
-#if RGB_LED_PWM_TEST
+#if (1 == RGB_LED_PWM_TEST)
     pwm_rgb_led_init();
 #endif
 
-#if PWM_BEEP_TEST
+#if (1 == PWM_BEEP_TEST)
     pwm_beep_init();
 #endif
 
-#if CHERRYUSB_DEVICE_TEST
+#if (1 == CHERRYUSB_DEVICE_TEST)
     printf("cherry usb device test.\n");
     board_init_usb_pins();
-    #if USBD_BOOT_TEST
+    #if (1 == USBD_BOOT_TEST)
     uint64_t nUsbBootTime = GetCurrentTimeUs();
     boot_hid_init();
     #endif
-    #if USBD_APP_TEST
+    #if (1 == USBD_APP_TEST)
     app_hid_init();
     #endif
 #endif
 
-#if OTP_TEST
+#if (1 == OTP_TEST)
     OtpValuePrint();
     ShowUuid();
     ShowUid();
     ShowXpiFlashInfo();
 #endif
 
-#if NOR_FLASH_TEST
+#if (1 == NOR_FLASH_TEST)
     #if defined(RUN_IN_RAM) && RUN_IN_RAM
     printf("run in ram\n");
     norflash_init();
     #endif
 #endif
 
-#if SOFTWARE_RESET_TEST
+#if (1 == SOFTWARE_RESET_TEST)
     uint64_t nSortwareResetTime = GetCurrentTimeUs();
 #endif
 
-#if WDOG_TEST
+#if (1 == WDOG_TEST)
     WatchDogInit(USER_TEST_WDOG, 10*1000);
 #endif
 
-#if DAC_TEST
+#if (1 == DAC_TEST)
     dac_test_init();
 #endif
 
-#if PWM_TEST
+#if (1 == PWM_TEST)
     pwm_test_init();
     generate_edge_aligned_waveform();
 #endif
 
-#if ADC_TEST
+#if (1 == ADC_TEST)
     adc_test_init();
     uint64_t nAdcTime = GetCurrentTimeUs();
 #endif
 
-#if TIM_TEST
+#if (1 == TIM_TEST)
     tim_test_init();
 #endif
 
-#if TSNS_TEST
+#if (1 == TSNS_TEST)
     tsns_test_init();
 #endif
 
-#if DMA_MGR_TEST
+#if (1 == DMA_MGR_TEST)
     dma_mgr_test_init();
     uint64_t nDmaTime = GetCurrentTimeUs();
 #endif
@@ -157,7 +162,7 @@ int main(void)
         printf("%c", u);
     #endif
 
-    #if NOR_FLASH_TEST
+    #if (1 == NOR_FLASH_TEST)
         #if defined(RUN_IN_RAM) && RUN_IN_RAM
         static uint8_t norflash_count = 1;
         if(norflash_count > 0)
@@ -168,32 +173,36 @@ int main(void)
         #endif
     #endif
 
-    #if LED_IO_TEST
+    #if (1 == LED_IO_TEST)
         if(GetCurrentTimeUs()- nLedToggleTime >= LED_FLASH_PERIOD_IN_MS*1000)
         {
             nLedToggleTime = GetCurrentTimeUs();
+            #if (1 == HPM_5300EVK_BOARD)
             board_led_toggle();
+            #else
+            gpio_toggle_pin(HPM_GPIO0, GPIO_DI_GPIOA, 12);
+            #endif
         }
     #endif
 
-    #if FGPIO_TOGGLE_TEST
+    #if (1 == FGPIO_TOGGLE_TEST)
         // 测试IO翻转速率
         //clock_cpu_delay_us(1);
         //board_delay_ms(300);
         board_fgpio_toggle_process();
     #endif
 
-    #if RGB_LED_PWM_TEST
+    #if (1 == RGB_LED_PWM_TEST)
         pwm_rgb_led_process();
     #endif
 
-    #if PWM_BEEP_TEST
+    #if (1 == PWM_BEEP_TEST)
         board_delay_ms(10);
         pwm_beep_process();
     #endif
 
-    #if CHERRYUSB_DEVICE_TEST
-        #if USBD_BOOT_TEST
+    #if (1 == CHERRYUSB_DEVICE_TEST)
+        #if (1 == USBD_BOOT_TEST)
         if(GetCurrentTimeUs()- nUsbBootTime >= 1*1000*1000)
         {
             nUsbBootTime = GetCurrentTimeUs();
@@ -201,7 +210,7 @@ int main(void)
         }
         #endif
         
-        #if USBD_APP_TEST
+        #if (1 == USBD_APP_TEST)
         app_hid_test();
 //        board_delay_ms(1000);
         #endif
@@ -219,7 +228,7 @@ int main(void)
         }
     #endif
 
-    #if SOFTWARE_RESET_TEST
+    #if (1 == SOFTWARE_RESET_TEST)
         // 复位操作
         if (GetCurrentTimeUs() - nSortwareResetTime >= 20*1000*1000)
         {
@@ -230,15 +239,15 @@ int main(void)
         }
     #endif
 
-    #if WDOG_TEST
+    #if (1 == WDOG_TEST)
         FeedWatchDog(USER_TEST_WDOG);
         #endif
 
-    #if DAC_TEST
+    #if (1 == DAC_TEST)
         dac_test_process();
     #endif
 
-    #if ADC_TEST
+    #if (1 == ADC_TEST)
         if(GetCurrentTimeUs() - nAdcTime >= 2*1000*1000)
         {
             nAdcTime = GetCurrentTimeUs();
@@ -246,11 +255,11 @@ int main(void)
         }
     #endif
 
-    #if TIM_TEST
+    #if (1 == TIM_TEST)
         tim_test_process();
     #endif
 
-    #if DMA_MGR_TEST
+    #if (1 == DMA_MGR_TEST)
         if(GetCurrentTimeUs() - nDmaTime >= 3*1000*1000)
         {
             nDmaTime = GetCurrentTimeUs();
