@@ -1,13 +1,13 @@
-/*
- * Copyright (c) 2022 HPMicro
- *
- * SPDX-License-Identifier: BSD-3-Clause
- *
- */
-
 #include "usbd_core.h"
 #include "usbd_hid.h"
+#include "user_config.h"
+#include "GlobalDefaultDefine.h"
 #include "app_systick.h"
+#include "Api_UsbDesc.h"
+
+static volatile int32_t sg_bUsbFsAppInit = 0;
+eUsbConfigType_t g_eUsb0ConfigType = (eUsbConfigType_t)USB0_DEVICE_CONFIG_TYPE;
+
 
 /*!< hidraw in endpoint */
 #define HIDRAW_IN_EP                    0x81
@@ -276,3 +276,49 @@ void boot_hid_test(void)
 
     usbd_ep_start_write(HIDRAW_IN_EP, send_buffer, 12);
 }
+
+
+
+
+/*
+ * 关闭usb枚举
+ */
+int32_t StopUsbFsDev(void)
+{
+    int32_t nRet = 0;
+    if (sg_bUsbFsAppInit)
+    {
+        sg_bUsbFsAppInit = 0;
+//        usbd_disconnect(&g_stUsbFsDriver);
+//        rcu_periph_reset_enable(RCU_USBFSRST);
+//    	rcu_periph_reset_disable(RCU_USBFSRST);
+        usbd_deinitialize();
+        nRet = 1;
+    }
+    return nRet;
+}
+
+
+/*
+ * USB设备初始化 开始枚举
+ */
+int32_t StartUsbFsDev(stUsbEnumInfo_t stUsbEnumInfo)
+{
+//  uint32_t nLastTime = GetCurrentTimeUs();
+    StopUsbFsDev();
+    if (!sg_bUsbFsAppInit)
+    {
+        g_eUsb0ConfigType = stUsbEnumInfo.eUsbConfigType;
+        sg_bUsbFsAppInit = 1;
+//        InitUSB(USB_DEVICES0, stUsbEnumInfo);
+//        UsbQueueInit(USB_DEVICES0, &g_stUsbEpsInfo[USB_DEVICES0]);  //根据枚举类型，对USB队列内存进行分割
+//        usbd_init (&g_stUsbFsDriver, USB_CORE_ENUM_FS, &usbfs_desc, &g_stUsbFsCC);
+
+        //while (GetUsbFsState() != USBD_CONFIGURED && ((GetSystickTime()-nLastTime) < USB_ENUM_TIME_OUT));
+
+        boot_hid_init();
+    }
+    
+    return 0;
+}
+

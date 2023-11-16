@@ -7,6 +7,8 @@
 #include "Api_Flash.h"
 #include "Upgrade.h"
 #include "Api_Crc.h"
+#include "Api_UsbDesc.h"
+#include "Api_UsbDevice.h"
 
 
 /*
@@ -38,7 +40,7 @@ void BuildInfoOutput(uint32_t nStep)
                g_stBootPara.nBoardType,
                g_eAppUpgradeFlag,
                g_stBootPara.nDefultWaitTime,
-               "2022","03","23");
+               "2023","11","15");
         }
         break;
 
@@ -80,6 +82,17 @@ int main(void)
 
     BootParaInit(&g_stBootPara);
 
+    if(1)
+    {
+	    stUsbEnumInfo_t stUsbTouchDevice = {.nUSBVid = g_stBootPara.nVid,
+	                        .nUSBPid = g_stBootPara.nPid,
+	                        .nVersion = g_stBootPara.nBootVersion,
+	                        .eUsbConfigType = eUsbConfigBootDefault};
+	                        
+	    StartUsbFsDev(stUsbTouchDevice); //USB开始枚举
+	    //StartUsbHsDev(stUsbTouchDevice);
+    }
+
 #if 0
     // 开机延时等待
     nLastTime = GetCurrentTimeUs();
@@ -90,7 +103,7 @@ int main(void)
 #endif
 
     uint64_t nUsbBootTime = GetCurrentTimeUs();
-    boot_hid_init();
+    //boot_hid_init();
 
     //norflash_test();
 
@@ -116,7 +129,7 @@ int main(void)
         if(GetCurrentTimeUs()- nUsbBootTime >= 1*1000*1000)
         {
             nUsbBootTime = GetCurrentTimeUs();
-            boot_hid_test();
+            //boot_hid_test();
         }
 
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
