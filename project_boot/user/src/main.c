@@ -87,10 +87,9 @@ int main(void)
 	    stUsbEnumInfo_t stUsbTouchDevice = {.nUSBVid = g_stBootPara.nVid,
 	                        .nUSBPid = g_stBootPara.nPid,
 	                        .nVersion = g_stBootPara.nBootVersion,
-	                        .eUsbConfigType = eUsbConfigBootDefault};
+	                        .eUsbCfgType = eUsbConfigBootDefault};
 	                        
-	    StartUsbFsDev(stUsbTouchDevice); //USB开始枚举
-	    //StartUsbHsDev(stUsbTouchDevice);
+	    StartUsbDev(stUsbTouchDevice); //USB开始枚举
     }
 
 #if 0
@@ -106,6 +105,10 @@ int main(void)
     //boot_hid_init();
 
     //norflash_test();
+    printf("**********data \n");
+    uint32_t *pTest = (uint32_t *)FLASH_USB_DESC_ADDRESS;
+
+    printf("**********data %08X\n", pTest);
 
 #if defined(__GNUC__)
     printf("gcc version %d\n", __GNUC__);

@@ -3,10 +3,22 @@
 #include "user_config.h"
 #include "GlobalDefaultDefine.h"
 #include "app_systick.h"
+#include "Api_Math.h"
 #include "Api_UsbDesc.h"
+#include "Api_UsbDevice.h"
 
-static volatile int32_t sg_bUsbFsAppInit = 0;
-eUsbConfigType_t g_eUsb0ConfigType = (eUsbConfigType_t)USB0_DEVICE_CONFIG_TYPE;
+stUsbEpsInfo_t g_stUsbEpsInfo[eUsbDevCount] = {{.nEpsCount = 0}};
+eUsbCfgType_t g_eUsbCfgType[eUsbDevCount] = {USB0_DEVICE_CONFIG_TYPE};
+static stEpAppProcess_t sg_arrEpAppProcess[8] = {0};
+static int8_t           sg_arrEpAppProcessMap[8] = {0};
+
+static volatile int32_t sg_bUsbAppInit = 0;
+static __attribute__((aligned(8))) uint8_t sg_arrUsbQueueMem[MAX_USB_QUEUE_MEM_SIZE];
+static uint32_t sg_nUsb0SuspendTick = 0;
+static volatile uint8_t sg_arrSetReport[eUsbDevCount] = {0};
+volatile uint32_t g_arrSetup0ProcessLstTick[eUsbDevCount];
+
+
 
 
 /*!< hidraw in endpoint */
@@ -278,17 +290,127 @@ void boot_hid_test(void)
 }
 
 
+//获取端点x的应用逻辑操作句柄
+stEpAppProcess_t *GetEpAppProcess(uint8_t nEpIdx)
+{
+    if (sg_arrEpAppProcessMap[nEpIdx] < 0)
+    {
+        return NULL;
+    }
+    return &sg_arrEpAppProcess[sg_arrEpAppProcessMap[nEpIdx]];
+}
+
+/*
+ * 检查usb队列是否在忙 忙则返回1 否则返回0
+ */
+int32_t GetUsbQueueBusy(eUsbDevice_t eUsbDev)
+{
+    for (int32_t i = 0; i < g_stUsbEpsInfo[eUsbDev].nEpsCount; i++)
+    {
+        uint8_t nEpNum = g_stUsbEpsInfo[eUsbDev].arrEpsReportOutAddr[i];
+        stEpAppProcess_t *pEpApp = GetEpAppProcess(nEpNum);
+        if (pEpApp != NULL && pEpApp->stQueue.bUsbTxBusy)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int32_t GetAllUsbQueueBusy(void)
+{
+    for (eUsbDevice_t eDev = eUsbDev0; eDev < eUsbDevCount; eDev++)
+    {
+        if (GetUsbQueueBusy(eDev))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+/*
+ * 对USB内存队列清零
+ */
+int32_t UsbQueueReset(void)
+{
+    for (int32_t i = 1; i < 8; i++)
+    {
+        stEpAppProcess_t *pEpApp = GetEpAppProcess(i);
+        if (pEpApp != NULL)
+        {
+            pEpApp->nBlockingCount = 0;
+            pEpApp->stQueue.bUsbTxBusy = 0;
+            pEpApp->stQueue.nQueueLen = 0;
+            pEpApp->stQueue.nQueueBack = 0;
+            pEpApp->stQueue.nQueueFront = 0;
+        }
+    }
+    return 0;
+}
+
+
+//初始化一个端点信息
+int32_t InitAEpInfo(eUsbDevice_t eDev, uint8_t nEpIdx, uint16_t nEpType, uint16_t nEpSize, uint16_t nEpsPhyOffset,
+        uint8_t nReportInAddr, uint8_t nReportOutAddr, uint8_t nQueueSize,
+        uint8_t nMaxEPacketSize, eUsbCfgBitType_t eBitType)
+{
+    g_stUsbEpsInfo[eDev].arrEpsType[nEpIdx] = nEpType;
+    g_stUsbEpsInfo[eDev].arrEpsSize[nEpIdx] = nEpSize;
+    g_stUsbEpsInfo[eDev].arrEpsReportInAddr[nEpIdx] = nReportInAddr;
+    g_stUsbEpsInfo[eDev].arrEpsPhyInAddr[nEpIdx] = nEpsPhyOffset;
+    nEpsPhyOffset += g_stUsbEpsInfo[eDev].arrEpsSize[nEpIdx];
+    g_stUsbEpsInfo[eDev].arrEpsReportOutAddr[nEpIdx] = nReportOutAddr;
+    g_stUsbEpsInfo[eDev].arrEpsPhyOutAddr[nEpIdx] = nEpsPhyOffset;
+    nEpsPhyOffset += g_stUsbEpsInfo[eDev].arrEpsSize[nEpIdx];
+    g_stUsbEpsInfo[eDev].arrQueueSize[nEpIdx] = nQueueSize;
+    g_stUsbEpsInfo[eDev].arrMaxEPacketSize[nEpIdx] = nMaxEPacketSize;
+//    EpsCallbackRegister(nReportInAddr, EpsInCallback);
+//    EpsCallbackRegister(nReportOutAddr, EpsOutCallback);
+    g_stUsbEpsInfo[eDev].arrInterfaceIdxMap[eBitType] = nEpIdx;
+    return nEpsPhyOffset;
+}
+
+/*
+ * 根据枚举类型，对USB队列内存进行分割
+ */
+int32_t UsbQueueInit(stUsbEpsInfo_t *pUsbEpsInfo)
+{
+    uint8_t *pUsbQueueMem = sg_arrUsbQueueMem;
+    int32_t  nMemOffset = 0;
+
+    MemSet(sg_arrUsbQueueMem, 0, sizeof(sg_arrUsbQueueMem));
+    MemSet(sg_arrEpAppProcess, 0, sizeof(sg_arrEpAppProcess));
+    for (int32_t i = 0; i < sizeof(sg_arrEpAppProcessMap)/sizeof(sg_arrEpAppProcessMap[0]); i++)
+    {
+        sg_arrEpAppProcessMap[i] = -1;
+    }
+    for (int32_t i = 0; i < pUsbEpsInfo->nEpsCount; i++)   //匹配则进行内存分配
+    {
+        sg_arrEpAppProcess[i].stQueue.arrQueueData = (uint8_t (*)[USB_PACKET_MAX_SIZE])&pUsbQueueMem[nMemOffset];
+        nMemOffset += (pUsbEpsInfo->arrQueueSize[i] * USB_PACKET_MAX_SIZE);
+        sg_arrEpAppProcess[i].stQueue.arrQueueDataLen = (uint8_t *)&pUsbQueueMem[nMemOffset];
+        nMemOffset += pUsbEpsInfo->arrQueueSize[i];
+        sg_arrEpAppProcess[i].stQueue.nEPacketSize = pUsbEpsInfo->arrMaxEPacketSize[i];
+        sg_arrEpAppProcess[i].stQueue.nMaxQueueSize = pUsbEpsInfo->arrQueueSize[i];
+
+        sg_arrEpAppProcessMap[pUsbEpsInfo->arrEpsReportOutAddr[i]] = i; //建立端点和队列控制器的映射关系
+    }
+    return 0;
+}
+
 
 
 /*
  * 关闭usb枚举
  */
-int32_t StopUsbFsDev(void)
+int32_t StopUsbDev(eUsbDevice_t eDev)
 {
     int32_t nRet = 0;
-    if (sg_bUsbFsAppInit)
+    if (sg_bUsbAppInit)
     {
-        sg_bUsbFsAppInit = 0;
+        sg_bUsbAppInit = 0;
 //        usbd_disconnect(&g_stUsbFsDriver);
 //        rcu_periph_reset_enable(RCU_USBFSRST);
 //    	rcu_periph_reset_disable(RCU_USBFSRST);
@@ -298,27 +420,85 @@ int32_t StopUsbFsDev(void)
     return nRet;
 }
 
+int32_t StopAllUsbDev(void)
+{
+    for (eUsbDevice_t eDev = eUsbDev0; eDev < eUsbDevCount; eDev++)
+    {
+        StopUsbDev(eDev);
+    }
+    return 0;
+}
+
 
 /*
  * USB设备初始化 开始枚举
  */
-int32_t StartUsbFsDev(stUsbEnumInfo_t stUsbEnumInfo)
+int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo)
 {
-//  uint32_t nLastTime = GetCurrentTimeUs();
-    StopUsbFsDev();
-    if (!sg_bUsbFsAppInit)
+    StopUsbDev(stUsbEnumInfo.eUsbDev);
+    if (!sg_bUsbAppInit)
     {
-        g_eUsb0ConfigType = stUsbEnumInfo.eUsbConfigType;
-        sg_bUsbFsAppInit = 1;
-//        InitUSB(USB_DEVICES0, stUsbEnumInfo);
-//        UsbQueueInit(USB_DEVICES0, &g_stUsbEpsInfo[USB_DEVICES0]);  //根据枚举类型，对USB队列内存进行分割
-//        usbd_init (&g_stUsbFsDriver, USB_CORE_ENUM_FS, &usbfs_desc, &g_stUsbFsCC);
+        stUsbEnumInfo.eUsbDev = eUsbDev0;
+        g_eUsbCfgType[stUsbEnumInfo.eUsbDev] = stUsbEnumInfo.eUsbCfgType;
+        if (eUsbCfgAppDefault != stUsbEnumInfo.eUsbCfgType)
+        {
+//            InitUsbStrings(stUsbEnumInfo.eUsbDev);    //初始化USB字符串
+        }
+//        InitUSBDesc(USER_POINT, stUsbEnumInfo); /* USB protocol and register initialize*/
+//        UsbQueueInit(&g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev]);  //根据枚举类型，对USB队列内存进行分割
+//        UsbPlugInSimulate(); //模拟USB插拔动作
 
-        //while (GetUsbFsState() != USBD_CONFIGURED && ((GetSystickTime()-nLastTime) < USB_ENUM_TIME_OUT));
+//        uint64_t nUsbEnumTime =0;
+//        usbd_desc_register(g_arrUsbDevDesc[stUsbEnumInfo.eUsbDev].Descriptor);
+//        usbd_add_interface(usbd_hid_init_intf(&intf0, g_stUsbDefaultHidReportDesc.Descriptor, g_stUsbDefaultHidReportDesc.Descriptor_Size));
+//        usbd_add_endpoint(&custom_in_ep);
+//        usbd_add_endpoint(&custom_out_ep);
+//
+//        usbd_initialize();
+//
+//        nUsbEnumTime = GetCurrentTimeUs();
+//        while(!usb_device_is_configured()) 
+//        {
+//            printf("wait usb device configured...\n");
+//        }
+//        printf("USB enum time is %dus\n", GetCurrentTimeUs()- nUsbEnumTime);
 
-        boot_hid_init();
+        
+        sg_nUsb0SuspendTick = GetCurrentTime();
+        g_arrSetup0ProcessLstTick[eUsbDev0] = GetCurrentTime();
+        sg_bUsbAppInit = 1;
     }
     
     return 0;
 }
+
+int32_t GetUsbAppInit(eUsbDevice_t eUsbDev)
+{
+    return sg_bUsbAppInit;
+}
+
+uint8_t GetUsbReportStatus(eUsbDevice_t eUsbDev)
+{
+    return sg_arrSetReport[eUsbDev];
+}
+
+uint8_t SetUsbReportStatus(eUsbDevice_t eUsbDev, uint8_t bSetReport)
+{
+    sg_arrSetReport[eUsbDev] = bSetReport;
+    return sg_arrSetReport[eUsbDev];
+}
+
+//等待枚举完成 超时退出
+int32_t WaitWhileUsbEuming(eUsbDevice_t eUsbDev, uint32_t nTimeOut)
+{
+    uint32_t nLastTime = GetCurrentTime();
+//    while ((!GetUsbReportStatus(eUsbDev) || (GetSystickTime()-g_arrSetup0ProcessLstTick[eUsbDev]) < 300) &&
+//            ((GetCurrentTimeUs()-nLastTime) < nTimeOut));
+      while ((!GetUsbReportStatus(eUsbDev)) &&
+                ((GetCurrentTime()-nLastTime) < nTimeOut));
+
+    return 0;
+}
+
+
 

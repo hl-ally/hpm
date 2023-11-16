@@ -15,99 +15,62 @@
 
 static xpi_nor_config_t s_xpi_nor_config;
 
-int FlashRead(uint32_t addr, void *buf, uint32_t size_bytes)
+hpm_stat_t FlashRead(uint32_t addr, void *buf, uint32_t size_bytes)
 {
     hpm_stat_t status = rom_xpi_nor_read(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto,
                         &s_xpi_nor_config, (uint32_t *)buf, addr, size_bytes);
-    if(status != status_success)
-    {
-        return -1;
-    }
-
-    return 0;
+    return status;
 }
 
-int FlashWrite(uint32_t addr, const void *buf, uint32_t size_bytes)
+hpm_stat_t FlashWrite(uint32_t addr, const void *buf, uint32_t size_bytes)
 {
     hpm_stat_t status = rom_xpi_nor_program(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto,
                                  &s_xpi_nor_config, (const uint32_t *)buf, addr, size_bytes);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
-int FlashErase(uint32_t addr, uint32_t size_bytes)
+hpm_stat_t FlashErase(uint32_t addr, uint32_t size_bytes)
 {
     hpm_stat_t status = rom_xpi_nor_erase(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr, size_bytes);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
 
-int FlashEraseChip(void)
+hpm_stat_t FlashEraseChip(void)
 {
     hpm_stat_t status = rom_xpi_nor_erase_chip(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
-int FlashEraseChipNonBlocking(void)
+hpm_stat_t FlashEraseChipNonBlocking(void)
 {
     hpm_stat_t status = rom_xpi_nor_erase_chip_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
 
-int FlashEraseSector(uint32_t addr)
+hpm_stat_t FlashEraseSector(uint32_t addr)
 {
     hpm_stat_t status = rom_xpi_nor_erase_sector(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
-int FlashEraseSectorNonBlocking(uint32_t addr)
+hpm_stat_t FlashEraseSectorNonBlocking(uint32_t addr)
 {
     hpm_stat_t status = rom_xpi_nor_erase_sector_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
-int FlashEraseBlock(uint32_t addr)
+hpm_stat_t FlashEraseBlock(uint32_t addr)
 {
     hpm_stat_t status = rom_xpi_nor_erase_block(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
-int FlashEraseBlockNonBlocking(uint32_t addr)
+hpm_stat_t FlashEraseBlockNonBlocking(uint32_t addr)
 {
     hpm_stat_t status = rom_xpi_nor_erase_block_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
-    if(status != status_success)
-    {
-        return -1;
-    }
-    return 0;
+    return status;
 }
 
 
@@ -262,6 +225,49 @@ uint32_t GetFwCheckSum(void)
     }
 
     return (~nChecksum32 + 1) & 0xFFFF;
+}
+
+
+uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen)
+{
+    hpm_stat_t nStatus = status_success;
+    uint32_t nEraseLen = 0;
+    uint32_t nEraseAddr = 0;
+
+    if (eType == ePersistentData)
+    {
+        nEraseAddr = FLASH_PERSISTENT_DATA_ADDRESS;
+        nEraseLen = FLASH_PERSISTENT_DATA_LENGTH;
+    }
+    else if (eType == eUsbDescData)
+    {
+        nEraseAddr = FLASH_USB_DESC_ADDRESS;
+        nEraseLen = FLASH_USB_DESC_LENGTH;
+    }
+    else if (eType == eZwParaData)
+    {
+        nEraseAddr = FLASH_ZW_PARA_ADDRESS;
+        nEraseLen = FLASH_ZW_PARA_LENGTH;
+    }
+    else if (eType == eFwTableData)
+    {
+        nEraseAddr = FLASH_FW_TABLE_ADDRESS;
+        nEraseLen = FLASH_FW_TABLE_LENGTH;
+    }
+    else if (eType == eCustomerPrivateData)
+    {
+        nEraseAddr = FLASH_CUSTOMR_PRIVATE_ADDRESS;
+        nEraseLen = FLASH_CUSTOMR_PRIVATE_LENGTH;
+    }
+    if (nEraseLen > 0)
+    {
+        if(!(status_success == FlashErase(nEraseAddr, nEraseLen) &&
+                status_success == FlashWrite(nEraseAddr, pBuf, nLen)))
+        {
+            nStatus = status_fail;
+        }
+    }
+    return nStatus;
 }
 
 

@@ -15,7 +15,31 @@
 #define BOOTLOADER_MAX_SIZE             (32 * 1024)                      // 32K
 
 #define APPLICATION_ADDRESS             ((uint32_t)0x08010000)
-#define APPLICATION_MAX_LEN             (SIZE_64KB+SIZE_64KB)
+#define APPLICATION_MAX_LEN             (SIZE_64KB+SIZE_64KB+SIZE_64KB+SIZE_64KB)
+
+/*************************固件保存数据索引的表数据的相关地址和大小信息 ******************************/
+#define FLASH_FW_TABLE_ADDRESS          (APPLICATION_ADDRESS + APPLICATION_MAX_LEN)
+#define FLASH_FW_TABLE_LENGTH           (2 * 1024)
+
+/*************************保存零等待区的剩余空间信息 占2k******************************/
+#define FLASH_ZW_PARA_ADDRESS           (FLASH_FW_TABLE_ADDRESS + FLASH_FW_TABLE_LENGTH)
+#define FLASH_ZW_PARA_LENGTH            (2 * 1024)
+
+/*************************持久化数据 占2k******************************/
+#define FLASH_PERSISTENT_DATA_ADDRESS   (FLASH_ZW_PARA_ADDRESS + FLASH_ZW_PARA_LENGTH)
+#define FLASH_PERSISTENT_DATA_LENGTH    (2 * 1024)
+
+/*************************USB相关描述符 占6k******************************/
+#define FLASH_USB_DESC_ADDRESS          (FLASH_PERSISTENT_DATA_ADDRESS + FLASH_PERSISTENT_DATA_LENGTH)
+#define FLASH_USB_DESC_LENGTH           (6 * 1024)
+
+/*************************Customer私有信息 占2k******************************/
+#define FLASH_CUSTOMR_PRIVATE_ADDRESS   (FLASH_USB_DESC_ADDRESS + FLASH_USB_DESC_LENGTH)
+#define FLASH_CUSTOMR_PRIVATE_LENGTH    (2 * 1024)
+
+/*************************后置扩展代码信息 占2k******************************/
+#define FLASH_EXT_CODE_PARA_ADDRESS     (FLASH_CUSTOMR_PRIVATE_ADDRESS + FLASH_CUSTOMR_PRIVATE_LENGTH)
+#define FLASH_EXT_CODE_PARA_LENGTH      (2 * 1024)
 
 
 
@@ -54,6 +78,17 @@ typedef struct
     uint32_t nCheckSum;
 } stStartBootPara_t;
 
+typedef enum
+{
+    ePersistentData = 0,
+    eUsbDescData,
+    eZwParaData,
+    eFwTableData,
+    eCustomerPrivateData,
+    eDataListTotal
+} eDataList_t;
+
+
 
 
 struct flashstress_driver {
@@ -83,6 +118,7 @@ int32_t BootParaInit(stStartBootPara_t *pDefault);
 eAppUpgradeFlag_t GetUpgradeFlag(void);
 uint32_t GetFwCheckSum(void);
 
+extern uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen);
 
 
 

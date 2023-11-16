@@ -22,11 +22,11 @@
 #endif
 
 #ifndef SYSTEM_SUPPORT_INK_V1
-#define SYSTEM_SUPPORT_INK_V1           (0U)   //�ɰ�WhiteBoard, ֧�ִ�С�ʺ���Ƥ��
+#define SYSTEM_SUPPORT_INK_V1           (0U)   //旧版WhiteBoard, 支持大小笔和橡皮擦
 #endif
 
 #ifndef SYSTEM_SUPPORT_INK_V2
-#define SYSTEM_SUPPORT_INK_V2           (1U)  //�°�WhiteBoard, ��֧�ִ�С��
+#define SYSTEM_SUPPORT_INK_V2           (1U)  //新版WhiteBoard, 不支持大小笔
 #endif
 
 #if (1 == USB1_COORD_EN)
@@ -51,7 +51,7 @@ typedef enum
 
 typedef enum
 {
-    /*******USB0�������ݴ�������***********/
+    /*******USB0相关数据传输类型***********/
     eUsb0Ep0Mode = 0,
     eUsb0Ep1Mode,
     eUsb0Ep2Mode,
@@ -62,7 +62,7 @@ typedef enum
     eUsb0Ep7Mode,
     eUsb0EpsCount = eUsb0Ep7Mode,
 
-    /*******USB1�������ݴ�������***********/
+    /*******USB1相关数据传输类型***********/
     eUsb1Ep0Mode,
     eUsb1Ep1Mode,
     eUsb1Ep2Mode,
@@ -73,7 +73,7 @@ typedef enum
     eUsb1Ep7Mode,
 
     eUsart3Mode,
-    /*******ͨ�ŵ���������***********/
+    /*******通信的类型总数***********/
     eCmdModeCount
 } eCmdSource_t;
 

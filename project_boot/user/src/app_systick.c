@@ -55,3 +55,9 @@ uint64_t GetCurrentTimeUs(void)
     return result/ticks_per_us;
 #endif
  }
+
+ uint64_t GetCurrentTime(void)
+{
+    return GetCurrentTimeUs()/1000;
+}
+
