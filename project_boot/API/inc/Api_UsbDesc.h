@@ -133,9 +133,9 @@ typedef enum
 
 typedef struct
 {
-    int32_t nOffset;
-    int32_t nLen;
-    int32_t nMaxLen;
+    uint32_t nOffset;
+    uint32_t nLen;
+    uint32_t nMaxLen;
 } stOneFlashDesc_t;
 
 
@@ -171,7 +171,7 @@ extern stReportSection_t g_arrUsbDevDesc[eUsbDevCount];
 
 extern void InitUSBDesc(uint32_t nPoints, stUsbEnumInfo_t stEnumInfo);
 extern int32_t InitUsbStringUnicode(uint8_t* pString, uint8_t *pSrcMemStr, eUsbStrType_t eUsbStrType, eUsbDevice_t eUsbDev);
-
+extern int32_t SaveUsbDescStringFlash(uint8_t *pStr, int32_t nLen, eUsbDescStr_t eUsbDescFlash);
 
 #endif /* __USB_DESC_H */
 

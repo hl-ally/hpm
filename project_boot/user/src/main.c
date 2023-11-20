@@ -78,37 +78,31 @@ int main(void)
 
     HwPlatformInit();
 
-    uint64_t nLedToggleTime = GetCurrentTimeUs();
-
-    BootParaInit(&g_stBootPara);
-
-    if(1)
-    {
-	    stUsbEnumInfo_t stUsbTouchDevice = {.nUSBVid = g_stBootPara.nVid,
-	                        .nUSBPid = g_stBootPara.nPid,
-	                        .nVersion = g_stBootPara.nBootVersion,
-	                        .eUsbCfgType = eUsbConfigBootDefault};
-	                        
-	    StartUsbDev(stUsbTouchDevice); //USB开始枚举
-    }
-
-#if 0
+#if 1
     // 开机延时等待
     nLastTime = GetCurrentTimeUs();
-    while(GetCurrentTimeUs() - nLastTime < 3*1000*1000)
+    while(GetCurrentTimeUs() - nLastTime < 1*1000*1000)
     {
         ;
     }
 #endif
 
-    uint64_t nUsbBootTime = GetCurrentTimeUs();
-    //boot_hid_init();
+    uint64_t nLedToggleTime = GetCurrentTimeUs();
 
-    //norflash_test();
-    printf("**********data \n");
-    uint32_t *pTest = (uint32_t *)FLASH_USB_DESC_ADDRESS;
+    BootParaInit(&g_stBootPara);
+    FlashTest();
+    if(0)
+    {
+        stUsbEnumInfo_t stUsbTouchDevice = {.nUSBVid = g_stBootPara.nVid,
+                            .nUSBPid = g_stBootPara.nPid,
+                            .nVersion = g_stBootPara.nBootVersion,
+                            .eUsbCfgType = eUsbConfigBootDefault};
+                            
+        StartUsbDev(stUsbTouchDevice); //USB开始枚举
 
-    printf("**********data %08X\n", pTest);
+    }
+
+//    FlashTest();
 
 #if defined(__GNUC__)
     printf("gcc version %d\n", __GNUC__);
@@ -129,16 +123,10 @@ int main(void)
             #endif
         }
 
-        if(GetCurrentTimeUs()- nUsbBootTime >= 1*1000*1000)
-        {
-            nUsbBootTime = GetCurrentTimeUs();
-            //boot_hid_test();
-        }
-
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
         {
             nLastTime = GetCurrentTimeUs();
-            printf("heartbeat, %llu\n", nLastTime);
+//            printf("heartbeat, %llu\n", nLastTime);
         }
     }
     return 0;

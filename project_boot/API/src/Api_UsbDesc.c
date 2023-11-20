@@ -962,13 +962,39 @@ int32_t SaveUsbDescStringFlash(uint8_t *pStr, int32_t nLen, eUsbDescStr_t eUsbDe
         }
         pUsbDescFlash->nThisCrc32 = GetCrc32_SW((uint8_t *)pUsbDescFlash, offsetof(stUsbDescFlash_t, nThisCrc32));
 
+        #if 0
+        printf("\npUsbDescFlash data(%d):\n", sizeof(stUsbDescFlash_t));
+        for(int j = 0;j<sizeof(stUsbDescFlash_t);j++)
+        {
+            if(j!=0 && (j%16 == 0))
+            {
+                printf("\n");
+            }
+            printf(" %02X", ((uint8_t *)pUsbDescFlash)[j]);
+        }
+        printf("\n\n");
+        #endif
+
         if (status_success != SaveDataList(eUsbDescData, (uint8_t *)pUsbDescFlash, sizeof(stUsbDescFlash_t)))
         {
             printf("SaveUsbDescStringFlash default error!\n");
             return -1;
         }
     }
+    #if 0
+    printf("\nsg_pUsbDescFlash data(%d):\n", sizeof(stUsbDescFlash_t));
+    for(int j = 0;j<sizeof(stUsbDescFlash_t);j++)
+    {
+        if(j!=0 && (j%16 == 0))
+        {
+            printf("\n");
+        }
+        printf(" %02X", ((uint8_t *)sg_pUsbDescFlash)[j]);
+    }
+    printf("\n\n");
+    #endif
     MemCpy(pTmp, sg_pUsbDescFlash, FLASH_USB_DESC_LENGTH);
+    
     if (nLen > pUsbDescFlash->arrDesc[eUsbDescFlash].nMaxLen)
     {
         printf("Warning->SaveUsbDesc eUsbDesc:%d, max:%d, %d\n", eUsbDescFlash, pUsbDescFlash->arrDesc[eUsbDescFlash].nMaxLen, nLen);
@@ -984,6 +1010,18 @@ int32_t SaveUsbDescStringFlash(uint8_t *pStr, int32_t nLen, eUsbDescStr_t eUsbDe
 //        printf("UsbDescStringFlash nTotalCrc32(0x%08x) != pTmp crc!(0x%08x)\n", sg_pUsbDescFlash->nTotalCrc32, GetCrc32_SW(pTotalCrcData, nTotalDescLen));
         pUsbDescFlash->nTotalCrc32 = GetCrc32_SW(pTotalCrcData, nTotalDescLen);
         pUsbDescFlash->nThisCrc32 = GetCrc32_SW((uint8_t *)pUsbDescFlash, offsetof(stUsbDescFlash_t, nThisCrc32));
+        #if 0
+        printf("\npTmp data(%d):\n", sizeof(stUsbDescFlash_t));
+        for(int j = 0;j<sizeof(stUsbDescFlash_t);j++)
+        {
+            if(j!=0 && (j%16 == 0))
+            {
+                printf("\n");
+            }
+            printf(" %02X", pTmp[j]);
+        }
+        printf("\n\n");
+        #endif
         if (status_success != SaveDataList(eUsbDescData, (uint8_t *)pTmp, FLASH_USB_DESC_LENGTH))
         {
             printf("SaveUsbDescStringFlash error!\n");
@@ -1012,10 +1050,37 @@ static int32_t InitUSBDevDesc(stUsbEnumInfo_t stEnumInfo)
     arrDevDesc[12] = FN_LOBYTE(stEnumInfo.nVersion);
     arrDevDesc[13] = FN_HIBYTE(stEnumInfo.nVersion);
 
+    #if 0
+    printf("\n before sg_pUsbDescFlash data(%d):\n", sizeof(stUsbDescFlash_t));
+    for(int j = 0;j<sizeof(stUsbDescFlash_t);j++)
+    {
+        if(j!=0 && (j%16 == 0))
+        {
+            printf("\n");
+        }
+        printf(" %02X", ((uint8_t *)sg_pUsbDescFlash)[j]);
+    }
+    printf("\n\n");
+    #endif
+    
     eUsbDescStr_t eDescStr = (eUsbDescStr_t)(eUsbDev0Desc + stEnumInfo.eUsbDev);
     if (!(SaveUsbDescStringFlash(arrDevDesc, sizeof(arrDevDesc), eDescStr) < 0))
     {
         uint8_t *pFlashStr = (uint8_t *)sg_pUsbDescFlash;
+        #if 0
+        printf("\npFlashStrdata(%d):\n", sizeof(stUsbDescFlash_t));
+        for(int j = 0;j<sizeof(stUsbDescFlash_t);j++)
+        {
+            if(j!=0 && (j%16 == 0))
+            {
+                printf("\n");
+            }
+            printf(" %02X", pFlashStr[j]);
+        }
+        printf("\n\n");
+        printf("offset_addr=%08X, offset=%x, addr=%08X, eDescStr=%d\n", &sg_pUsbDescFlash->arrDesc[eDescStr].nOffset, 
+                                sg_pUsbDescFlash->arrDesc[eDescStr].nOffset, pFlashStr, eDescStr);
+        #endif
         g_arrUsbDevDesc[stEnumInfo.eUsbDev].Descriptor = (uint8_t *)&pFlashStr[sg_pUsbDescFlash->arrDesc[eDescStr].nOffset];
         g_arrUsbDevDesc[stEnumInfo.eUsbDev].Descriptor_Size = sg_pUsbDescFlash->arrDesc[eDescStr].nLen;
     }
@@ -1023,7 +1088,7 @@ static int32_t InitUSBDevDesc(stUsbEnumInfo_t stEnumInfo)
 }
 
 //初始化接口描述符
-__attribute__((weak)) int32_t InitHidConfigDesc(stUsbEnumInfo_t stEnumInfo, stReportSection_t **ppReportDesc, int32_t nCount)
+ATTR_WEAK int32_t InitHidConfigDesc(stUsbEnumInfo_t stEnumInfo, stReportSection_t **ppReportDesc, int32_t nCount)
 {
     eUsbCfgType_t eType = stEnumInfo.eUsbCfgType;
     uint8_t arrUsbHidConfigDesc[CUSTOMHID_SIZ_CONFIG_DESC];

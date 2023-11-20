@@ -3,19 +3,21 @@
 #include <stdint.h>
 
 
-#define SIZE_256B                       ((uint32_t)0x000000FFU)
-#define SIZE_4KB                        ((uint32_t)0x00001000U)
-#define SIZE_64KB                       ((uint32_t)0x00010000U)
+#define SIZE_256B                       ((uint32_t)0x000000FF)
+#define SIZE_4KB                        ((uint32_t)0x00001000)
+#define SIZE_64KB                       ((uint32_t)0x00010000)
 
 #define FLASH_PAGE_SIZE                 SIZE_256B
 #define FLASH_SECTOR_SIZE               SIZE_4KB
 #define FLASH_BLOCK_SIZE                SIZE_64KB
 
-#define BOOTLOADER_ADDRESS              ((uint32_t)0x08000000)            //Boot的启动地址
+#define FLASH_START_ADDRESS             ((uint32_t)0x80000000)
+
+#define BOOTLOADER_ADDRESS              (FLASH_START_ADDRESS)            //Boot的启动地址
 #define BOOTLOADER_MAX_SIZE             (32 * 1024)                      // 32K
 
-#define APPLICATION_ADDRESS             ((uint32_t)0x08010000)
-#define APPLICATION_MAX_LEN             (SIZE_64KB+SIZE_64KB+SIZE_64KB+SIZE_64KB)
+#define APPLICATION_ADDRESS             (FLASH_START_ADDRESS + SIZE_64KB)
+#define APPLICATION_MAX_LEN             (256 * 1024)
 
 /*************************固件保存数据索引的表数据的相关地址和大小信息 ******************************/
 #define FLASH_FW_TABLE_ADDRESS          (APPLICATION_ADDRESS + APPLICATION_MAX_LEN)
@@ -42,9 +44,11 @@
 #define FLASH_EXT_CODE_PARA_LENGTH      (2 * 1024)
 
 
+#define FLASH_BOOT_PARA_ADDRESS         (FLASH_EXT_CODE_PARA_ADDRESS + FLASH_EXT_CODE_PARA_LENGTH)
+#define FLASH_BOOT_PARA_LENGTH          (0x100)
 
-#define INFO_OFFSET                     (0x200)
-#define INFO_LEN                        (0x100)
+
+
 
 //boot跳转行为定义
 typedef enum
@@ -121,6 +125,7 @@ uint32_t GetFwCheckSum(void);
 extern uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen);
 
 
+extern void FlashTest(void);
 
 
 

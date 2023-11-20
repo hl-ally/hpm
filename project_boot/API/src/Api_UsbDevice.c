@@ -435,33 +435,50 @@ int32_t StopAllUsbDev(void)
  */
 int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo)
 {
-    StopUsbDev(stUsbEnumInfo.eUsbDev);
+    
+//    StopUsbDev(stUsbEnumInfo.eUsbDev);
     if (!sg_bUsbAppInit)
     {
+        printf("usb device start enum ...\n");
         stUsbEnumInfo.eUsbDev = eUsbDev0;
         g_eUsbCfgType[stUsbEnumInfo.eUsbDev] = stUsbEnumInfo.eUsbCfgType;
         if (eUsbCfgAppDefault != stUsbEnumInfo.eUsbCfgType)
         {
 //            InitUsbStrings(stUsbEnumInfo.eUsbDev);    //初始化USB字符串
         }
-//        InitUSBDesc(USER_POINT, stUsbEnumInfo); /* USB protocol and register initialize*/
-//        UsbQueueInit(&g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev]);  //根据枚举类型，对USB队列内存进行分割
+        InitUSBDesc(USER_POINT, stUsbEnumInfo); /* USB protocol and register initialize*/
+        UsbQueueInit(&g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev]);  //根据枚举类型，对USB队列内存进行分割
 //        UsbPlugInSimulate(); //模拟USB插拔动作
 
-//        uint64_t nUsbEnumTime =0;
+        #if 1
 //        usbd_desc_register(g_arrUsbDevDesc[stUsbEnumInfo.eUsbDev].Descriptor);
 //        usbd_add_interface(usbd_hid_init_intf(&intf0, g_stUsbDefaultHidReportDesc.Descriptor, g_stUsbDefaultHidReportDesc.Descriptor_Size));
 //        usbd_add_endpoint(&custom_in_ep);
 //        usbd_add_endpoint(&custom_out_ep);
 //
 //        usbd_initialize();
-//
-//        nUsbEnumTime = GetCurrentTimeUs();
-//        while(!usb_device_is_configured()) 
+//        for(int i=0;i<40;i++)
 //        {
-//            printf("wait usb device configured...\n");
+//            if(g_arrUsbDevDesc[stUsbEnumInfo.eUsbDev].Descriptor[i] != hid_descriptor[i])
+//            {
+//                printf("no same %d-%02X-%02X\n", i, g_arrUsbDevDesc[stUsbEnumInfo.eUsbDev].Descriptor[i], hid_descriptor[i]);
+//            }
 //        }
-//        printf("USB enum time is %dus\n", GetCurrentTimeUs()- nUsbEnumTime);
+        #else
+        usbd_desc_register(hid_descriptor);
+        usbd_add_interface(usbd_hid_init_intf(&intf0, hid_custom_report_desc, HID_CUSTOM_REPORT_DESC_SIZE));
+        usbd_add_endpoint(&custom_in_ep);
+        usbd_add_endpoint(&custom_out_ep);
+
+        usbd_initialize();
+        #endif
+        
+//        uint64_t nUsbEnumTime = GetCurrentTimeUs();
+//        while( !usb_device_is_configured() && (GetCurrentTimeUs() - nUsbEnumTime <= 300*1000)) 
+//        {
+////            printf("wait usb device configured...%llu-%llu\n", nUsbEnumTime, GetCurrentTimeUs());
+//        }
+//        printf("USB enum time is %llu(us)\n", (GetCurrentTimeUs()- nUsbEnumTime));
 
         
         sg_nUsb0SuspendTick = GetCurrentTime();

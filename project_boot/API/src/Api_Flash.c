@@ -9,67 +9,101 @@
 #include "Api_Flash.h"
 #include "Api_Math.h"
 #include "Api_Crc.h"
+#include "Api_UsbDesc.h"
 
 
-#define FLASH_LOG(...)            printf(__VA_ARGS__)
+#define FLASH_LOG(...)              printf(__VA_ARGS__)
+#define FLASH_GET_OFFSET(addr)      (addr - FLASH_START_ADDRESS)
 
 static xpi_nor_config_t s_xpi_nor_config;
 
 hpm_stat_t FlashRead(uint32_t addr, void *buf, uint32_t size_bytes)
 {
     hpm_stat_t status = rom_xpi_nor_read(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto,
-                        &s_xpi_nor_config, (uint32_t *)buf, addr, size_bytes);
+                        &s_xpi_nor_config, (uint32_t *)buf, FLASH_GET_OFFSET(addr), size_bytes);
     return status;
 }
 
 hpm_stat_t FlashWrite(uint32_t addr, const void *buf, uint32_t size_bytes)
 {
     hpm_stat_t status = rom_xpi_nor_program(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto,
-                                 &s_xpi_nor_config, (const uint32_t *)buf, addr, size_bytes);
+                         &s_xpi_nor_config, (const uint32_t *)buf, FLASH_GET_OFFSET(addr), size_bytes);
+    if(status_success == status)
+    {
+        FLASH_LOG("flash write sucess\n");
+    }
+    else
+    {
+        FLASH_LOG("flash write fail %d\n", status);
+    }
     return status;
 }
 
 hpm_stat_t FlashErase(uint32_t addr, uint32_t size_bytes)
 {
-    hpm_stat_t status = rom_xpi_nor_erase(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr, size_bytes);
+    hpm_stat_t status = rom_xpi_nor_erase(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, 
+                        &s_xpi_nor_config, FLASH_GET_OFFSET(addr), size_bytes);
+    if(status_success == status)
+    {
+        FLASH_LOG("flash erase sucess\n");
+    }
+    else
+    {
+        FLASH_LOG("flash erase fail %d\n", status);
+    }
     return status;
 }
 
 
 hpm_stat_t FlashEraseChip(void)
 {
-    hpm_stat_t status = rom_xpi_nor_erase_chip(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config);
+    hpm_stat_t status = rom_xpi_nor_erase_chip(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, 
+                        &s_xpi_nor_config);
     return status;
 }
 
 hpm_stat_t FlashEraseChipNonBlocking(void)
 {
-    hpm_stat_t status = rom_xpi_nor_erase_chip_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config);
+    hpm_stat_t status = rom_xpi_nor_erase_chip_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, 
+                        &s_xpi_nor_config);
     return status;
 }
 
 
 hpm_stat_t FlashEraseSector(uint32_t addr)
 {
-    hpm_stat_t status = rom_xpi_nor_erase_sector(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
+    hpm_stat_t status = rom_xpi_nor_erase_sector(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, 
+                        &s_xpi_nor_config, FLASH_GET_OFFSET(addr));
+
+    if(status_success == status)
+    {
+        FLASH_LOG("flash erase sector sucess\n");
+    }
+    else
+    {
+        FLASH_LOG("flash erase sector fail %d\n", status);
+    }
     return status;
 }
 
 hpm_stat_t FlashEraseSectorNonBlocking(uint32_t addr)
 {
-    hpm_stat_t status = rom_xpi_nor_erase_sector_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
+    hpm_stat_t status = rom_xpi_nor_erase_sector_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, 
+                        &s_xpi_nor_config, FLASH_GET_OFFSET(addr));
     return status;
 }
 
 hpm_stat_t FlashEraseBlock(uint32_t addr)
 {
-    hpm_stat_t status = rom_xpi_nor_erase_block(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
+    hpm_stat_t status = rom_xpi_nor_erase_block(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, 
+                        &s_xpi_nor_config, FLASH_GET_OFFSET(addr));
     return status;
 }
 
 hpm_stat_t FlashEraseBlockNonBlocking(uint32_t addr)
 {
-    hpm_stat_t status = rom_xpi_nor_erase_block_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, addr);
+    hpm_stat_t status = rom_xpi_nor_erase_block_nonblocking(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, 
+                        &s_xpi_nor_config, FLASH_GET_OFFSET(addr));
     return status;
 }
 
@@ -97,7 +131,6 @@ uint32_t FlashGetSectorSize(void)
             xpi_nor_property_sector_size, &sector_size);
     return sector_size;
 }
-
 
 uint32_t FlashGetBlockSize(void)
 {
@@ -165,8 +198,8 @@ static void PrintBootPara(stStartBootPara_t *pPara)
 
 int32_t GetBootPara(stStartBootPara_t *pPara)
 {
-    int32_t nLen = FN_MIN(sizeof(stStartBootPara_t), INFO_LEN);
-    FlashRead(APPLICATION_ADDRESS + INFO_OFFSET, (uint32_t *)pPara, nLen);
+    int32_t nLen = FN_MIN(sizeof(stStartBootPara_t), FLASH_BOOT_PARA_LENGTH);
+    FlashRead(FLASH_BOOT_PARA_ADDRESS, (uint32_t *)pPara, nLen);
     return nLen;
 }
 
@@ -216,11 +249,11 @@ uint32_t GetFwCheckSum(void)
     
     for(i = 0; i < nLen; i++)
     {
-        if((i >= INFO_OFFSET)&&(i < (INFO_OFFSET + INFO_LEN)))
-        {
-            pApp++;
-            continue;
-        }
+//        if((i >= INFO_OFFSET)&&(i < (INFO_OFFSET + INFO_LEN)))
+//        {
+//            pApp++;
+//            continue;
+//        }
         nChecksum32 += (*(pApp++));
     }
 
@@ -259,6 +292,20 @@ uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen)
         nEraseAddr = FLASH_CUSTOMR_PRIVATE_ADDRESS;
         nEraseLen = FLASH_CUSTOMR_PRIVATE_LENGTH;
     }
+    #if 0
+    printf("\npBuf data(%d):\n", 188);
+    for(int j = 0;j<188;j++)
+    {
+        if(j!=0 && (j%16 == 0))
+        {
+            printf("\n");
+        }
+        printf(" %02X", pBuf[j]);
+    }
+    printf("\n\n");
+    FLASH_LOG("eType=%d, nEraseAddr=%08X, nEraseLen=%d\n", eType, nEraseAddr, nEraseLen);
+    #endif
+    
     if (nEraseLen > 0)
     {
         if(!(status_success == FlashErase(nEraseAddr, nEraseLen) &&
@@ -267,7 +314,108 @@ uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen)
             nStatus = status_fail;
         }
     }
+
+    #if 0
+    // 校验写入数据的准确性
+    if(status_success == nStatus)
+    {
+        uint8_t arrTmp[FLASH_USB_DESC_LENGTH];
+        if(status_success == FlashRead(nEraseAddr, arrTmp, nLen))
+        {
+            for(int i=0;i<188;i++)
+            {
+                if(arrTmp[i] != pBuf[i])
+                {
+                    printf("flash write and read no same %d-read(%02X)-write(%02X)\n", i, arrTmp[i], pBuf[i]);
+                }
+            }
+        }
+        else
+        {
+            printf("save data list verify fail\n");
+        }
+    }
+    #endif
+
+    #if 0
+    uint8_t *sg_pUsbDescFlash = (uint8_t *)nEraseAddr;
+    printf("\nsg_pUsbDescFlash-%08X data(%d):\n", sg_pUsbDescFlash, 188);
+    for(int j = 0;j<188;j++)
+    {
+        if(j!=0 && (j%16 == 0))
+        {
+            printf("\n");
+        }
+        printf(" %02X", sg_pUsbDescFlash[j]);
+    }
+    printf("\n\n");
+    #endif
+    
     return nStatus;
 }
+
+void FlashTest(void)
+{
+#if 0
+    printf("\n********************************\n");
+    printf("Flash test\n");
+    uint8_t arrWrite[188] = {
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x6D, 0xD4, 0x62, 0x51
+    };
+    uint8_t arrRead[188] = {};
+    uint32_t nAddr = FLASH_USB_DESC_ADDRESS;
+    uint32_t nLen = FLASH_USB_DESC_LENGTH;
+
+//    if(status_success == FlashErase(nAddr, nLen))
+//    {
+//        printf("flash erase test sucess\n");
+//    }
+//
+//    if(status_success == FlashWrite(nAddr, arrWrite, 188))
+//    {
+//        printf("flash write test sucess\n");
+//    }
+//
+//    if(status_success == FlashRead(nAddr, arrRead, 188))
+//    {
+//        printf("arrRead[%d %d %d %d]\n", arrRead[0], arrRead[1], arrRead[2], arrRead[3]);
+//    }
+
+//    SaveDataList(eUsbDescData, arrWrite, 188);
+
+    uint8_t arrDevDesc[18] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    SaveUsbDescStringFlash(arrDevDesc, 18, 0);
+    stUsbDescFlash_t *sg_pUsbDescFlash = (stUsbDescFlash_t *)FLASH_USB_DESC_ADDRESS;
+    printf("\nsg_pUsbDescFlash data(%d):\n", 188);
+    for(int j = 0;j<188;j++)
+    {
+        if(j!=0 && (j%16 == 0))
+        {
+            printf("\n");
+        }
+        printf(" %02X", ((uint8_t *)sg_pUsbDescFlash)[j]);
+    }
+    printf("\n\n");
+//    uint32_t pTest = *(uint32_t *)FLASH_USB_DESC_ADDRESS;
+//    printf("%08X=pTest %08X\n", FLASH_USB_DESC_ADDRESS, pTest);
+
+    printf("Flash test finish\n");
+    printf("********************************\n");
+
+#endif
+}
+
 
 
