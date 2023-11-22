@@ -230,7 +230,7 @@ int32_t BootParaInit(stStartBootPara_t *pDefault)
 
 eAppUpgradeFlag_t GetUpgradeFlag(void)
 {
-	stStartBootPara_t stPara;
+    stStartBootPara_t stPara;
     GetBootPara(&stPara);
     return stPara.eUpgradeFlag;
 }
@@ -292,20 +292,7 @@ uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen)
         nEraseAddr = FLASH_CUSTOMR_PRIVATE_ADDRESS;
         nEraseLen = FLASH_CUSTOMR_PRIVATE_LENGTH;
     }
-    #if 0
-    printf("\npBuf data(%d):\n", 188);
-    for(int j = 0;j<188;j++)
-    {
-        if(j!=0 && (j%16 == 0))
-        {
-            printf("\n");
-        }
-        printf(" %02X", pBuf[j]);
-    }
-    printf("\n\n");
-    FLASH_LOG("eType=%d, nEraseAddr=%08X, nEraseLen=%d\n", eType, nEraseAddr, nEraseLen);
-    #endif
-    
+
     if (nEraseLen > 0)
     {
         if(!(status_success == FlashErase(nEraseAddr, nEraseLen) &&
@@ -337,20 +324,6 @@ uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen)
     }
     #endif
 
-    #if 0
-    uint8_t *sg_pUsbDescFlash = (uint8_t *)nEraseAddr;
-    printf("\nsg_pUsbDescFlash-%08X data(%d):\n", sg_pUsbDescFlash, 188);
-    for(int j = 0;j<188;j++)
-    {
-        if(j!=0 && (j%16 == 0))
-        {
-            printf("\n");
-        }
-        printf(" %02X", sg_pUsbDescFlash[j]);
-    }
-    printf("\n\n");
-    #endif
-    
     return nStatus;
 }
 

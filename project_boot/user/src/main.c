@@ -9,6 +9,7 @@
 #include "Api_Crc.h"
 #include "Api_UsbDesc.h"
 #include "Api_UsbDevice.h"
+#include "hpm_l1c_drv.h"
 
 
 /*
@@ -90,19 +91,16 @@ int main(void)
     uint64_t nLedToggleTime = GetCurrentTimeUs();
 
     BootParaInit(&g_stBootPara);
-    FlashTest();
-    if(0)
+    if(1)
     {
         stUsbEnumInfo_t stUsbTouchDevice = {.nUSBVid = g_stBootPara.nVid,
                             .nUSBPid = g_stBootPara.nPid,
                             .nVersion = g_stBootPara.nBootVersion,
                             .eUsbCfgType = eUsbConfigBootDefault};
-                            
+        l1c_dc_disable();
         StartUsbDev(stUsbTouchDevice); //USB开始枚举
-
+        l1c_dc_enable();
     }
-
-//    FlashTest();
 
 #if defined(__GNUC__)
     printf("gcc version %d\n", __GNUC__);
