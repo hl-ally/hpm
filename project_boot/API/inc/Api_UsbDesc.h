@@ -60,36 +60,6 @@
 
 #define ENDPx_START_ADDR                        (0)
 
-
-
-
-typedef enum
-{
-    eUsbConfigTouch0AndCommBit      = 0x00,  //Touch & communication interface
-    eUsbConfigKeyboardBit           = 0x01,  //Keyboard interface
-    eUsbConfigBulkBit               = 0x02,  //Bulk interface
-    eUsbConfigTouch1Bit             = 0x04,  //Touch only interface
-    eUsbConfigMouseBit              = 0x08,  //Mouse only interface
-    eUsbConfigPenBit                = 0x10,  //Pen bit
-    eUsbConfigBitTotal
-} eUsbConfigBitType_t;
-
-
-typedef enum
-{
-    eUsbConfigStandard                      = eUsbConfigTouch0AndCommBit,
-    eUsbConfigStandardWithKeyboard          = eUsbConfigTouch0AndCommBit | eUsbConfigKeyboardBit,
-    eUsbConfigStandardWithBulk              = eUsbConfigTouch0AndCommBit | eUsbConfigBulkBit,
-    eUsbConfigStandardWithBulkAndKeyBoard   = eUsbConfigTouch0AndCommBit | eUsbConfigKeyboardBit | eUsbConfigBulkBit,
-    eUsbConfigStandardWithDualHid           = eUsbConfigTouch0AndCommBit | eUsbConfigTouch1Bit,
-    eUsbConfigStandardWithKeyboardDualHid   = eUsbConfigTouch0AndCommBit | eUsbConfigTouch1Bit | eUsbConfigKeyboardBit,
-    eUsbConfigBootDefault = 0xFE,
-    eUsbConfigAppDefault = 0xFF
-} eUsbConfigType_t;
-
-
-
-
 typedef enum
 {
     eTouchCommReportSection = 0,    //触控和通讯描述符索引ID
@@ -158,7 +128,7 @@ typedef struct
     uint16_t nUSBVid;
     uint16_t nUSBPid;
     uint16_t nVersion;
-    eUsbConfigType_t eUsbCfgType;
+    eUsbCfgType_t eUsbCfgType;
     uint32_t nPhysicalX;
     uint32_t nPhysicalY;
     uint8_t  bTouchCoordWidthEn;
@@ -167,12 +137,13 @@ typedef struct
 
 extern stReportSection_t g_stUsbDefaultHidReportDesc;
 extern stReportSection_t g_arrUsbDevDesc[eUsbDevCount];
-
+extern stReportSection_t g_arrUsbCfgDesc[eUsbDevCount];
+extern stReportSection_t g_arrHidString[eUsbStrTotal];
 
 extern void InitUSBDesc(uint32_t nPoints, stUsbEnumInfo_t stEnumInfo);
-extern int32_t InitUsbStringUnicode(uint8_t* pString, uint8_t *pSrcMemStr, eUsbStrType_t eUsbStrType, eUsbDevice_t eUsbDev);
+//extern int32_t InitUsbStringUnicode(uint8_t* pString, uint8_t *pSrcMemStr, eUsbStrType_t eUsbStrType, eUsbDevice_t eUsbDev);
 extern int32_t SaveUsbDescStringFlash(uint8_t *pStr, int32_t nLen, eUsbDescStr_t eUsbDescFlash);
-
+extern int32_t InitUsbStrings(eUsbDevice_t eUsbDev);
 #endif /* __USB_DESC_H */
 
 

@@ -10,6 +10,7 @@
 #include "Api_UsbDesc.h"
 #include "Api_UsbDevice.h"
 #include "hpm_l1c_drv.h"
+#include "GlobalDefaultDefine.h"
 
 
 /*
@@ -96,7 +97,7 @@ int main(void)
         stUsbEnumInfo_t stUsbTouchDevice = {.nUSBVid = g_stBootPara.nVid,
                             .nUSBPid = g_stBootPara.nPid,
                             .nVersion = g_stBootPara.nBootVersion,
-                            .eUsbCfgType = eUsbConfigBootDefault};
+                            .eUsbCfgType = eUsbCfgBootDefault};
         l1c_dc_disable();
         StartUsbDev(stUsbTouchDevice); //USB开始枚举
         l1c_dc_enable();
@@ -124,7 +125,7 @@ int main(void)
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
         {
             nLastTime = GetCurrentTimeUs();
-//            printf("heartbeat, %llu\n", nLastTime);
+            printf("heartbeat, %llu\n", nLastTime);
         }
     }
     return 0;

@@ -1533,5 +1533,36 @@ int32_t InitUsbStringUnicode(uint8_t* pString, uint8_t *pSrcMemStr, eUsbStrType_
     return nLen;
 }
 
+//初始化USB字符串
+int32_t InitUsbStrings(eUsbDevice_t eUsbDev)
+{
+    uint8_t arrStrTmp[512], arrProductStrTmp[512];
+    uint8_t *pVendorStr = NULL;//g_pConfigData->strManufacturerDesc;
+    uint8_t *pProductStr = arrProductStrTmp;
+    uint8_t *pSeriesNumStr = NULL;
+    uint8_t arrStrSeriesNum[128];
+
+    if (pVendorStr != NULL)
+    {
+        InitUsbStringUnicode(pVendorStr, arrStrTmp, eUsbStrVendor, eUsbDev);
+    }
+    if (pProductStr != NULL)
+    {
+//        GetProductString(pProductStr, eUsbDev);
+        InitUsbStringUnicode(pProductStr, arrStrTmp, eUsbStrProduct, eUsbDev);
+    }
+//    if (0 && pSeriesNumStr == NULL) //20210827 关闭序列号字符串初始化 使用默认
+//    {
+//        uint32_t arrSerialNum[3];
+//        GetSerialNum(arrSerialNum);
+//        sprintf((char *)arrStrSeriesNum, "%04x%04x%04x", arrSerialNum[0], arrSerialNum[1], arrSerialNum[2]);
+//        pSeriesNumStr = arrStrSeriesNum;
+//    }
+    if (pSeriesNumStr != NULL)
+    {
+        InitUsbStringUnicode(pSeriesNumStr, arrStrTmp, eUsbStrSerialNumber, eUsbDev);
+    }
+    return 0;
+}
 
 
