@@ -260,6 +260,17 @@ uint32_t GetFwCheckSum(void)
     return (~nChecksum32 + 1) & 0xFFFF;
 }
 
+uint32_t GetBootDataCrc32(void)
+{
+#if !USE_APPFLASH_BACKUP_EN
+//    stStartBootPara_t stPara;
+//    GetBootPara(&stPara);
+//    return stPara.stBootFlashPara.nBootCrc;
+    return 0;
+#else
+    return GetCrc32_SW((uint8_t *)(BOOTLOADER_ADDRESS), BOOTLOADER_MAX_SIZE);
+#endif
+}
 
 uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen)
 {

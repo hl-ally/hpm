@@ -1,6 +1,7 @@
 #ifndef API_FLASH_H
 #define API_FLASH_H
 #include <stdint.h>
+#include "hpm_common.h"
 
 
 #define SIZE_256B                       ((uint32_t)0x000000FF)
@@ -12,12 +13,14 @@
 #define FLASH_BLOCK_SIZE                SIZE_64KB
 
 #define FLASH_START_ADDRESS             ((uint32_t)0x80000000)
+#define FLASH_CHIP_SIZE                 ((uint32_t)0x00100000)
 
 #define BOOTLOADER_ADDRESS              (FLASH_START_ADDRESS)            //Boot的启动地址
 #define BOOTLOADER_MAX_SIZE             (32 * 1024)                      // 32K
 
 #define APPLICATION_ADDRESS             (FLASH_START_ADDRESS + SIZE_64KB)
-#define APPLICATION_MAX_LEN             (256 * 1024)
+//#define APPLICATION_MAX_LEN             (256 * 1024)
+#define APPLICATION_MAX_LEN             (FLASH_CHIP_SIZE - BOOTLOADER_MAX_SIZE)
 
 /*************************固件保存数据索引的表数据的相关地址和大小信息 ******************************/
 #define FLASH_FW_TABLE_ADDRESS          (APPLICATION_ADDRESS + APPLICATION_MAX_LEN)
@@ -116,11 +119,14 @@ struct flashstress_context {
 };
 
 int FlashInit(void);
+extern hpm_stat_t FlashErase(uint32_t addr, uint32_t size_bytes);
+extern hpm_stat_t FlashWrite(uint32_t addr, const void *buf, uint32_t size_bytes);
 
 int32_t GetBootPara(stStartBootPara_t *pPara);
 int32_t BootParaInit(stStartBootPara_t *pDefault);
 eAppUpgradeFlag_t GetUpgradeFlag(void);
 uint32_t GetFwCheckSum(void);
+uint32_t GetBootDataCrc32(void);
 
 extern uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen);
 

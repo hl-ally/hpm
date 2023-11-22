@@ -7,6 +7,7 @@
 //#include "SystemDefine.h"
 #include "app_systick.h"
 //#include "Api_Gpio.h"
+#include "hpm_common.h"
 
 
 typedef void (*pFunction)(void);
@@ -43,16 +44,16 @@ uint32_t CheckFroApplication(void)
     if((nFwChecksum == 0 || stPara.stBootFlashPara.nFirewareCrc ==0) || 
         (nFwChecksum != stPara.stBootFlashPara.nFirewareCrc))
     {
-		ret = 0;
+        ret = 0;
     }
 
     if(0 == ret)
     {
-    	printf("\r\nCheckFroApplication:\r\n ");
-    	uint32_t* pAppData = (uint32_t*)APPLICATION_ADDRESS;
-    	for(int i=0; i<32; i++)
-    		printf("%08X,",pAppData[i]);
-    	printf("End...\r\n");
+        printf("\r\nCheckFroApplication:\r\n ");
+        uint32_t* pAppData = (uint32_t*)APPLICATION_ADDRESS;
+        for(int i=0; i<32; i++)
+            printf("%08X,",pAppData[i]);
+        printf("End...\r\n");
     	
     }
     return ret;
@@ -197,21 +198,19 @@ int ClearBackupAppFLash(void)
 /*
   * 写入数据 - 为了加速写入，只能顺序地写入，不能乱序写入
  */
-int SaveAppFLash(uint8_t* pBuf, int32_t nLen, int32_t nOffset)
+hpm_stat_t SaveAppFLash(uint8_t* pBuf, int32_t nLen, int32_t nOffset)
 {
-    //if (nLen <= 0)
-    //{
-    //    return FMC_READY;
-    //}
-    //return FLASH_WriteLenByte(APPLICATION_ADDRESS+nOffset, pBuf, FN_MAX(0, (int32_t)FN_MIN((int32_t)(APPLICATION_MAX_LEN-nOffset), nLen)));
-    return 0;
+    if (nLen <= 0)
+    {
+        return status_invalid_argument;
+    }
+    return FlashWrite(APPLICATION_ADDRESS+nOffset, pBuf, FN_MAX(0, (int32_t)FN_MIN((int32_t)(APPLICATION_MAX_LEN-nOffset), nLen)));
 }
 
 
-int EraseAppData(void)
+hpm_stat_t EraseAppData(void)
 {
-	//return FLASH_EraseLenByte(APPLICATION_ADDRESS, APPLICATION_MAX_LEN);
-    return 0;
+    return FlashErase(APPLICATION_ADDRESS, APPLICATION_MAX_LEN);
 }
 
 

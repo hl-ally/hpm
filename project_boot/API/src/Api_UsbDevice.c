@@ -433,8 +433,7 @@ int32_t StopAllUsbDev(void)
  */
 int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo)
 {
-    
-//    StopUsbDev(stUsbEnumInfo.eUsbDev);
+    StopUsbDev(eUsbDev0);
     if (!sg_bUsbAppInit)
     {
         printf("usb device start enum ...\n");

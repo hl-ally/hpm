@@ -11,7 +11,7 @@
 #include "Api_UsbDevice.h"
 #include "hpm_l1c_drv.h"
 #include "GlobalDefaultDefine.h"
-
+#include "CommService.h"
 
 /*
  * 输出app启动信息
@@ -75,6 +75,7 @@ void HwPlatformInit(void)
 int main(void)
 {
     uint64_t nLastTime = 0;
+    uint64_t nUpgradeTime = 0;
 
     g_eAppUpgradeFlag = GetUpgradeFlag();
 
@@ -103,15 +104,38 @@ int main(void)
         l1c_dc_enable();
     }
 
-#if defined(__GNUC__)
-    printf("gcc version %d\n", __GNUC__);
-#endif
-
-    printf("now into while loop, enjoy......\n");
+    BuildInfoOutput(1);
     nLastTime = GetCurrentTimeUs();
+    nUpgradeTime = GetCurrentTime();
     while(1)
     {
+        switch(g_eAppUpgradeFlag)
+        {
+        case eAppIAPMode:
+            break;
+        case eAppRunMode:
+            printf("Goto Application...\r\n\r\n");
+            if (CheckFroApplication())
+            {
+                RunApplication();
+            }
+            else
+            {
+                g_eAppUpgradeFlag = eAppIAPMode;
+            }
+            break;
+        case eAppTimeoutRunMode:
+        default:
+            if((GetCurrentTime() - nUpgradeTime) > g_stBootPara.nDefultWaitTime)
+            {
+                nUpgradeTime = GetCurrentTime();
+                printf("Falg:[%x] Timeout %dms...\n", g_eAppUpgradeFlag,g_stBootPara.nDefultWaitTime);
+                g_eAppUpgradeFlag = eAppRunMode;
+            }
+            break;
+        }
 
+        CmdService();
         if(GetCurrentTimeUs()- nLedToggleTime >= LED_FLASH_PERIOD_IN_MS*1000)
         {
             nLedToggleTime = GetCurrentTimeUs();
