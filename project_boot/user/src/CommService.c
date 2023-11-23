@@ -4,7 +4,7 @@
 #include <string.h>
 //#include "SystemDefine.h"
 #include "Api_CommandQueue.h"
-//#include "Api_UsbDevice.h"
+#include "Api_UsbDevice.h"
 #include "Api_Flash.h"
 //#include "Api_Gpio.h"
 #include "Command.h"
@@ -17,11 +17,13 @@
  *************************************************************************************************/
 void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSource)
 {
-	if ((nlength == 0) || (nlength > CMD_QUEUE_DATA_MAX_SIZE) )
+    if ((nlength == 0) || (nlength > CMD_QUEUE_DATA_MAX_SIZE) )
     {
         printf("\r\n boot Send Max Length !nlength = %d,MAX:%d\r\n",nlength,CMD_QUEUE_DATA_MAX_SIZE);
         return;
     }
+
+    printf("source:%d,send:%d,%x,%x ",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1]);
     switch(eCmdSource)
     {
         case eUsb0Ep1Mode:
@@ -32,8 +34,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         case eUsb0Ep6Mode:
         case eUsb0Ep7Mode:
         {
-            printf("%d:%x,%x ",eCmdSource,pAnsCmdBuf[0],pAnsCmdBuf[1]);
-//            USB0_EPSendPacket((uint8_t)eCmdSource, pAnsCmdBuf, USB_PACKET_MAX_SIZE);
+            USBEPSendPacket(eUsbDev0, (uint8_t)(eCmdSource-eUsb0Ep1Mode), pAnsCmdBuf, nlength);
         }
         break;
 
@@ -45,7 +46,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         case eUsb1Ep6Mode:
         case eUsb1Ep7Mode:
         {
-//            USB1_EPSendPacket((uint8_t)eCmdSource-USB0_EP_COUNT, pAnsCmdBuf, USB_PACKET_MAX_SIZE);
+            USBEPSendPacket(eUsbDev1, (uint8_t)(eCmdSource-eUsb1Ep1Mode), pAnsCmdBuf, nlength);
         }
         break;
 

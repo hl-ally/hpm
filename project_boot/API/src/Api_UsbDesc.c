@@ -942,7 +942,7 @@ int32_t SaveUsbDescStringFlash(uint8_t *pStr, int32_t nLen, eUsbDescStr_t eUsbDe
     uint32_t nTotalDescLen = FLASH_USB_DESC_LENGTH-sizeof(stUsbDescFlash_t);
     uint8_t *pTotalCrcData = &pTmp[sizeof(stUsbDescFlash_t)];
     int32_t bReset = 0;
- 
+
     for (int32_t i = 0; !bReset && i < eUsbStrDescTotal; i++)
     {
         if (sg_pUsbDescFlash->arrDesc[i].nMaxLen != arrMaxDescLen[i])
@@ -1533,6 +1533,13 @@ int32_t InitUsbStringUnicode(uint8_t* pString, uint8_t *pSrcMemStr, eUsbStrType_
     return nLen;
 }
 
+int32_t GetProductString(uint8_t *pStr, eUsbDevice_t eUsbDev)
+{
+    sprintf((char *)pStr, "Touch Device");
+    return strlen((char *)pStr);
+}
+
+
 //初始化USB字符串
 int32_t InitUsbStrings(eUsbDevice_t eUsbDev)
 {
@@ -1548,7 +1555,7 @@ int32_t InitUsbStrings(eUsbDevice_t eUsbDev)
     }
     if (pProductStr != NULL)
     {
-//        GetProductString(pProductStr, eUsbDev);
+        GetProductString(pProductStr, eUsbDev);
         InitUsbStringUnicode(pProductStr, arrStrTmp, eUsbStrProduct, eUsbDev);
     }
 //    if (0 && pSeriesNumStr == NULL) //20210827 关闭序列号字符串初始化 使用默认

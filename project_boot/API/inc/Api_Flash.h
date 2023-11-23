@@ -16,11 +16,11 @@
 #define FLASH_CHIP_SIZE                 ((uint32_t)0x00100000)
 
 #define BOOTLOADER_ADDRESS              (FLASH_START_ADDRESS)            //Boot的启动地址
-#define BOOTLOADER_MAX_SIZE             (32 * 1024)                      // 32K
+#define BOOTLOADER_MAX_SIZE             (64 * 1024)                      // 32K
 
 #define APPLICATION_ADDRESS             (FLASH_START_ADDRESS + SIZE_64KB)
-//#define APPLICATION_MAX_LEN             (256 * 1024)
-#define APPLICATION_MAX_LEN             (FLASH_CHIP_SIZE - BOOTLOADER_MAX_SIZE)
+#define APPLICATION_MAX_LEN             (256 * 1024)
+//#define APPLICATION_MAX_LEN             (FLASH_CHIP_SIZE - BOOTLOADER_MAX_SIZE)
 
 /*************************固件保存数据索引的表数据的相关地址和大小信息 ******************************/
 #define FLASH_FW_TABLE_ADDRESS          (APPLICATION_ADDRESS + APPLICATION_MAX_LEN)

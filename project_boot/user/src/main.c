@@ -18,7 +18,7 @@
  */
 void BuildInfoOutput(uint32_t nStep)
 {
-	switch (nStep)
+    switch (nStep)
     {
         case 0:
         {
@@ -42,7 +42,7 @@ void BuildInfoOutput(uint32_t nStep)
                g_stBootPara.nBoardType,
                g_eAppUpgradeFlag,
                g_stBootPara.nDefultWaitTime,
-               "2023","11","15");
+               "2023","11","23");
         }
         break;
 

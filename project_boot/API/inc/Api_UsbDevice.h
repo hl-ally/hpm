@@ -1,5 +1,6 @@
 #ifndef _API_USB_DEVICE_
 #define _API_USB_DEVICE_
+#include "Api_UsbDesc.h"
 
 /*************usb发送Buffer的队列深度与长度***************/
 #ifndef USB_TOUCH_COMM_QUEUE_SIZE
@@ -63,6 +64,8 @@ extern stUsbEpsInfo_t g_stUsbEpsInfo[eUsbDevCount];
 extern int32_t InitAEpInfo(eUsbDevice_t eDev, uint8_t nEpIdx, uint16_t nEpType, uint16_t nEpSize, uint16_t nEpsPhyOffset,
         uint8_t nReportInAddr, uint8_t nReportOutAddr, uint8_t nQueueSize,
         uint8_t nMaxEPacketSize, eUsbCfgBitType_t eBitType);
+extern int16_t USBEPSendPacket(eUsbDevice_t eDev, uint8_t nEpIdx, uint8_t *pBuffer, int16_t nLen);
+extern int16_t USBSendPacket(eUsbDevice_t eDev, eUsbCfgBitType_t eBitType, uint8_t *pBuffer, int16_t nLen);
 
 extern int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo);
 

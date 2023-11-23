@@ -9,7 +9,7 @@
 //#include "Api_Gpio.h"
 #include "upgrade.h"
 #include "GlobalVariables.h"
-//#include "Api_UsbDevice.h"
+#include "Api_UsbDevice.h"
 #include "hpm_common.h"
 #include "hpm_gpio_drv.h"
 
