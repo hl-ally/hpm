@@ -65,9 +65,14 @@ typedef enum
 
 typedef struct
 {
-    uint32_t nFirewareLen;             
+    uint32_t nBootCrc;
+    uint32_t nFirewareLen;
     uint32_t nFirewareCrc;
-    uint8_t  nKey[32];                   
+    uint32_t nUpgradeCRC;
+    uint32_t nRev[8];
+    uint32_t nUniqueID[8];
+    uint32_t nBackData[8];
+    uint8_t  nKey[32];
 } BootFlashPara;
 
 typedef struct
@@ -100,11 +105,14 @@ int FlashInit(void);
 extern hpm_stat_t FlashErase(uint32_t addr, uint32_t size_bytes);
 extern hpm_stat_t FlashWrite(uint32_t addr, const void *buf, uint32_t size_bytes);
 
-int32_t GetBootPara(stStartBootPara_t *pPara);
-int32_t BootParaInit(stStartBootPara_t *pDefault);
-eAppUpgradeFlag_t GetUpgradeFlag(void);
-uint32_t GetFwCheckSum(void);
-uint32_t GetBootDataCrc32(void);
+extern int32_t GetBootPara(stStartBootPara_t *pPara);
+extern int32_t BootParaInit(stStartBootPara_t *pDefault);
+extern eAppUpgradeFlag_t GetUpgradeFlag(void);
+extern uint32_t GetFwCheckSum(void);
+extern uint32_t GetBootDataCrc32(void);
+extern int32_t SaveAppDataLen(uint32_t nLen);
+extern int32_t SaveAppCheckSum(void);
+extern int32_t SetUpgradeFlag(eAppUpgradeFlag_t nFlag);
 
 extern uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen);
 

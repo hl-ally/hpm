@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 #include "board.h"
 #include "hpm_debug_console.h"
 #include "hpm_l1c_drv.h"
@@ -12,7 +13,7 @@
 #include "Api_UsbDesc.h"
 
 
-#define FLASH_LOG(...)              printf(__VA_ARGS__)
+#define FLASH_LOG(...)              {}//printf(__VA_ARGS__)
 #define FLASH_GET_OFFSET(addr)      (addr - FLASH_START_ADDRESS)
 
 static xpi_nor_config_t s_xpi_nor_config;
@@ -204,6 +205,28 @@ int32_t GetBootPara(stStartBootPara_t *pPara)
 }
 
 /*
+ * 设置boot启动参数
+ */
+int32_t SetBootPara(stStartBootPara_t *pPara)
+{
+    int32_t nLen = FN_MIN(sizeof(stStartBootPara_t), FLASH_BOOT_PARA_LENGTH);
+
+    pPara->nCheckSum = (uint32_t)GetCrc32_SW((uint8_t *)pPara, offsetof(stStartBootPara_t, nCheckSum));
+    pPara->stBootFlashPara.nBootCrc = GetCrc32_SW((uint8_t *)(BOOTLOADER_ADDRESS), BOOTLOADER_MAX_SIZE);
+
+    if (status_success == FlashErase(FLASH_BOOT_PARA_ADDRESS, FLASH_BOOT_PARA_LENGTH)
+        && status_success == FlashWrite(FLASH_BOOT_PARA_ADDRESS, (uint8_t *)pPara, nLen))
+    {
+        return nLen;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+
+/*
  * 初始化boot启动参数
  */
 int32_t BootParaInit(stStartBootPara_t *pDefault)
@@ -218,6 +241,7 @@ int32_t BootParaInit(stStartBootPara_t *pDefault)
     {
         printf("Reseting boot parameter...\r\n");
         PrintBootPara(pDefault);
+        SetBootPara(pDefault);
     }
     else
     {
@@ -260,16 +284,74 @@ uint32_t GetFwCheckSum(void)
     return (~nChecksum32 + 1) & 0xFFFF;
 }
 
+
+
+int32_t SaveAppDataLen(uint32_t nLen)
+{
+    stStartBootPara_t stPara;
+    GetBootPara(&stPara);
+
+    stPara.stBootFlashPara.nFirewareLen = nLen;
+
+    if(-1 == SetBootPara(&stPara))
+    {
+        printf("Flash SaveAppDataLen Err!\n"); 
+        return -1;
+    }
+	return 1;
+}
+
+int32_t SaveAppCheckSum(void)
+{
+    uint32_t nCheckSum = GetFwCheckSum();
+    stStartBootPara_t stPara;
+    GetBootPara(&stPara);
+
+    stPara.stBootFlashPara.nFirewareCrc = nCheckSum;
+
+    if(-1 == SetBootPara(&stPara))
+    {
+        printf("Flash SaveAppCheckSum Err!\n");
+        return -1;
+    }
+    return 1;
+}
+
+int32_t SetUpgradeFlag(eAppUpgradeFlag_t nFlag)
+{
+    stStartBootPara_t stPara;
+    GetBootPara(&stPara);
+    stPara.eUpgradeFlag = nFlag;
+    
+    if(-1 == SetBootPara(&stPara))
+    {
+        printf("Flash SetUpgradeFlag Err!\n");
+        return -1;
+    }
+    return 1;
+}
+
+
 uint32_t GetBootDataCrc32(void)
 {
-#if !USE_APPFLASH_BACKUP_EN
-//    stStartBootPara_t stPara;
-//    GetBootPara(&stPara);
-//    return stPara.stBootFlashPara.nBootCrc;
+    stStartBootPara_t stPara;
+    GetBootPara(&stPara);
+    return stPara.stBootFlashPara.nBootCrc;
+//    return GetCrc32_SW((uint8_t *)(BOOTLOADER_ADDRESS), BOOTLOADER_MAX_SIZE);
+}
+
+int32_t FlashEraseKey(void)
+{   
+    int32_t i;
+    stStartBootPara_t stPara;
+    GetBootPara(&stPara);
+
+    for(i = 0; i < sizeof(stPara.stBootFlashPara.nKey); i++)
+    {
+        stPara.stBootFlashPara.nKey[i] = 0xff;
+    }
+    SetBootPara(&stPara);
     return 0;
-#else
-    return GetCrc32_SW((uint8_t *)(BOOTLOADER_ADDRESS), BOOTLOADER_MAX_SIZE);
-#endif
 }
 
 uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen)

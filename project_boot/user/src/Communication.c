@@ -180,9 +180,9 @@ CmdAnswerType Communication(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
                             
                             //USBDisableEp0(&(g_stUsbFsDriver.regs));
                             nIAPEnableFlag = 0;
-                            //SaveAppDataLen((snTotalPacketNum + 1) * DATA_LEN);
-                            //SaveAppCheckSum();
-                            //SetUpgradeFlag(eAppTimeoutRunMode);
+                            SaveAppDataLen((snTotalPacketNum + 1) * DATA_LEN);
+                            SaveAppCheckSum();
+                            SetUpgradeFlag(eAppTimeoutRunMode);
                             g_eAppUpgradeFlag = eAppRunMode;
                         }
                         else

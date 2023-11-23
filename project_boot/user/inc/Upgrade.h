@@ -30,13 +30,8 @@ extern stStartBootPara_t g_stBootPara;
 extern void SetBootWorkMode(void);
 extern uint32_t CheckFroApplication(void);
 extern void RunApplication(void);
-extern uint32_t GetBackupAppFLashAddress(void);
-//extern fmc_state_enum ClearBackupAppFLash(void);
 extern hpm_stat_t EraseAppData(void);
 extern hpm_stat_t SaveAppFLash(uint8_t* pBuf, int32_t nLen, int32_t nOffset);
-//extern fmc_state_enum SaveBackupAppFLash(void);
-extern int8_t CopyBackupApp2MainApp(void);
-extern uint32_t CheckForBackupApplication(void);
 
 #endif
 

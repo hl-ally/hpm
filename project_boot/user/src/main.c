@@ -77,22 +77,10 @@ int main(void)
 {
     uint64_t nLastTime = 0;
     uint64_t nUpgradeTime = 0;
+    uint64_t nLedToggleTime = 0;
 
     g_eAppUpgradeFlag = GetUpgradeFlag();
-
     HwPlatformInit();
-
-#if 1
-    // 开机延时等待
-    nLastTime = GetCurrentTimeUs();
-    while(GetCurrentTimeUs() - nLastTime < 1*1000*1000)
-    {
-        ;
-    }
-#endif
-
-    uint64_t nLedToggleTime = GetCurrentTimeUs();
-
     BootParaInit(&g_stBootPara);
     if(1)
     {
@@ -106,8 +94,18 @@ int main(void)
     }
 
     BuildInfoOutput(1);
+    
+#if 1
+    // 开机延时等待
+    nLastTime = GetCurrentTimeUs();
+    while(GetCurrentTimeUs() - nLastTime < 1*1000*1000)
+    {
+        CmdService();
+    }
+#endif
     nLastTime = GetCurrentTimeUs();
     nUpgradeTime = GetCurrentTime();
+    nLedToggleTime = GetCurrentTimeUs();
     while(1)
     {
         switch(g_eAppUpgradeFlag)

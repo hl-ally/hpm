@@ -8,6 +8,8 @@
 #include "app_systick.h"
 //#include "Api_Gpio.h"
 #include "hpm_common.h"
+#include "board.h"
+#include "hpm_ppor_drv.h"
 
 
 typedef void (*pFunction)(void);
@@ -58,82 +60,16 @@ uint32_t CheckFroApplication(void)
     return ret;
 }
 
-uint32_t CheckForBackupApplication(void)
-{
-    uint32_t ret = 1;
-    //stStartBootPara_t stPara;
-    //stStartBootPara_t stBackupPara;
-    //uint32_t nBackupFwChecksum = GetBackupFwCheckSum();
-    //int32_t nInfoLen = FN_MIN(sizeof(stStartBootPara_t), INFO_LEN);
-    //FLASH_ReadLenByte(FLASH_BACKUP_ADDRESS + INFO_OFFSET, (uint8_t *)(&stBackupPara), nInfoLen);
-    
-    //GetBootPara(&stPara);
-    
-    //if((nBackupFwChecksum != stBackupPara.stBootFlashPara.nFirewareCrc)||
-    //    (nBackupFwChecksum == 0 || stBackupPara.stBootFlashPara.nFirewareCrc == 0)||
-    //    (stPara.stBootFlashPara.nFirewareCrc != stBackupPara.stBootFlashPara.nFirewareCrc))
-    //{
-    //    printf("CheckForBackupApplication, main app crc %X, backup app crc save %X, get %X\n", 
-    //                        stPara.stBootFlashPara.nFirewareCrc, 
-    //                        stBackupPara.stBootFlashPara.nFirewareCrc, 
-    //                        nBackupFwChecksum);
-    //    ret = 0;
-    //}
-
-    return ret;
-}
-
-
-uint32_t IsBackupAppNoData(void)
-{
-    uint32_t ret = 0;
-    //stStartBootPara_t stPara;
-    //stStartBootPara_t stBackupPara;
-    //uint32_t nBackupFwChecksum = GetBackupFwCheckSum();
-    //int32_t nInfoLen = FN_MIN(sizeof(stStartBootPara_t), INFO_LEN);
-    //FLASH_ReadLenByte(FLASH_BACKUP_ADDRESS + INFO_OFFSET, (uint8_t *)(&stBackupPara), nInfoLen);
-    
-    //GetBootPara(&stPara);
-    
-    //if((nBackupFwChecksum != stBackupPara.stBootFlashPara.nFirewareCrc)&&
-    //    (stPara.stBootFlashPara.nFirewareCrc != stBackupPara.stBootFlashPara.nFirewareCrc)&&
-    //    (stBackupPara.stBootFlashPara.nFirewareCrc == 0xFFFFFFFF || stBackupPara.stBootFlashPara.nFirewareLen == 0xFFFFFFFF))
-    //{
-    //    printf("backup app no data, [%X %X]\n", stBackupPara.stBootFlashPara.nFirewareCrc, stBackupPara.stBootFlashPara.nFirewareLen);
-    //    ret = 1;
-    //}
-
-    return ret;
-}
-
-
-/*
-static void BeforeRunApplication(void)
-{
-    stStartBootPara_t stPara;
-    stStartBootPara_t stBackupPara;
-    uint32_t nBackupFwChecksum = GetBackupFwCheckSum();
-    int32_t nInfoLen = FN_MIN(sizeof(stStartBootPara_t), INFO_LEN);
-    FLASH_ReadLenByte(FLASH_BACKUP_ADDRESS + INFO_OFFSET, (uint8_t *)(&stBackupPara), nInfoLen);
-    
-    GetBootPara(&stPara);
-    
-    if((nBackupFwChecksum != stBackupPara.stBootFlashPara.nFirewareCrc)||
-        (nBackupFwChecksum == 0 || stBackupPara.stBootFlashPara.nFirewareCrc == 0)||
-        (stPara.stBootFlashPara.nFirewareCrc != stBackupPara.stBootFlashPara.nFirewareCrc))
-    {
-        printf("Main app crc %X, backup app crc save %X, get %X\n", 
-                            stPara.stBootFlashPara.nFirewareCrc, 
-                            stBackupPara.stBootFlashPara.nFirewareCrc, 
-                            nBackupFwChecksum);
-        SaveBackupAppFLash();
-
-    }
-}
-*/
 
 void RunApplication(void)
 {
+    printf("jump to application...\n");
+    // 复位操作
+    uint32_t resetTime = 5*24*1000*1000; 
+    printf("softerware reset after %ds\r\n", resetTime/(24*1000*1000));
+    ppor_sw_reset(HPM_PPOR, resetTime);
+    while(1);
+
     //uint32_t  JumpAddress = *(__IO uint32_t*)(APPLICATION_ADDRESS + 4);
     //pFunction Jump = (pFunction)JumpAddress;
 
@@ -181,18 +117,6 @@ void RunApplication(void)
     //while(1);
 }
 
-uint32_t GetBackupAppFLashAddress(void)
-{
-    //return FLASH_BACKUP_ADDRESS;
-    return 0;
-}
-
-int ClearBackupAppFLash(void)
-{
-    sg_nBackupAppFlashOffsetErase = 0;
-    return 0;
-}
-
 
 /*
   * 写入数据 - 为了加速写入，只能顺序地写入，不能乱序写入
@@ -211,90 +135,5 @@ hpm_stat_t EraseAppData(void)
 {
     return FlashErase(APPLICATION_ADDRESS, APPLICATION_MAX_LEN);
 }
-
-
-int EraseBackupAppData(void)
-{
-	//return FLASH_EraseLenByte(FLASH_BACKUP_ADDRESS, FLASH_BACKUP_SIZE);
-    return 0 ;
-}
-
-
-/*
-  * 写入数据 - 为了加速写入，只能顺序地写入，不能乱序写入
- */
-int SaveBackupAppFLash(void)
-{
-    uint8_t flashData[1024];
-    uint16_t nCopyLen = 1024;
-    uint32_t nOffset = 0;
-    //uint32_t nMaxBackupLen = FN_MIN(APPLICATION_MAX_LEN, FLASH_BACKUP_SIZE);
-    uint32_t nMaxBackupLen = 0x3000;
-
-    printf("SaveBackupAppFLash\n");
-    
-    if(EraseBackupAppData() != 1)
-    {
-        printf("Erase backup flash fail\n");
-    }
-
-    while(nOffset < nMaxBackupLen)
-    {
-        //FLASH_ReadLenByte(APPLICATION_ADDRESS+nOffset, flashData, nCopyLen);
-        //if(FLASH_WriteLenByte(FLASH_BACKUP_ADDRESS+nOffset, flashData, FN_MAX(0, (int32_t)FN_MIN((int32_t)(nMaxBackupLen-nOffset), nCopyLen))) != FMC_READY)
-        //{
-        //    printf("%s, write app data fail. [%X]\n", __func__, nOffset);
-        //}
-        //nOffset += nCopyLen;
-    }
-
-    printf("SaveBackupAppFLash success\n");
-    
-    return 1;
-}
-
-
-
-int8_t CopyBackupApp2MainApp(void)
-{
-    //uint8_t flashData[1024];
-    //uint16_t nCopyLen = 1024;
-    //uint32_t nOffset = 0;
-    //uint32_t nBackupFwChecksum = GetBackupFwCheckSum();
-    //uint32_t nMaxBackupLen = FN_MIN(APPLICATION_MAX_LEN, FLASH_BACKUP_SIZE);
-    //stStartBootPara_t stPara;
-    
-    //stStartBootPara_t stBackupPara;
-    //int32_t nInfoLen = FN_MIN(sizeof(stStartBootPara_t), INFO_LEN);
-    //FLASH_ReadLenByte(FLASH_BACKUP_ADDRESS + INFO_OFFSET, (uint8_t *)(&stBackupPara), nInfoLen);
-    
-    //GetBootPara(&stPara);
-
-    //printf("Backup App checksum save %X, get %X\r\n", stBackupPara.stBootFlashPara.nFirewareCrc, nBackupFwChecksum);
-    //if((nBackupFwChecksum == 0 || stBackupPara.stBootFlashPara.nFirewareCrc == 0) || 
-    //    (nBackupFwChecksum != stBackupPara.stBootFlashPara.nFirewareCrc))
-    //{
-        
-    //    return 0;
-    //}
-
-    //printf("CopyBackupApp2MainApp\n");
-
-    //if(EraseAppData() != FMC_READY)
-    //{
-    //    printf("%s, erase app data fail\n", __func__);
-    //}
-
-    //while(nOffset < nMaxBackupLen)
-    //{
-    //    FLASH_ReadLenByte(FLASH_BACKUP_ADDRESS+nOffset, flashData, nCopyLen);
-    //    FLASH_WriteLenByte(APPLICATION_ADDRESS+nOffset, flashData, FN_MAX(0, (int32_t)FN_MIN((int32_t)(nMaxBackupLen-nOffset), nCopyLen)));
-    //    nOffset += nCopyLen;
-    //}
-    
-    return 1;
-
-}
-
 
 

@@ -23,7 +23,6 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         return;
     }
 
-    printf("AnswerCommand, source:%d,send:%d,%x,%x\n",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1]);
     switch(eCmdSource)
     {
         case eUsb0Ep1Mode:
@@ -51,6 +50,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         break;
 
         default:
+            printf("AnswerCommand, source:%d,send:%d,%x,%x\n",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1]);
         break;
     }
 }
