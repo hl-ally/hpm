@@ -55,6 +55,7 @@ void HwPlatformInit(void)
 {
     board_init();
     FlashInit();
+    UsbDevCallbackRegister(CMD_FE_REPORT_ID, AddCmdQueueBlock); //注册USB相关回调函数
 
     // IO口控制LED
     #if HPM_5300EVK_BOARD
@@ -149,7 +150,7 @@ int main(void)
         if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
         {
             nLastTime = GetCurrentTimeUs();
-            printf("heartbeat, %llu\n", nLastTime);
+//            printf("heartbeat, %llu\n", nLastTime);
         }
     }
     return 0;

@@ -23,7 +23,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         return;
     }
 
-    printf("source:%d,send:%d,%x,%x ",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1]);
+    printf("AnswerCommand, source:%d,send:%d,%x,%x\n",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1]);
     switch(eCmdSource)
     {
         case eUsb0Ep1Mode:
@@ -34,7 +34,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         case eUsb0Ep6Mode:
         case eUsb0Ep7Mode:
         {
-            USBEPSendPacket(eUsbDev0, (uint8_t)(eCmdSource-eUsb0Ep1Mode), pAnsCmdBuf, nlength);
+            USBEPSendPacket(eUsbDev0, (uint8_t)(eCmdSource), pAnsCmdBuf, CMD_QUEUE_DATA_MAX_SIZE);
         }
         break;
 
@@ -46,7 +46,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         case eUsb1Ep6Mode:
         case eUsb1Ep7Mode:
         {
-            USBEPSendPacket(eUsbDev1, (uint8_t)(eCmdSource-eUsb1Ep1Mode), pAnsCmdBuf, nlength);
+            USBEPSendPacket(eUsbDev1, (uint8_t)(eCmdSource-eUsb1Ep0Mode), pAnsCmdBuf, CMD_QUEUE_DATA_MAX_SIZE);
         }
         break;
 

@@ -9,6 +9,7 @@
 
 stUsbEpsInfo_t g_stUsbEpsInfo[eUsbDevCount] = {{.nEpsCount = 0}};
 eUsbCfgType_t g_eUsbCfgType[eUsbDevCount] = {USB0_DEVICE_CONFIG_TYPE};
+pUsbDevFuncCallback g_pUsbDevCallback[USB_DEV_REPORT_ID_TOTAL] = {NULL};
 static stEpAppProcess_t sg_arrEpAppProcess[8] = {0};
 static int8_t           sg_arrEpAppProcessMap[8] = {0};
 
@@ -24,6 +25,17 @@ USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t send_buffer[USB_PACKET_MAX_SIZE];
 
 #define HID_STATE_IDLE 0
 #define HID_STATE_BUSY 1
+
+//获取端点x的应用逻辑操作句柄
+stEpAppProcess_t *GetEpAppProcess(uint8_t nEpIdx)
+{
+    if (sg_arrEpAppProcessMap[nEpIdx] < 0)
+    {
+        return NULL;
+    }
+    return &sg_arrEpAppProcess[sg_arrEpAppProcessMap[nEpIdx]];
+}
+
 
 /*!< hid state ! Data can be sent only when state is idle  */
 static volatile uint8_t custom_state;
@@ -58,16 +70,35 @@ void usbd_event_handler(uint8_t event)
 
 static void usbd_hid_custom_in_callback(uint8_t ep, uint32_t nbytes)
 {
-    USB_LOG_RAW("actual in len:%d\r\n", nbytes);
+//    USB_LOG_RAW("ep:%d, actual in len:%d\r\n",ep, nbytes);
     custom_state = HID_STATE_IDLE;
+    stEpAppProcess_t *pEpApp = GetEpAppProcess(USB_EP_GET_IDX(ep));
+    /*no data need send*/
+    if (0 == pEpApp->stQueue.nQueueLen)
+    {
+        pEpApp->stQueue.bUsbTxBusy = 0;
+        if (pEpApp->stQueue.nQueueFront == (pEpApp->stQueue.nQueueBack+1)%pEpApp->stQueue.nMaxQueueSize)
+        {
+            pEpApp->stQueue.nQueueFront = pEpApp->stQueue.nQueueBack;
+        }
+        return;
+    }
+    usbd_ep_start_write(ep, pEpApp->stQueue.arrQueueData[pEpApp->stQueue.nQueueFront], pEpApp->stQueue.arrQueueDataLen[pEpApp->stQueue.nQueueFront]);
+    pEpApp->stQueue.nQueueLen = (pEpApp->stQueue.nQueueLen-1) < 0 ? 0 : (pEpApp->stQueue.nQueueLen-1);
+    pEpApp->stQueue.nQueueFront = (pEpApp->stQueue.nQueueFront + 1) % pEpApp->stQueue.nMaxQueueSize;
 }
 
 static void usbd_hid_custom_out_callback(uint8_t ep, uint32_t nbytes)
 {
-    USB_LOG_RAW("actual out len:%d\r\n", nbytes);
-    usbd_ep_start_read(CUSTOM_TOUCH0_EP_OUT_ADDR, read_buffer, 64);
-    read_buffer[0] = 0x02; /* IN: report id */
-    usbd_ep_start_write(CUSTOM_TOUCH0_EP_IN_ADDR, read_buffer, nbytes);
+//    USB_LOG_RAW("actual out len:%d\r\n", nbytes);
+    usbd_ep_start_read(ep, read_buffer, nbytes);
+//    read_buffer[0] = 0x02; /* IN: report id */
+//    usbd_ep_start_write(CUSTOM_TOUCH0_EP_IN_ADDR, read_buffer, nbytes);
+
+    if (g_pUsbDevCallback[read_buffer[0]] != NULL)
+    {
+        g_pUsbDevCallback[read_buffer[0]](read_buffer, nbytes, (eCmdSource_t)ep);
+    }
 }
 
 static struct usbd_endpoint custom_in_ep = {
@@ -81,15 +112,6 @@ static struct usbd_endpoint custom_out_ep = {
 };
 
 
-//获取端点x的应用逻辑操作句柄
-stEpAppProcess_t *GetEpAppProcess(uint8_t nEpIdx)
-{
-    if (sg_arrEpAppProcessMap[nEpIdx] < 0)
-    {
-        return NULL;
-    }
-    return &sg_arrEpAppProcess[sg_arrEpAppProcessMap[nEpIdx]];
-}
 
 int16_t USBEPSendPacket(eUsbDevice_t eDev, uint8_t nEpIdx, uint8_t *pBuffer, int16_t nLen)
 {
@@ -97,6 +119,7 @@ int16_t USBEPSendPacket(eUsbDevice_t eDev, uint8_t nEpIdx, uint8_t *pBuffer, int
     //判断枚举是否完成
     if (!usb_device_is_configured() || pEpApp == NULL)
     {
+        printf("usb is not enum*********%d, %d, %x\n", nEpIdx, usb_device_is_configured(), pEpApp);
         return 0;
     }
     uint32_t nCurTick = GetCurrentTime();
@@ -136,11 +159,10 @@ int16_t USBEPSendPacket(eUsbDevice_t eDev, uint8_t nEpIdx, uint8_t *pBuffer, int
     if (pEpApp->stQueue.bUsbTxBusy == 0)
     {
         pEpApp->stQueue.bUsbTxBusy = 1;
-//        USB_SIL_Write(nEpIdx, pBuffer, nLen);
-        usbd_ep_start_write(nEpIdx, pBuffer, nLen);
+
         pEpApp->stQueue.nQueueLen = (pEpApp->stQueue.nQueueLen-1) < 0 ? 0 : (pEpApp->stQueue.nQueueLen-1);
         pEpApp->stQueue.nQueueFront = (pEpApp->stQueue.nQueueFront + 1) % pEpApp->stQueue.nMaxQueueSize;
-//        SetEPTxValid(nEpIdx);
+        usbd_ep_start_write(nEpIdx|0x80, pBuffer, nLen);
     }
     return nLen;
 }
@@ -157,6 +179,11 @@ int16_t USBSendPacket(eUsbDevice_t eDev, eUsbCfgBitType_t eBitType, uint8_t *pBu
     return USBEPSendPacket(eDev, g_stUsbEpsInfo[eDev].arrEpsReportInAddr[g_stUsbEpsInfo[eDev].arrInterfaceIdxMap[eBitType]] & 0x7F, pBuffer, nLen);
 }
 
+//注册USB回调
+void UsbDevCallbackRegister(uint8_t nReportId, pUsbDevFuncCallback pCallback)
+{
+    g_pUsbDevCallback[nReportId] = pCallback;
+}
 
 /*
  * 检查usb队列是否在忙 忙则返回1 否则返回0
@@ -362,6 +389,19 @@ int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo)
         usbd_add_interface(usbd_hid_init_intf(&intf0, g_stUsbDefaultHidReportDesc.Descriptor, g_stUsbDefaultHidReportDesc.Descriptor_Size));
         usbd_add_endpoint(&custom_in_ep);
         usbd_add_endpoint(&custom_out_ep);
+
+//        for (int32_t i = 0; i < g_stUsbEpsInfo[eUsbDev0].nEpsCount; i++)
+//        {
+//            /* Initialize Endpoints */
+//            uint8_t bEpNum = (uint8_t)(g_stUsbEpsInfo[eUsbDev0].arrEpsReportOutAddr[i]);
+//            SetEPType(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsType[i]);
+//            SetEPTxAddr(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsPhyInAddr[i]);
+//            SetEPRxAddr(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsPhyOutAddr[i]);
+//            SetEPTxCount(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsSize[i]);
+//            SetEPRxCount(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsSize[i]);
+//            SetEPRxStatus(bEpNum, EP_RX_VALID);
+//            SetEPTxStatus(bEpNum, EP_TX_NAK);
+//        }
 
         usbd_initialize();
 
