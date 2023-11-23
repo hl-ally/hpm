@@ -16,9 +16,9 @@
 #define FLASH_CHIP_SIZE                 ((uint32_t)0x00100000)
 
 #define BOOTLOADER_ADDRESS              (FLASH_START_ADDRESS)            //Boot的启动地址
-#define BOOTLOADER_MAX_SIZE             (64 * 1024)                      // 32K
+#define BOOTLOADER_MAX_SIZE             (64 * 1024)
 
-#define APPLICATION_ADDRESS             (FLASH_START_ADDRESS + SIZE_64KB)
+#define APPLICATION_ADDRESS             (FLASH_START_ADDRESS + BOOTLOADER_MAX_SIZE)
 #define APPLICATION_MAX_LEN             (256 * 1024)
 //#define APPLICATION_MAX_LEN             (FLASH_CHIP_SIZE - BOOTLOADER_MAX_SIZE)
 
@@ -95,28 +95,6 @@ typedef enum
     eDataListTotal
 } eDataList_t;
 
-
-
-
-struct flashstress_driver {
-    uint32_t (*get_flash_chip_size_bytes)(void);
-    uint32_t (*get_flash_block_size_bytes)(void);
-    uint8_t (*get_flash_erase_value)(void);
-    int (*erase_chip)(void);
-    int (*erase_block)(uint32_t offset);
-    int (*read)(uint32_t offset, void *buf, uint32_t size_bytes);
-    int (*write)(uint32_t offset, const void *buf, uint32_t size_bytes);
-};
-
-#define CONFIG_CONTEXT_NUM              1
-#define CONFIG_DATA_BUF_SIZE            4096
-#define CONFIG_NAME_LEN                 64
-struct flashstress_context {
-    int is_used;
-    char name[CONFIG_NAME_LEN + 1];
-    struct flashstress_driver drv;
-    uint8_t data_buf[CONFIG_DATA_BUF_SIZE];
-};
 
 int FlashInit(void);
 extern hpm_stat_t FlashErase(uint32_t addr, uint32_t size_bytes);

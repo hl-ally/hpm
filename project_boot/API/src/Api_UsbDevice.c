@@ -18,13 +18,12 @@ static __attribute__((aligned(8))) uint8_t sg_arrUsbQueueMem[MAX_USB_QUEUE_MEM_S
 static uint32_t sg_nUsb0SuspendTick = 0;
 static volatile uint8_t sg_arrSetReport[eUsbDevCount] = {0};
 volatile uint32_t g_arrSetup0ProcessLstTick[eUsbDevCount];
+uint8_t g_arrUsbDesc[1024] = {0};
 
 struct usbd_interface intf0;
 USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t read_buffer[USB_PACKET_MAX_SIZE];
 USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t send_buffer[USB_PACKET_MAX_SIZE];
 
-#define HID_STATE_IDLE 0
-#define HID_STATE_BUSY 1
 
 //获取端点x的应用逻辑操作句柄
 stEpAppProcess_t *GetEpAppProcess(uint8_t nEpIdx)
@@ -36,9 +35,6 @@ stEpAppProcess_t *GetEpAppProcess(uint8_t nEpIdx)
     return &sg_arrEpAppProcess[sg_arrEpAppProcessMap[nEpIdx]];
 }
 
-
-/*!< hid state ! Data can be sent only when state is idle  */
-static volatile uint8_t custom_state;
 
 void usbd_event_handler(uint8_t event)
 {
@@ -68,10 +64,49 @@ void usbd_event_handler(uint8_t event)
     }
 }
 
-static void usbd_hid_custom_in_callback(uint8_t ep, uint32_t nbytes)
+void (*pEpInProcess[7])(uint8_t nEpNum, uint32_t nLen) =
+{
+    NULL, //Endpoint 1 IN Callback
+    NULL, //Endpoint 2 IN Callback
+    NULL, //Endpoint 3 IN Callback
+    NULL, //Endpoint 4 IN Callback
+    NULL, //Endpoint 5 IN Callback
+    NULL, //Endpoint 6 IN Callback
+    NULL, //Endpoint 7 IN Callback
+};
+
+void (*pEpOutProcess[7])(uint8_t nEpNum, uint32_t nLen) =
+{
+    NULL, //Endpoint 1 OUT Callback
+    NULL, //Endpoint 2 OUT Callback
+    NULL, //Endpoint 3 OUT Callback
+    NULL, //Endpoint 4 OUT Callback
+    NULL, //Endpoint 5 OUT Callback
+    NULL, //Endpoint 6 OUT Callback
+    NULL, //Endpoint 7 OUT Callback
+};
+
+
+static void EpsCallbackRegister(uint8_t nEpNumReg, void (*pEpIntCallback)(uint8_t nEpNum, uint32_t nLen))
+{
+    uint8_t nIdx = (uint8_t)(nEpNumReg & 0x7F)-1;
+    if (nIdx < 7)
+    {
+        if ((nEpNumReg & 0x80))
+        {
+            pEpInProcess[nIdx] = pEpIntCallback;
+        }
+        else
+        {
+            pEpOutProcess[nIdx] = pEpIntCallback;
+        }
+    }
+}
+
+
+static void usbd_custom_in_callback(uint8_t ep, uint32_t nbytes)
 {
 //    USB_LOG_RAW("ep:%d, actual in len:%d\r\n",ep, nbytes);
-    custom_state = HID_STATE_IDLE;
     stEpAppProcess_t *pEpApp = GetEpAppProcess(USB_EP_GET_IDX(ep));
     /*no data need send*/
     if (0 == pEpApp->stQueue.nQueueLen)
@@ -88,7 +123,7 @@ static void usbd_hid_custom_in_callback(uint8_t ep, uint32_t nbytes)
     pEpApp->stQueue.nQueueFront = (pEpApp->stQueue.nQueueFront + 1) % pEpApp->stQueue.nMaxQueueSize;
 }
 
-static void usbd_hid_custom_out_callback(uint8_t ep, uint32_t nbytes)
+static void usbd_custom_out_callback(uint8_t ep, uint32_t nbytes)
 {
 //    USB_LOG_RAW("actual out len:%d\r\n", nbytes);
     usbd_ep_start_read(ep, read_buffer, nbytes);
@@ -100,18 +135,6 @@ static void usbd_hid_custom_out_callback(uint8_t ep, uint32_t nbytes)
         g_pUsbDevCallback[read_buffer[0]](read_buffer, nbytes, (eCmdSource_t)ep);
     }
 }
-
-static struct usbd_endpoint custom_in_ep = {
-    .ep_cb = usbd_hid_custom_in_callback,
-    .ep_addr = CUSTOM_TOUCH0_EP_IN_ADDR
-};
-
-static struct usbd_endpoint custom_out_ep = {
-    .ep_cb = usbd_hid_custom_out_callback,
-    .ep_addr = CUSTOM_TOUCH0_EP_OUT_ADDR
-};
-
-
 
 int16_t USBEPSendPacket(eUsbDevice_t eDev, uint8_t nEpIdx, uint8_t *pBuffer, int16_t nLen)
 {
@@ -241,6 +264,11 @@ int32_t InitAEpInfo(eUsbDevice_t eDev, uint8_t nEpIdx, uint16_t nEpType, uint16_
         uint8_t nReportInAddr, uint8_t nReportOutAddr, uint8_t nQueueSize,
         uint8_t nMaxEPacketSize, eUsbCfgBitType_t eBitType)
 {
+    printf("%s, eDev=%d, nEpIdx=%d, nEpType=%d, nEpSize=%d, nEpsPhyOffset=%d, "
+            "nReportInAddr=%01X, nReportOutAddr=%02X, nQueueSize=%d, "
+            "nMaxEPacketSize=%d, eBitType=0x%02X\n",
+            __func__, eDev, nEpIdx, nEpType, nEpSize, nEpsPhyOffset, nReportInAddr, nReportOutAddr, nQueueSize, nMaxEPacketSize, eBitType);
+
     g_stUsbEpsInfo[eDev].arrEpsType[nEpIdx] = nEpType;
     g_stUsbEpsInfo[eDev].arrEpsSize[nEpIdx] = nEpSize;
     g_stUsbEpsInfo[eDev].arrEpsReportInAddr[nEpIdx] = nReportInAddr;
@@ -251,8 +279,8 @@ int32_t InitAEpInfo(eUsbDevice_t eDev, uint8_t nEpIdx, uint16_t nEpType, uint16_
     nEpsPhyOffset += g_stUsbEpsInfo[eDev].arrEpsSize[nEpIdx];
     g_stUsbEpsInfo[eDev].arrQueueSize[nEpIdx] = nQueueSize;
     g_stUsbEpsInfo[eDev].arrMaxEPacketSize[nEpIdx] = nMaxEPacketSize;
-//    EpsCallbackRegister(nReportInAddr, EpsInCallback);
-//    EpsCallbackRegister(nReportOutAddr, EpsOutCallback);
+    EpsCallbackRegister(nReportInAddr, usbd_custom_in_callback);
+    EpsCallbackRegister(nReportOutAddr, usbd_custom_out_callback);
     g_stUsbEpsInfo[eDev].arrInterfaceIdxMap[eBitType] = nEpIdx;
     return nEpsPhyOffset;
 }
@@ -314,8 +342,29 @@ int32_t StopAllUsbDev(void)
     return 0;
 }
 
+void UsbInitEp(stUsbEnumInfo_t stUsbEnumInfo)
+{
+    static struct usbd_endpoint custom_in_ep = {
+        .ep_cb = usbd_custom_in_callback,
+        .ep_addr = CUSTOM_TOUCH0_EP_IN_ADDR
+    };
 
-uint8_t g_arrUsbDesc[1000] = {0};
+    static struct usbd_endpoint custom_out_ep = {
+        .ep_cb = usbd_custom_out_callback,
+        .ep_addr = CUSTOM_TOUCH0_EP_OUT_ADDR
+    };
+        
+    printf("usb config endpoint count:%d\n", g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev].nEpsCount);
+    
+    for (int32_t i = 0; i < g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev].nEpsCount; i++)
+    {
+        custom_in_ep.ep_addr = g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev].arrEpsReportInAddr[i]|0x80;
+        custom_out_ep.ep_addr = g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev].arrEpsReportOutAddr[i];
+        usbd_add_endpoint(&custom_in_ep);
+        usbd_add_endpoint(&custom_out_ep);
+    }
+}
+
 /*
  * USB设备初始化 开始枚举
  */
@@ -330,13 +379,12 @@ int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo)
         if (eUsbCfgAppDefault != stUsbEnumInfo.eUsbCfgType)
         {
             InitUsbStrings(stUsbEnumInfo.eUsbDev);    //初始化USB字符串
-            printf("init usb strings finish\n");
         }
         InitUSBDesc(USER_POINT, stUsbEnumInfo); /* USB protocol and register initialize*/
         UsbQueueInit(&g_stUsbEpsInfo[stUsbEnumInfo.eUsbDev]);  //根据枚举类型，对USB队列内存进行分割
 //        UsbPlugInSimulate(); //模拟USB插拔动作
 
-        #if 1
+        #if 0
         // 设备描述符
         printf("usb device desc(%d):", g_arrUsbDevDesc[stUsbEnumInfo.eUsbDev].Descriptor_Size);
         for(int i=0;i<g_arrUsbDevDesc[stUsbEnumInfo.eUsbDev].Descriptor_Size;i++)
@@ -387,22 +435,7 @@ int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo)
         
         usbd_desc_register(g_arrUsbDesc);
         usbd_add_interface(usbd_hid_init_intf(&intf0, g_stUsbDefaultHidReportDesc.Descriptor, g_stUsbDefaultHidReportDesc.Descriptor_Size));
-        usbd_add_endpoint(&custom_in_ep);
-        usbd_add_endpoint(&custom_out_ep);
-
-//        for (int32_t i = 0; i < g_stUsbEpsInfo[eUsbDev0].nEpsCount; i++)
-//        {
-//            /* Initialize Endpoints */
-//            uint8_t bEpNum = (uint8_t)(g_stUsbEpsInfo[eUsbDev0].arrEpsReportOutAddr[i]);
-//            SetEPType(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsType[i]);
-//            SetEPTxAddr(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsPhyInAddr[i]);
-//            SetEPRxAddr(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsPhyOutAddr[i]);
-//            SetEPTxCount(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsSize[i]);
-//            SetEPRxCount(bEpNum, g_stUsbEpsInfo[eUsbDev0].arrEpsSize[i]);
-//            SetEPRxStatus(bEpNum, EP_RX_VALID);
-//            SetEPTxStatus(bEpNum, EP_TX_NAK);
-//        }
-
+        UsbInitEp(stUsbEnumInfo);
         usbd_initialize();
 
         uint64_t nUsbEnumTime = GetCurrentTimeUs();

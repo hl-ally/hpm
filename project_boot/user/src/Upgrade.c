@@ -54,7 +54,6 @@ uint32_t CheckFroApplication(void)
         for(int i=0; i<32; i++)
             printf("%08X,",pAppData[i]);
         printf("End...\r\n");
-    	
     }
     return ret;
 }
