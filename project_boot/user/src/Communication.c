@@ -171,7 +171,7 @@ CmdAnswerType Communication(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
                         }
                         if (nCurPacketNum == snTotalPacketNum)
                         {
-                        	printf("Upgrade data finish!\r\n");
+                            printf("Upgrade data finish!\r\n");
                             pReCmdBlock->DataPacket[1] = CMD_FINISH;
                             pReCmdBlock->DataPacket[2] = 0x00;
                             pReCmdBlock->DataPacket[3] = 0x00;
@@ -194,6 +194,9 @@ CmdAnswerType Communication(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
                             
                             pReCmdBlock->DataPacket[5] = (nCurPacketNum + 1) & 0xff;
                             pReCmdBlock->DataPacket[6] = ((nCurPacketNum + 1) >> 8) & 0xff;
+
+                            // 清空回复的数据。避免bushound可以查看bin文件的明文
+                            memset(&pReCmdBlock->DataPacket[7], 0, 64-6);
                             
                             pReCmdBlock->nDataLen = 7;
                         }
