@@ -7,8 +7,9 @@ find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})
 
 project(app)
 
-sdk_app_src(src/main.c)
-#sdk_app_src(src/app_systick.c)
+sdk_app_inc(user/inc)
+sdk_app_src(user/src/main.c)
+sdk_app_src(user/src/app_systick.c)
 
 sdk_ses_opt_debug_connection(J-Link)
 generate_ses_project()
