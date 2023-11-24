@@ -113,15 +113,20 @@ int main(void)
         case eAppIAPMode:
             break;
         case eAppRunMode:
-            printf("Goto Application...\r\n\r\n");
-            if (CheckFroApplication())
+            if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
             {
-                RunApplication();
+                nLastTime = GetCurrentTimeUs();
+                printf("Goto Application...\r\n\r\n");
+                if (CheckFroApplication())
+                {
+                    RunApplication();
+                }
+                else
+                {
+                    g_eAppUpgradeFlag = eAppIAPMode;
+                }
             }
-            else
-            {
-                g_eAppUpgradeFlag = eAppIAPMode;
-            }
+            
             break;
         case eAppTimeoutRunMode:
         default:
@@ -145,11 +150,11 @@ int main(void)
             #endif
         }
 
-        if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
-        {
-            nLastTime = GetCurrentTimeUs();
-//            printf("heartbeat, %llu\n", nLastTime);
-        }
+//        if(GetCurrentTimeUs() - nLastTime >= 5*1000*1000)
+//        {
+//            nLastTime = GetCurrentTimeUs();
+////            printf("heartbeat, %llu\n", nLastTime);
+//        }
     }
     return 0;
 }
