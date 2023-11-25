@@ -331,6 +331,19 @@ int32_t SetUpgradeFlag(eAppUpgradeFlag_t nFlag)
     return 1;
 }
 
+uint16_t GetBootVersion(void)
+{
+    stStartBootPara_t stPara;
+    GetBootPara(&stPara);
+    return stPara.nBootVersion;
+}
+
+uint16_t GetBootBoardType(void)
+{
+    stStartBootPara_t stPara;
+    GetBootPara(&stPara);
+    return stPara.nBoardType;
+}
 
 uint32_t GetBootDataCrc32(void)
 {

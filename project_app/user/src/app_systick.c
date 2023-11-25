@@ -4,6 +4,12 @@
 #include "hpm_mchtmr_drv.h"
 
 
+void Delay_ms(uint16_t ms)
+{
+    board_delay_ms(ms);
+}
+
+
 uint64_t GetCurrentTimeUs(void)
 {
 #if 1

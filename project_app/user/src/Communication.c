@@ -8,10 +8,16 @@
 #include "Api_Crc.h"
 //#include "Api_Gpio.h"
 //#include "upgrade.h"
+#include "FlashPara.h"
 #include "GlobalVariables.h"
+#include "GlobalDefaultDefine.h"
 #include "Api_UsbDevice.h"
 #include "hpm_common.h"
 #include "hpm_gpio_drv.h"
+#include "hpm_ppor_drv.h"
+#include "Evaluation.h"
+#include "app_systick.h"
+
 
 
 #define CALIB_INFO_DUG          (0u)      //校准打印输出
@@ -30,6 +36,14 @@ typedef struct _APP_SIGNAL_TEST
 } APP_SIGNAL_TEST;
 
 static APP_SIGNAL_TEST  g_stSingalTest;//用于信号测试，先收完数据保存，待收完后再一起回应
+
+static void SoftwareRest(void)
+{
+    uint32_t resetTime = 1*24*1000*1000; 
+    printf("softerware reset after %ds\r\n", resetTime/(24*1000*1000));
+    ppor_sw_reset(HPM_PPOR, resetTime);
+    while(1);
+}
 
 /*****************************************************************
  * @Function: 服务程序获取版本号的通讯
@@ -235,38 +249,38 @@ CmdAnswerType CmdMaster(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock
         pReCmdBlock->DataPacket[2] = SLAVE_SET_SEND_DATA_RE;
         pReCmdBlock->DataPacket[3] = 3;
 
-        pReCmdBlock->DataPacket[5] = g_bSendTouchData;
-        pReCmdBlock->DataPacket[6] = g_eTouchData;
-        pReCmdBlock->DataPacket[8] = g_bSyncMode;
-
-        pReCmdBlock->nDataLen = 8;
-        AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
-
-        //兼容免驱采集数据工具下发的指令
-        if (GetCRC32(pCmdBlock->DataPacket, 60) == FN_UINT32(&pCmdBlock->DataPacket[60]))
-        {
-            g_bSendTouchData = pCmdBlock->DataPacket[5];
-            g_eTouchData = pCmdBlock->DataPacket[6];
-            g_bSyncMode = pCmdBlock->DataPacket[8];
-
-            g_eUsbDevice = GetUsbDev(pCmdBlock->eCmdSource);
-            g_eUsbSendCfgType = (eUsbCfgBitType_t)pCmdBlock->DataPacket[9];
-            g_nEvalReportId = pCmdBlock->DataPacket[10];
-            if (pCmdBlock->DataPacket[11])
-            {
-                ScanAndOrgInit();
-            }
-        }
-        else
-        {
-            if(g_bSendTouchData != pCmdBlock->DataPacket[5] || g_eTouchData != pCmdBlock->DataPacket[6] || g_bSyncMode != pCmdBlock->DataPacket[8])
-            {
-                g_bSendTouchData = pCmdBlock->DataPacket[5];
-                g_eTouchData = pCmdBlock->DataPacket[6];
-                g_bSyncMode = pCmdBlock->DataPacket[8];
-                ScanAndOrgInit();
-            }
-        }
+//        pReCmdBlock->DataPacket[5] = g_bSendTouchData;
+//        pReCmdBlock->DataPacket[6] = g_eTouchData;
+//        pReCmdBlock->DataPacket[8] = g_bSyncMode;
+//
+//        pReCmdBlock->nDataLen = 8;
+//        AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
+//
+//        //兼容免驱采集数据工具下发的指令
+//        if (GetCRC32(pCmdBlock->DataPacket, 60) == FN_UINT32(&pCmdBlock->DataPacket[60]))
+//        {
+//            g_bSendTouchData = pCmdBlock->DataPacket[5];
+//            g_eTouchData = pCmdBlock->DataPacket[6];
+//            g_bSyncMode = pCmdBlock->DataPacket[8];
+//
+//            g_eUsbDevice = GetUsbDev(pCmdBlock->eCmdSource);
+//            g_eUsbSendCfgType = (eUsbCfgBitType_t)pCmdBlock->DataPacket[9];
+//            g_nEvalReportId = pCmdBlock->DataPacket[10];
+//            if (pCmdBlock->DataPacket[11])
+//            {
+//                ScanAndOrgInit();
+//            }
+//        }
+//        else
+//        {
+//            if(g_bSendTouchData != pCmdBlock->DataPacket[5] || g_eTouchData != pCmdBlock->DataPacket[6] || g_bSyncMode != pCmdBlock->DataPacket[8])
+//            {
+//                g_bSendTouchData = pCmdBlock->DataPacket[5];
+//                g_eTouchData = pCmdBlock->DataPacket[6];
+//                g_bSyncMode = pCmdBlock->DataPacket[8];
+//                ScanAndOrgInit();
+//            }
+//        }
 
         /******** Modified by Roc ********/
         //printf("CMDMaster\r\n");
@@ -284,46 +298,46 @@ CmdAnswerType CmdMaster(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock
 
     case SLAVE_ADC_TEST:    //从机接收到
     {
-        int32_t nTestResult = 0;
-        if(pCmdBlock->DataPacket[FN_MIN(CMD_QUEUE_DATA_MAX_SIZE, 63)] == (uint8_t)GetCheckSum(&pCmdBlock->DataPacket[5], FN_MIN(pCmdBlock->DataPacket[3], CMD_QUEUE_DATA_MAX_SIZE - 5)))
-        {
-            //Byte5、6-T_B TEST_MAX_ADC, Byte7、8-T_B TEST_MIN_ADC
-            //Byte9、10-T_M TEST_MAX_ADC, Byte11、12-T_M TEST_MIN_ADC
-            g_nTEST_MAX_ADC = FN_UINT16(&pCmdBlock->DataPacket[9]);
-            g_nTEST_MIN_ADC = FN_UINT16(&pCmdBlock->DataPacket[11]);
-            //Byte13、14-T_F TEST_MAX_ADC, Byte15、16-T_F TEST_MIN_ADC
-
-            //Byte17、18-TEST_MAX_UNT_ADC
-            g_nTEST_MAX_UNT_ADC = FN_UINT16(&pCmdBlock->DataPacket[17]);
-
-            //Byte19、20-TEST_MAX_REVERSE_ADC, Byte21、22-TEST_MIN_REVERSE_ADC
-            g_nTEST_MAX_REVERSE_ADC = FN_UINT16(&pCmdBlock->DataPacket[19]);
-
-            //Byte23、24-T_B TEST_MAX_AGC, Byte25、26-T_B TEST_MIN_AGC
-            //Byte27、28-T_M TEST_MAX_AGC, Byte29、30-T_M TEST_MIN_AGC
-            g_nTEST_MAX_AGC = FN_UINT16(&pCmdBlock->DataPacket[27]);
-            g_nTEST_MIN_AGC = FN_UINT16(&pCmdBlock->DataPacket[29]);
-            //Byte31、32-T_F TEST_MAX_AGC, Byte33、34-T_F TEST_MIN_AGC
-
-            nTestResult = HardTest();   //第一位为1代表AGC异常，第二位为1代表ADC和波动值异常，第三位为1代表反向值
-
-            pReCmdBlock->DataPacket[0] = 0xfc;
-            pReCmdBlock->DataPacket[1] = SLAVE;
-            pReCmdBlock->DataPacket[2] = SLAVE_ADC_TEST_RE;
-            pReCmdBlock->DataPacket[3] = 4;
-            pReCmdBlock->DataPacket[4] = pCmdBlock->DataPacket[4];
-            pReCmdBlock->DataPacket[5] = FN_BYTE(nTestResult, 0);
-            pReCmdBlock->DataPacket[6] = FN_BYTE(nTestResult, 1);
-            pReCmdBlock->DataPacket[7] = FN_BYTE(nTestResult, 2);
-            pReCmdBlock->DataPacket[8] = FN_BYTE(nTestResult, 3);
-            pReCmdBlock->nDataLen = 9;
-
-            eRetVal = CMD_ANSWER_DATA;
-        }
-        else
-        {
-            eRetVal = CMD_ANSWER_FAIL;
-        }
+//        int32_t nTestResult = 0;
+//        if(pCmdBlock->DataPacket[FN_MIN(CMD_QUEUE_DATA_MAX_SIZE, 63)] == (uint8_t)GetCheckSum(&pCmdBlock->DataPacket[5], FN_MIN(pCmdBlock->DataPacket[3], CMD_QUEUE_DATA_MAX_SIZE - 5)))
+//        {
+//            //Byte5、6-T_B TEST_MAX_ADC, Byte7、8-T_B TEST_MIN_ADC
+//            //Byte9、10-T_M TEST_MAX_ADC, Byte11、12-T_M TEST_MIN_ADC
+//            g_nTEST_MAX_ADC = FN_UINT16(&pCmdBlock->DataPacket[9]);
+//            g_nTEST_MIN_ADC = FN_UINT16(&pCmdBlock->DataPacket[11]);
+//            //Byte13、14-T_F TEST_MAX_ADC, Byte15、16-T_F TEST_MIN_ADC
+//
+//            //Byte17、18-TEST_MAX_UNT_ADC
+//            g_nTEST_MAX_UNT_ADC = FN_UINT16(&pCmdBlock->DataPacket[17]);
+//
+//            //Byte19、20-TEST_MAX_REVERSE_ADC, Byte21、22-TEST_MIN_REVERSE_ADC
+//            g_nTEST_MAX_REVERSE_ADC = FN_UINT16(&pCmdBlock->DataPacket[19]);
+//
+//            //Byte23、24-T_B TEST_MAX_AGC, Byte25、26-T_B TEST_MIN_AGC
+//            //Byte27、28-T_M TEST_MAX_AGC, Byte29、30-T_M TEST_MIN_AGC
+//            g_nTEST_MAX_AGC = FN_UINT16(&pCmdBlock->DataPacket[27]);
+//            g_nTEST_MIN_AGC = FN_UINT16(&pCmdBlock->DataPacket[29]);
+//            //Byte31、32-T_F TEST_MAX_AGC, Byte33、34-T_F TEST_MIN_AGC
+//
+//            nTestResult = HardTest();   //第一位为1代表AGC异常，第二位为1代表ADC和波动值异常，第三位为1代表反向值
+//
+//            pReCmdBlock->DataPacket[0] = 0xfc;
+//            pReCmdBlock->DataPacket[1] = SLAVE;
+//            pReCmdBlock->DataPacket[2] = SLAVE_ADC_TEST_RE;
+//            pReCmdBlock->DataPacket[3] = 4;
+//            pReCmdBlock->DataPacket[4] = pCmdBlock->DataPacket[4];
+//            pReCmdBlock->DataPacket[5] = FN_BYTE(nTestResult, 0);
+//            pReCmdBlock->DataPacket[6] = FN_BYTE(nTestResult, 1);
+//            pReCmdBlock->DataPacket[7] = FN_BYTE(nTestResult, 2);
+//            pReCmdBlock->DataPacket[8] = FN_BYTE(nTestResult, 3);
+//            pReCmdBlock->nDataLen = 9;
+//
+//            eRetVal = CMD_ANSWER_DATA;
+//        }
+//        else
+//        {
+//            eRetVal = CMD_ANSWER_FAIL;
+//        }
     }
     break;
 
@@ -435,20 +449,20 @@ CmdAnswerType CmdSignalTest(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
             g_stSingalTest.dataStep = 0;
 
             //updata g_stTestStatus
-            g_stTestStatus.eStatus = eTestStart;
-            g_stTestStatus.eCmdSource = pReCmdBlock->eCmdSource;
-            g_stTestStatus.nStartTime = GetSystickTime();
+//            g_stTestStatus.eStatus = eTestStart;
+//            g_stTestStatus.eCmdSource = pReCmdBlock->eCmdSource;
+//            g_stTestStatus.nStartTime = GetSystickTime();
         }
     }
     break;
     case TOUCH_BOX_CONTRO_PENETRATION:
     {
-        g_bTouchPenetration = 0;
+//        g_bTouchPenetration = 0;
     }
     break;
     case MCU_TOUCH_CONTRO_PENETRATION:
     {
-        g_bTouchPenetration = 1;
+//        g_bTouchPenetration = 1;
     }
     break;
     default:
@@ -464,18 +478,18 @@ CmdAnswerType CmdSignalTest(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
 
 ATTR_WEAK CmdAnswerType HwTonSet(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
 {
-    if (1 == pCmdBlock->DataPacket[5])
-    {
-        ENABLE_T_On();    // 开启发射
-        g_bRunAlg = 1;    // 开启免驱算法
-    }
-    else
-    {
-        DISABLE_T_On();   // 关闭发射
-        g_bRunAlg = 0;    // 关闭免驱算法
-    }
-    ScanOnce();
-    return eCmdAnswerOK;    
+//    if (1 == pCmdBlock->DataPacket[5])
+//    {
+//        ENABLE_T_On();    // 开启发射
+//        g_bRunAlg = 1;    // 开启免驱算法
+//    }
+//    else
+//    {
+//        DISABLE_T_On();   // 关闭发射
+//        g_bRunAlg = 0;    // 关闭免驱算法
+//    }
+//    ScanOnce();
+    return CMD_ANSWER_OK;    
 }
 
 /*****************************************************************
@@ -494,7 +508,7 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     {
         pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
         pReCmdBlock->DataPacket[1] = CMD_ANSWER;
-        pReCmdBlock->DataPacket[2] = eCmdAnswerOK;
+        pReCmdBlock->DataPacket[2] = CMD_ANSWER_OK;
         pReCmdBlock->DataPacket[3] = 2;
         pReCmdBlock->DataPacket[4] = 0x00;
         pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[1];
@@ -506,7 +520,7 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
         StopAllUsbDev();
         printf("\r\nhardware SystemReset \r\n");
         Delay_ms(700);
-        NVIC_SystemReset();
+        SoftwareRest();
     }
     break;
 
@@ -525,8 +539,8 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     case HW_AGEING:
     {
         //printf("Aging Status:%d----->\r\n", g_stBurnAging.eMode);
-        g_stBurnAging.eCmdState = (pCmdBlock->DataPacket[5] == eAgingEnable) ? eAgingEnable : eAgingDisable;  //接入老化工具，使能老化模式
-        eRetVal = eCmdAnswerOK;
+//        g_stBurnAging.eCmdState = (pCmdBlock->DataPacket[5] == eAgingEnable) ? eAgingEnable : eAgingDisable;  //接入老化工具，使能老化模式
+        eRetVal = CMD_ANSWER_OK;
         //printf("Aging Status:%d\r\n", g_stBurnAging.eMode);
     }
     break;
@@ -534,32 +548,32 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     /*LED进入老化的状态显示灯*/
     case HW_LED:
     {
-        if(pCmdBlock->DataPacket[5]==0)
-        {
-            LedOff();
-            g_bBoradLedEnable = 0;
-        }
-        else if(pCmdBlock->DataPacket[5]==1)
-        {
-            LedOn();
-            g_bBoradLedEnable = 0;
-        }
-        else
-        {
-            g_bBoradLedEnable = 1;
-        }
-        eRetVal = eCmdAnswerOK;
+//        if(pCmdBlock->DataPacket[5]==0)
+//        {
+//            LedOff();
+//            g_bBoradLedEnable = 0;
+//        }
+//        else if(pCmdBlock->DataPacket[5]==1)
+//        {
+//            LedOn();
+//            g_bBoradLedEnable = 0;
+//        }
+//        else
+//        {
+//            g_bBoradLedEnable = 1;
+//        }
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case HW_AGC_SET:
     {
-        if(pCmdBlock->DataPacket[5] == 1)
-        {
-
-        }
-        ScanOnce();
-        eRetVal = eCmdAnswerOK;
+//        if(pCmdBlock->DataPacket[5] == 1)
+//        {
+//
+//        }
+//        ScanOnce();
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
@@ -591,15 +605,15 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
         pReCmdBlock->DataPacket[4] = pCmdBlock->DataPacket[4];
         pReCmdBlock->nDataLen = 6;
 
-        // 获取当前状态值
-        if(GET_T_STATUS())
-        {
-            pReCmdBlock->DataPacket[5] = 1; // 发射状态
-        }
-        else
-        {
-             pReCmdBlock->DataPacket[5] = 0; // 不发射状态
-        }
+//        // 获取当前状态值
+//        if(GET_T_STATUS())
+//        {
+//            pReCmdBlock->DataPacket[5] = 1; // 发射状态
+//        }
+//        else
+//        {
+//             pReCmdBlock->DataPacket[5] = 0; // 不发射状态
+//        }
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
@@ -646,7 +660,7 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
 
     case HW_SET_THRESHOLE:
     {
-        eRetVal = eCmdAnswerOK;
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
@@ -695,7 +709,7 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
 
     case HW_TESTING:
     {
-        eRetVal = eCmdAnswerOK;
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
@@ -737,43 +751,43 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
 
     case HW_ADC_INVERSE_V2:
     {
-#if (defined ATF403A_ENV || defined GD415_ENV)
-        uint32_t arrInverseVal[R_ADC_GROUP];
-
-        InitHwInverseVal(arrInverseVal);         //初始化硬件反向值
-        FeedWatchdog();
-
-        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
-        pReCmdBlock->DataPacket[1] = HW;
-        pReCmdBlock->DataPacket[2] = HW_ADC_INVERSE_V2_RE;
-        pReCmdBlock->DataPacket[3] = R_ADC_GROUP;
-
-        for (int32_t k = 0; k < R_ADC_GROUP; k++)
-        {
-            //从pReCmdBlock->DataPacket[4]开始存储各个通道的反向值
-            pReCmdBlock->DataPacket[4 + k] = (uint8_t)arrInverseVal[k];
-        }
-
-        pReCmdBlock->nDataLen = 64;
-
-        AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
-        //测试完成后恢复原始信号
-        ADC_InitConfig();
-        FeedWatchdog();
-
-        ScanOnce();
-#else
-#error "No HW_ADC_INVERSE"
-#endif
+//#if (defined ATF403A_ENV || defined GD415_ENV)
+//        uint32_t arrInverseVal[R_ADC_GROUP];
+//
+//        InitHwInverseVal(arrInverseVal);         //初始化硬件反向值
+//        FeedWatchdog();
+//
+//        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
+//        pReCmdBlock->DataPacket[1] = HW;
+//        pReCmdBlock->DataPacket[2] = HW_ADC_INVERSE_V2_RE;
+//        pReCmdBlock->DataPacket[3] = R_ADC_GROUP;
+//
+//        for (int32_t k = 0; k < R_ADC_GROUP; k++)
+//        {
+//            //从pReCmdBlock->DataPacket[4]开始存储各个通道的反向值
+//            pReCmdBlock->DataPacket[4 + k] = (uint8_t)arrInverseVal[k];
+//        }
+//
+//        pReCmdBlock->nDataLen = 64;
+//
+//        AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
+//        //测试完成后恢复原始信号
+//        ADC_InitConfig();
+//        FeedWatchdog();
+//
+//        ScanOnce();
+//#else
+//#error "No HW_ADC_INVERSE"
+//#endif
     }
     break;
     case HW_TEST_CHANNEL:
     {
-        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
-        pReCmdBlock->DataPacket[1] = HW;
-        pReCmdBlock->DataPacket[2] = HW_TEST_CHANNEL_RE;
-        pReCmdBlock->DataPacket[3] = TestChannel();              //检查是否通道差异格外异常;
-        pReCmdBlock->nDataLen = 4;
+//        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
+//        pReCmdBlock->DataPacket[1] = HW;
+//        pReCmdBlock->DataPacket[2] = HW_TEST_CHANNEL_RE;
+//        pReCmdBlock->DataPacket[3] = TestChannel();              //检查是否通道差异格外异常;
+//        pReCmdBlock->nDataLen = 4;
 
         eRetVal = CMD_ANSWER_DATA;
     }
@@ -781,13 +795,13 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     
     case HW_GET_RAGC_MAX_GEAR:
     {
-        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
-        pReCmdBlock->DataPacket[1] = HW;
-        pReCmdBlock->DataPacket[2] = HW_GET_RAGC_MAX_GEAR_RE;
-        pReCmdBlock->DataPacket[3] = FN_BYTE(g_nRAgcMax + 1, 0);
-        pReCmdBlock->DataPacket[4] = FN_BYTE(g_nRAgcMax + 1, 1);
-
-        pReCmdBlock->nDataLen = 5;
+//        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
+//        pReCmdBlock->DataPacket[1] = HW;
+//        pReCmdBlock->DataPacket[2] = HW_GET_RAGC_MAX_GEAR_RE;
+//        pReCmdBlock->DataPacket[3] = FN_BYTE(g_nRAgcMax + 1, 0);
+//        pReCmdBlock->DataPacket[4] = FN_BYTE(g_nRAgcMax + 1, 1);
+//
+//        pReCmdBlock->nDataLen = 5;
 
         eRetVal = CMD_ANSWER_DATA;
     }
@@ -795,23 +809,23 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
 
     case HW_GET_RAGC_MAPPING:
     {
-        uint16_t nStartIdx = pCmdBlock->DataPacket[3] + (pCmdBlock->DataPacket[4] << 8);
-        uint16_t nCnt = pCmdBlock->DataPacket[5];
-        nCnt = FN_MIN(nCnt, (64 - 3) / 2);
-
-        for (uint32_t i = 0, j = 0; i < nCnt; i++, j += 2)
-        {
-            uint8_t nVal = g_arrGearRAgc[FN_MIN(g_nRAgcMax, nStartIdx + i)];
-
-            pReCmdBlock->DataPacket[3 + j + 0] = FN_BYTE(nVal, 0);
-            pReCmdBlock->DataPacket[3 + j + 1] = 0;
-        }
-
-        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
-        pReCmdBlock->DataPacket[1] = HW;
-        pReCmdBlock->DataPacket[2] = HW_GET_RAGC_MAPPING_RE;
-
-        pReCmdBlock->nDataLen = 64;
+//        uint16_t nStartIdx = pCmdBlock->DataPacket[3] + (pCmdBlock->DataPacket[4] << 8);
+//        uint16_t nCnt = pCmdBlock->DataPacket[5];
+//        nCnt = FN_MIN(nCnt, (64 - 3) / 2);
+//
+//        for (uint32_t i = 0, j = 0; i < nCnt; i++, j += 2)
+//        {
+//            uint8_t nVal = g_arrGearRAgc[FN_MIN(g_nRAgcMax, nStartIdx + i)];
+//
+//            pReCmdBlock->DataPacket[3 + j + 0] = FN_BYTE(nVal, 0);
+//            pReCmdBlock->DataPacket[3 + j + 1] = 0;
+//        }
+//
+//        pReCmdBlock->DataPacket[0] = pCmdBlock->DataPacket[0];
+//        pReCmdBlock->DataPacket[1] = HW;
+//        pReCmdBlock->DataPacket[2] = HW_GET_RAGC_MAPPING_RE;
+//
+//        pReCmdBlock->nDataLen = 64;
 
         eRetVal = CMD_ANSWER_DATA;
     }
@@ -890,7 +904,7 @@ CmdAnswerType CmdBootloader(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
 
     case BL_RUN_BL:
     {
-        NVIC_SystemReset();
+        SoftwareRest();
     }
     break;
 
@@ -910,14 +924,14 @@ CmdAnswerType CmdBootloader(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
         printf("\r\nbootloader SystemReset\r\n");
         SetUpgradeFlag(eAppIAPMode);
 
-        uint32_t nTick = GetSystickTime();
-        while (GetAllUsbQueueBusy() && (GetSystickTime() - nTick) < 2000);
+        uint32_t nTick = GetCurrentTime();
+        while (GetAllUsbQueueBusy() && (GetCurrentTime() - nTick) < 2000);
         StopAllUsbDev();
 
         printf("Reset!");
         Delay_ms(300);
-        __disable_irq();        //关闭了中断，滴答定时器和喂狗中断都将会关闭
-        NVIC_SystemReset();
+        disable_global_irq(CSR_MSTATUS_MIE_MASK);        //关闭了中断，滴答定时器和喂狗中断都将会关闭
+        SoftwareRest();
     }
     break;
 
@@ -1036,7 +1050,7 @@ CmdAnswerType CmdDeviceConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCm
 
             nPacketNo += 1;
             pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
-            pReCmdBlock->DataPacket[1] = CONFIG;
+            pReCmdBlock->DataPacket[1] = CMD_CONFIG;
             pReCmdBlock->DataPacket[2] = CONFIG_SET_DATA_RE;
             pReCmdBlock->DataPacket[3] = FN_BYTE(3, 0);
             pReCmdBlock->DataPacket[4] = FN_BYTE(3, 1);
@@ -1078,20 +1092,20 @@ CmdAnswerType CmdDeviceConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCm
                 {
                 case 1:
                 {
-                    nState = CONFIG_OK;
-                    s_pBuf = (uint8_t *)GetAlgTableCfgData();
-                    s_nTotalLen = GetAlgTableCfgLen();
-                    if ((uint32_t)s_pBuf < FLASH_BASE_ADDRESS || (uint32_t)s_pBuf > FLASH_MAX_ADDRESS)
-                    {
-                        return eRetVal;
-                    }
-                    s_nCrc = GetCrc32_SW(s_pBuf, s_nTotalLen);
-
-                    s_nEachPacketLen = (USB_PACKET_MAX_SIZE - 9)>(sizeof(pReCmdBlock->DataPacket)-9)?(sizeof(pReCmdBlock->DataPacket)-9):(USB_PACKET_MAX_SIZE - 9);
-                    s_nTotalPacketNum = (s_nTotalLen + s_nEachPacketLen - 1) / s_nEachPacketLen;
-
-                    nPacketLen = 16;
-                    g_stScanCoreVar.nScanCount = 0;
+//                    nState = CONFIG_OK;
+//                    s_pBuf = (uint8_t *)GetAlgTableCfgData();
+//                    s_nTotalLen = GetAlgTableCfgLen();
+//                    if ((uint32_t)s_pBuf < FLASH_BASE_ADDRESS || (uint32_t)s_pBuf > FLASH_MAX_ADDRESS)
+//                    {
+//                        return eRetVal;
+//                    }
+//                    s_nCrc = GetCrc32_SW(s_pBuf, s_nTotalLen);
+//
+//                    s_nEachPacketLen = (USB_PACKET_MAX_SIZE - 9)>(sizeof(pReCmdBlock->DataPacket)-9)?(sizeof(pReCmdBlock->DataPacket)-9):(USB_PACKET_MAX_SIZE - 9);
+//                    s_nTotalPacketNum = (s_nTotalLen + s_nEachPacketLen - 1) / s_nEachPacketLen;
+//
+//                    nPacketLen = 16;
+//                    g_stScanCoreVar.nScanCount = 0;
                 }
                 break;
 
@@ -1124,18 +1138,18 @@ CmdAnswerType CmdDeviceConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCm
             }
             else
             {
-                if(nPacketNo == s_nTotalPacketNum)
-                {
-                    nPacketLen = (s_nTotalLen - s_nEachPacketLen * (nPacketNo - 1));
-                    nState = CONFIG_FINISH;
-                    g_stScanCoreVar.nScanCount = 1;
-                }
-                else
-                {
-                    nPacketLen = s_nEachPacketLen;
-                    nState = CONFIG_OK;
-                }
-                MemCpy(&pReCmdBlock->DataPacket[8], (uint8_t*)s_pBuf + s_nEachPacketLen * (nPacketNo - 1), nPacketLen);
+//                if(nPacketNo == s_nTotalPacketNum)
+//                {
+//                    nPacketLen = (s_nTotalLen - s_nEachPacketLen * (nPacketNo - 1));
+//                    nState = CONFIG_FINISH;
+//                    g_stScanCoreVar.nScanCount = 1;
+//                }
+//                else
+//                {
+//                    nPacketLen = s_nEachPacketLen;
+//                    nState = CONFIG_OK;
+//                }
+//                MemCpy(&pReCmdBlock->DataPacket[8], (uint8_t*)s_pBuf + s_nEachPacketLen * (nPacketNo - 1), nPacketLen);
             }
         }
          else
@@ -1145,7 +1159,7 @@ CmdAnswerType CmdDeviceConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCm
         }
         nPacketLen += 3;
         pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
-        pReCmdBlock->DataPacket[1] = CONFIG;
+        pReCmdBlock->DataPacket[1] = CMD_CONFIG;
         pReCmdBlock->DataPacket[2] = CONFIG_GET_DATA_RE;
         pReCmdBlock->DataPacket[3] = FN_BYTE(nPacketLen, 0);
         pReCmdBlock->DataPacket[4] = FN_BYTE(nPacketLen, 1);
@@ -1179,14 +1193,14 @@ CmdAnswerType CmdDeviceConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCm
         }
         else
         {
-            qrcode_data[1 + qrcode_len] = checksum;
-            // 保存二维码信息到flash
-            FlashSaveQrCode(qrcode_data);
-            //printf("save QR code [%02X %02X %02X %02X %02X %02X %02X %02X]\n", qrcode_data[0],qrcode_data[1],qrcode_data[2],qrcode_data[3],qrcode_data[4],qrcode_data[5],qrcode_data[6],qrcode_data[7]);
+//            qrcode_data[1 + qrcode_len] = checksum;
+//            // 保存二维码信息到flash
+//            FlashSaveQrCode(qrcode_data);
+//            //printf("save QR code [%02X %02X %02X %02X %02X %02X %02X %02X]\n", qrcode_data[0],qrcode_data[1],qrcode_data[2],qrcode_data[3],qrcode_data[4],qrcode_data[5],qrcode_data[6],qrcode_data[7]);
         }
 
         pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
-        pReCmdBlock->DataPacket[1] = CONFIG;
+        pReCmdBlock->DataPacket[1] = CMD_CONFIG;
         pReCmdBlock->DataPacket[2] = CONFIG_SET_QRCODE_RE;
         pReCmdBlock->DataPacket[3] = nState;
 
@@ -1203,29 +1217,29 @@ CmdAnswerType CmdDeviceConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCm
         uint8_t qrcode_len = 0;
         if(0x55 == pCmdBlock->DataPacket[3] && 0xAA == pCmdBlock->DataPacket[4] && 0xFF == pCmdBlock->DataPacket[5])
         {
-            qrcode_len = FlashGetQrCode(qrcode_data);
-            //printf("get QR code [%02X %02X %02X %02X %02X %02X %02X %02X]\n", qrcode_data[0],qrcode_data[1],qrcode_data[2],qrcode_data[3],qrcode_data[4],qrcode_data[5],qrcode_data[6],qrcode_data[7]);
-
-            if(qrcode_len > 59)
-            {
-                qrcode_len = 0;
-                nState = CONFIG_CHECK_ERROR;
-            }
-            else
-            {
-                for(int i = 0;i< 1+ qrcode_len;i++)
-                {
-                    checksum += qrcode_data[i];
-                }
-                if(checksum != qrcode_data[1 + qrcode_len])
-                {
-                    nState = CONFIG_CHECK_ERROR;
-                }
-            }
+//            qrcode_len = FlashGetQrCode(qrcode_data);
+//            //printf("get QR code [%02X %02X %02X %02X %02X %02X %02X %02X]\n", qrcode_data[0],qrcode_data[1],qrcode_data[2],qrcode_data[3],qrcode_data[4],qrcode_data[5],qrcode_data[6],qrcode_data[7]);
+//
+//            if(qrcode_len > 59)
+//            {
+//                qrcode_len = 0;
+//                nState = CONFIG_CHECK_ERROR;
+//            }
+//            else
+//            {
+//                for(int i = 0;i< 1+ qrcode_len;i++)
+//                {
+//                    checksum += qrcode_data[i];
+//                }
+//                if(checksum != qrcode_data[1 + qrcode_len])
+//                {
+//                    nState = CONFIG_CHECK_ERROR;
+//                }
+//            }
 
             //printf("state %d; qrcode len %d\n", nState, qrcode_len);
             pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
-            pReCmdBlock->DataPacket[1] = CONFIG;
+            pReCmdBlock->DataPacket[1] = CMD_CONFIG;
             pReCmdBlock->DataPacket[2] = CONFIG_GET_QRCODE_RE;
             pReCmdBlock->DataPacket[3] = nState;
 
@@ -1271,13 +1285,13 @@ CmdAnswerType CmdData(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
         pReCmdBlock->DataPacket[5] = 24;
         pReCmdBlock->nDataLen = 64;
 
-        for(i = 0; i < 12; i++)
-        {
-            pReCmdBlock->DataPacket[6 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 0);
-            pReCmdBlock->DataPacket[7 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 1);
-            pReCmdBlock->DataPacket[8 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 0);
-            pReCmdBlock->DataPacket[9 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 1);
-        }
+//        for(i = 0; i < 12; i++)
+//        {
+//            pReCmdBlock->DataPacket[6 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 0);
+//            pReCmdBlock->DataPacket[7 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 1);
+//            pReCmdBlock->DataPacket[8 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 0);
+//            pReCmdBlock->DataPacket[9 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 1);
+//        }
 
         pReCmdBlock->DataPacket[6 + 4 * i] = 0;
         pReCmdBlock->DataPacket[7 + 4 * i] = 0;
@@ -1313,79 +1327,79 @@ CmdAnswerType CmdData(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
         pReCmdBlock->DataPacket[6] = pCmdBlock->DataPacket[6];
         pReCmdBlock->DataPacket[7] = pCmdBlock->DataPacket[7];
 
-        if ((pCmdBlock->DataPacket[5] < TEST_BUF_END))
-        {
-            //根据数据类型得到最大有效数据长度[E30/R30 RAGC/TAGC各占一个字节]
-            s_nCmdPackTestDataMaxLen = (pCmdBlock->DataPacket[5] >= T0_X_AGC && pCmdBlock->DataPacket[5] < T0_X_UNT) ? (uint8_t)(CMD_PACKET_TEST_DATA_LEN / 2) : CMD_PACKET_TEST_DATA_LEN;
-            //压缩发送需要的测试数据
-            pReCmdBlock->DataPacket[8] = FN_MIN(nCmdGetLen, s_nCmdPackTestDataMaxLen); //得到发送数据包的长度
-            pReCmdBlock->DataPacket[3] = pReCmdBlock->DataPacket[8] + 4; //未使用
-            for (nLedCnt = 0; nLedCnt < pReCmdBlock->DataPacket[8] && (CMD_PACKET_INFO_DATA_LEN + nLedCnt) < CMD_QUEUE_DATA_MAX_SIZE && (nCmdGetOffset + nLedCnt) < g_nTotal[nAxis]; nLedCnt++)
-            {
-                if (pCmdBlock->DataPacket[5] < T0_X_ORG)
-                {
-                    //打开测试工具后处理的事件
-                    OpenTestToolEventPro();
-                    if (g_stTestStatus.eStatus == eTestStart)
-                    {
-                        int16_t nAdc = g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]];
-                        if (((MIN_ADC_REQ-30) < nAdc) && (nAdc < MIN_ADC_REQ))
-                        {
-                            g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] = (uint8_t)MIN_ADC_REQ; //限定波动最小值为80
-                        }
-                        else if (nAdc > (MIN_ADC_REQ+30))
-                        {
-                            g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] = (uint8_t)(MIN_ADC_REQ+30);//限定波动最大值为110
-                        }
-                        pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] ;
-                    }
-                    else
-                    {
-                        pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = (uint8_t)(g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]]);
-                    }
-                }
-                else if (pCmdBlock->DataPacket[5] >= T0_X_ORG && pCmdBlock->DataPacket[5] < T0_X_AGC)
-                {
-                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = (uint8_t)(g_ORG[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] / THRESHOLD_RATE);
-                }
-                else if (pCmdBlock->DataPacket[5] >= T0_X_AGC && pCmdBlock->DataPacket[5] < T0_X_UNT)
-                {
-#if (SCAN_SOLUTION == SCAN_SOLUTION_6CH_E5HG)
-                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt)]    = FN_MAX(0, (uint8_t)(GET_RECE_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt], eRAgcLeft)));
-                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt+1)]  = FN_MAX(0, (uint8_t)(GET_RECE_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt], eRAgcRight)));
-#else
-                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt)]    = FN_MAX(0, (uint8_t)(GET_RECE_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt])));
-                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt+1)]  = FN_MAX(0, (uint8_t)(GET_TRAN_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt])));
-#endif
-                }
-                else if (pCmdBlock->DataPacket[5] >= T0_X_UNT && pCmdBlock->DataPacket[5] < TEST_BUF_END)
-                {
-                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = 0;
-                }
-            }
-            //根据数据类型得到回传的数据长度
-            pReCmdBlock->nDataLen = (pCmdBlock->DataPacket[5] >= T0_X_AGC && pCmdBlock->DataPacket[5] < T0_X_UNT) ? (uint8_t)(CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt)) : (uint8_t)(CMD_PACKET_INFO_DATA_LEN + nLedCnt);
-
-            AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
-
-            eRetVal = CMD_ANSWER_NONE;
-        }
-        else
-        {
-            eRetVal = CMD_ANSWER_FAIL;
-        }
-        //updata g_stTestStatus
-        if (g_stTestStatus.eStatus == eTestStart
-            && g_stTestStatus.eCmdSource == pReCmdBlock->eCmdSource)
-        {
-            if(pCmdBlock->DataPacket[5] > T2_Y_ORG
-                || (uint32_t)(GetSystickTime() - g_stTestStatus.nStartTime) > ANDROID_UNTTEST_WAITTIME)
-            {
-                g_stTestStatus.eStatus = eTestFinish;
-                g_stTestStatus.nStartTime = GetSystickTime();
-                //printf("Test Finshed!\r\n");
-            }
-        }
+//        if ((pCmdBlock->DataPacket[5] < TEST_BUF_END))
+//        {
+//            //根据数据类型得到最大有效数据长度[E30/R30 RAGC/TAGC各占一个字节]
+//            s_nCmdPackTestDataMaxLen = (pCmdBlock->DataPacket[5] >= T0_X_AGC && pCmdBlock->DataPacket[5] < T0_X_UNT) ? (uint8_t)(CMD_PACKET_TEST_DATA_LEN / 2) : CMD_PACKET_TEST_DATA_LEN;
+//            //压缩发送需要的测试数据
+//            pReCmdBlock->DataPacket[8] = FN_MIN(nCmdGetLen, s_nCmdPackTestDataMaxLen); //得到发送数据包的长度
+//            pReCmdBlock->DataPacket[3] = pReCmdBlock->DataPacket[8] + 4; //未使用
+//            for (nLedCnt = 0; nLedCnt < pReCmdBlock->DataPacket[8] && (CMD_PACKET_INFO_DATA_LEN + nLedCnt) < CMD_QUEUE_DATA_MAX_SIZE && (nCmdGetOffset + nLedCnt) < g_nTotal[nAxis]; nLedCnt++)
+//            {
+//                if (pCmdBlock->DataPacket[5] < T0_X_ORG)
+//                {
+//                    //打开测试工具后处理的事件
+//                    OpenTestToolEventPro();
+//                    if (g_stTestStatus.eStatus == eTestStart)
+//                    {
+//                        int16_t nAdc = g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]];
+//                        if (((MIN_ADC_REQ-30) < nAdc) && (nAdc < MIN_ADC_REQ))
+//                        {
+//                            g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] = (uint8_t)MIN_ADC_REQ; //限定波动最小值为80
+//                        }
+//                        else if (nAdc > (MIN_ADC_REQ+30))
+//                        {
+//                            g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] = (uint8_t)(MIN_ADC_REQ+30);//限定波动最大值为110
+//                        }
+//                        pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] ;
+//                    }
+//                    else
+//                    {
+//                        pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = (uint8_t)(g_stScanCoreVar.pADCCurrent[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]]);
+//                    }
+//                }
+//                else if (pCmdBlock->DataPacket[5] >= T0_X_ORG && pCmdBlock->DataPacket[5] < T0_X_AGC)
+//                {
+//                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = (uint8_t)(g_ORG[g_nTestAdcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt]] / THRESHOLD_RATE);
+//                }
+//                else if (pCmdBlock->DataPacket[5] >= T0_X_AGC && pCmdBlock->DataPacket[5] < T0_X_UNT)
+//                {
+//#if (SCAN_SOLUTION == SCAN_SOLUTION_6CH_E5HG)
+//                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt)]    = FN_MAX(0, (uint8_t)(GET_RECE_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt], eRAgcLeft)));
+//                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt+1)]  = FN_MAX(0, (uint8_t)(GET_RECE_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt], eRAgcRight)));
+//#else
+//                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt)]    = FN_MAX(0, (uint8_t)(GET_RECE_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt])));
+//                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt+1)]  = FN_MAX(0, (uint8_t)(GET_TRAN_AGC_GEAR_TAB(g_nTestAgcIndex[nAxis][nDir][nCmdGetOffset + nLedCnt])));
+//#endif
+//                }
+//                else if (pCmdBlock->DataPacket[5] >= T0_X_UNT && pCmdBlock->DataPacket[5] < TEST_BUF_END)
+//                {
+//                    pReCmdBlock->DataPacket[CMD_PACKET_INFO_DATA_LEN + nLedCnt] = 0;
+//                }
+//            }
+//            //根据数据类型得到回传的数据长度
+//            pReCmdBlock->nDataLen = (pCmdBlock->DataPacket[5] >= T0_X_AGC && pCmdBlock->DataPacket[5] < T0_X_UNT) ? (uint8_t)(CMD_PACKET_INFO_DATA_LEN + (2*nLedCnt)) : (uint8_t)(CMD_PACKET_INFO_DATA_LEN + nLedCnt);
+//
+//            AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
+//
+//            eRetVal = CMD_ANSWER_NONE;
+//        }
+//        else
+//        {
+//            eRetVal = CMD_ANSWER_FAIL;
+//        }
+//        //updata g_stTestStatus
+//        if (g_stTestStatus.eStatus == eTestStart
+//            && g_stTestStatus.eCmdSource == pReCmdBlock->eCmdSource)
+//        {
+//            if(pCmdBlock->DataPacket[5] > T2_Y_ORG
+//                || (uint32_t)(GetSystickTime() - g_stTestStatus.nStartTime) > ANDROID_UNTTEST_WAITTIME)
+//            {
+//                g_stTestStatus.eStatus = eTestFinish;
+//                g_stTestStatus.nStartTime = GetSystickTime();
+//                //printf("Test Finshed!\r\n");
+//            }
+//        }
     }
     break;
 
@@ -1405,7 +1419,7 @@ CmdAnswerType CmdData(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
             }
             pReCmdBlock->nDataLen = pCmdBlock->DataPacket[3] + 5;
             AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, eUsb0Ep1Mode);
-            eRetVal = eCmdAnswerOK;
+            eRetVal = CMD_ANSWER_OK;
         }
         else
         {
@@ -1429,7 +1443,7 @@ CmdAnswerType CmdData(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
             }
             pReCmdBlock->nDataLen = pCmdBlock->DataPacket[3] + 5;
             AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, eUsart3Mode);
-            eRetVal = eCmdAnswerOK;
+            eRetVal = CMD_ANSWER_OK;
         }
         else
         {
@@ -1495,28 +1509,28 @@ CmdAnswerType CmdEraseBootloaderKey(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK*
     {
     case ERASE_KEY_OPTION:
     {
-        uint8_t arrUniqueID[16] = {0};
-        int32_t i = 0;
-
-        GetUniqueID(arrUniqueID, sizeof(arrUniqueID));
-        for (i = 0; i < 16; i++)
-        {
-            arrUniqueID[i] = arrUniqueID[i] & pCmdBlock->DataPacket[5];
-            if (pCmdBlock->DataPacket[6 + i] != arrUniqueID[i])
-            {
-                break;
-            }
-        }
-
-        if(i == 16)
-        {
-            eRetVal = eCmdAnswerOK;
-            FlashEraseKey();
-        }
-        else
-        {
-            eRetVal = CMD_ANSWER_FAIL;
-        }
+//        uint8_t arrUniqueID[16] = {0};
+//        int32_t i = 0;
+//
+//        GetUniqueID(arrUniqueID, sizeof(arrUniqueID));
+//        for (i = 0; i < 16; i++)
+//        {
+//            arrUniqueID[i] = arrUniqueID[i] & pCmdBlock->DataPacket[5];
+//            if (pCmdBlock->DataPacket[6 + i] != arrUniqueID[i])
+//            {
+//                break;
+//            }
+//        }
+//
+//        if(i == 16)
+//        {
+//            eRetVal = CMD_ANSWER_OK;
+//            FlashEraseKey();
+//        }
+//        else
+//        {
+//            eRetVal = CMD_ANSWER_FAIL;
+//        }
     }
     break;
 
@@ -1594,13 +1608,13 @@ CmdAnswerType CmdNewSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
     case NEW_SET_AGC_INIT:
     {
         // USB0=534ms USB1=2185ms
-        InitAGC();
-        ScanAndOrgInit();
-        //eRetVal = eCmdAnswerOK;
+//        InitAGC();
+//        ScanAndOrgInit();
+        eRetVal = CMD_ANSWER_OK;
 #if 1
         g_stSingalTest.stSingalData[0].DataPacket[0] = CMD_FC_REPORT_ID;
         g_stSingalTest.stSingalData[0].DataPacket[1] = CMD_ANSWER;
-        g_stSingalTest.stSingalData[0].DataPacket[2] = eCmdAnswerOK;
+        g_stSingalTest.stSingalData[0].DataPacket[2] = CMD_ANSWER_OK;
         g_stSingalTest.stSingalData[0].DataPacket[3] = 2;
         g_stSingalTest.stSingalData[0].DataPacket[4] = pCmdBlock->DataPacket[4];
         g_stSingalTest.stSingalData[0].DataPacket[5] = pCmdBlock->DataPacket[1];
@@ -1616,38 +1630,38 @@ CmdAnswerType CmdNewSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
 
     case NEW_SET_DRAW_TEST_EN:
     {
-        if(pCmdBlock->DataPacket[5] == 1)
-        {
-            if(pCmdBlock->DataPacket[3] == 2)
-            {
-                if(pCmdBlock->DataPacket[6] == 1)
-                {
-                    g_bSendHardWareTestResult = 1;      //关闭 :发送坐标的对与错
-                }
-                else
-                {
-                    g_bSendHardWareTestResult = 0;      //开启:1--开启测试模式，其它关闭测试模式
-                }
-            }
-            g_HardWareCheckResult = 0;                  //开启 :1--开启测试模式，其它关闭测试模式
-        }
-        else
-        {
-            g_HardWareCheckResult = 0x10000000;         //关闭:1--开启测试模式，其它关闭测试模式
-        }
-
-        g_eCheckHardWareComMode = pCmdBlock->eCmdSource;
-        eRetVal = eCmdAnswerOK;
+//        if(pCmdBlock->DataPacket[5] == 1)
+//        {
+//            if(pCmdBlock->DataPacket[3] == 2)
+//            {
+//                if(pCmdBlock->DataPacket[6] == 1)
+//                {
+//                    g_bSendHardWareTestResult = 1;      //关闭 :发送坐标的对与错
+//                }
+//                else
+//                {
+//                    g_bSendHardWareTestResult = 0;      //开启:1--开启测试模式，其它关闭测试模式
+//                }
+//            }
+//            g_HardWareCheckResult = 0;                  //开启 :1--开启测试模式，其它关闭测试模式
+//        }
+//        else
+//        {
+//            g_HardWareCheckResult = 0x10000000;         //关闭:1--开启测试模式，其它关闭测试模式
+//        }
+//
+//        g_eCheckHardWareComMode = pCmdBlock->eCmdSource;
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case  NEW_SET_ALLRESET:
     {
-        g_bTouchEn = 1;
-        ResetCalibration();
-        ResetCoordFormat();
-        ResetSetting();
-        ResetRotation();
+//        g_bTouchEn = 1;
+//        ResetCalibration();
+//        ResetCoordFormat();
+//        ResetSetting();
+//        ResetRotation();
         pReCmdBlock->DataPacket[0] = 0xfc;
         pReCmdBlock->DataPacket[1] = NEW_SET;
         pReCmdBlock->DataPacket[2] = NEW_SET_ALLRESET_RE;
@@ -1665,45 +1679,45 @@ CmdAnswerType CmdNewSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
 
     case NEW_SET_SET:
     {
-        if(pCmdBlock->DataPacket[5] != 0xff) g_bTouchEn = pCmdBlock->DataPacket[5];
-        if(pCmdBlock->DataPacket[6] != 0xff) g_bRightBTNEn= pCmdBlock->DataPacket[6];
-        if(pCmdBlock->DataPacket[7] != 0xff || pCmdBlock->DataPacket[8] != 0xff) g_nRightBTNTime = pCmdBlock->DataPacket[7] + pCmdBlock->DataPacket[8] * 0x100;
-        if(pCmdBlock->DataPacket[9] != 0xff) g_nRightBTNRange = pCmdBlock->DataPacket[9];
-        if(pCmdBlock->DataPacket[10] != 0xff) g_bWheelEn= pCmdBlock->DataPacket[10];
-        if(pCmdBlock->DataPacket[11] != 0xff) g_nWheelDis = pCmdBlock->DataPacket[11];
-        if(pCmdBlock->DataPacket[12] != 0xff) g_bDragEn = pCmdBlock->DataPacket[12];
-        SaveSettingData();
-        SaveCoordFormat();
-        eRetVal = eCmdAnswerOK;
+//        if(pCmdBlock->DataPacket[5] != 0xff) g_bTouchEn = pCmdBlock->DataPacket[5];
+//        if(pCmdBlock->DataPacket[6] != 0xff) g_bRightBTNEn= pCmdBlock->DataPacket[6];
+//        if(pCmdBlock->DataPacket[7] != 0xff || pCmdBlock->DataPacket[8] != 0xff) g_nRightBTNTime = pCmdBlock->DataPacket[7] + pCmdBlock->DataPacket[8] * 0x100;
+//        if(pCmdBlock->DataPacket[9] != 0xff) g_nRightBTNRange = pCmdBlock->DataPacket[9];
+//        if(pCmdBlock->DataPacket[10] != 0xff) g_bWheelEn= pCmdBlock->DataPacket[10];
+//        if(pCmdBlock->DataPacket[11] != 0xff) g_nWheelDis = pCmdBlock->DataPacket[11];
+//        if(pCmdBlock->DataPacket[12] != 0xff) g_bDragEn = pCmdBlock->DataPacket[12];
+//        SaveSettingData();
+//        SaveCoordFormat();
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case NEW_SET_GET:
     {
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = NEW_SET;
-        pReCmdBlock->DataPacket[2] = NEW_SET_GET_RE;
-        pReCmdBlock->DataPacket[3] = 5;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_bTouchEn;
-        pReCmdBlock->DataPacket[6] = g_bRightBTNEn;
-        pReCmdBlock->DataPacket[7] = FN_BYTE(g_nRightBTNTime, 0);
-        pReCmdBlock->DataPacket[8] = FN_BYTE(g_nRightBTNTime, 1);
-        pReCmdBlock->DataPacket[9] = g_nRightBTNRange;
-        pReCmdBlock->DataPacket[10] = g_bWheelEn;
-        pReCmdBlock->DataPacket[11] = g_nWheelDis;
-        pReCmdBlock->DataPacket[12] = g_bDragEn;
-        pReCmdBlock->nDataLen = 13;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = NEW_SET;
+//        pReCmdBlock->DataPacket[2] = NEW_SET_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 5;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_bTouchEn;
+//        pReCmdBlock->DataPacket[6] = g_bRightBTNEn;
+//        pReCmdBlock->DataPacket[7] = FN_BYTE(g_nRightBTNTime, 0);
+//        pReCmdBlock->DataPacket[8] = FN_BYTE(g_nRightBTNTime, 1);
+//        pReCmdBlock->DataPacket[9] = g_nRightBTNRange;
+//        pReCmdBlock->DataPacket[10] = g_bWheelEn;
+//        pReCmdBlock->DataPacket[11] = g_nWheelDis;
+//        pReCmdBlock->DataPacket[12] = g_bDragEn;
+//        pReCmdBlock->nDataLen = 13;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case NEW_SET_SETRESET:
     {
-        g_bTouchEn = 1;
-        SaveCoordFormat();
-        ResetSetting();
-        eRetVal = eCmdAnswerOK;
+//        g_bTouchEn = 1;
+//        SaveCoordFormat();
+//        ResetSetting();
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
@@ -1742,7 +1756,7 @@ CmdAnswerType CmdNewSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
     //设置去污功能
     case NEW_SET_DEC_SET:    // 设置去污功能
     {
-        eRetVal = eCmdAnswerOK;
+        eRetVal = CMD_ANSWER_OK;
         //将设置去污的命令转发到应用执行
 #if ((USB1_DEVICE_CONFIG_TYPE & 0x02) == 0x02)
         AnswerCommand(&pCmdBlock->DataPacket[0],pCmdBlock->DataPacket[3]+5,USB1_EP2_MODE);
@@ -1906,63 +1920,63 @@ CmdAnswerType CmdConfigPara(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
 ATTR_WEAK CmdAnswerType CmdUserKey(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
 {
     CmdAnswerType eRetVal = CMD_ANSWER_NONE;
-    stObjCtrlCombin_t *pObjCombin = GetObjCombin();
-
-    switch(pCmdBlock->DataPacket[2])
-    {
-    case USERKEY_GET_ID:
-    {
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = pCmdBlock->DataPacket[1];
-        pReCmdBlock->DataPacket[2] = USERKEY_GET_ID_RE;
-        pReCmdBlock->DataPacket[3] = 16;
-        pReCmdBlock->DataPacket[4] = 0;
-        GetUniqueID(&(pReCmdBlock->DataPacket[5]), 16);
-        pReCmdBlock->nDataLen = 21;
-        eRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case USERKEY_GET_KEY:
-    {
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = pCmdBlock->DataPacket[1];
-        pReCmdBlock->DataPacket[2] = USERKEY_GET_KEY_RE;
-        pReCmdBlock->DataPacket[3] = 56;
-        pReCmdBlock->DataPacket[4] = 0x00;
-        MemCpy(&(pReCmdBlock->DataPacket[5]), g_UserKey, 56);
-        pReCmdBlock->nDataLen = 64;
-        eRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case USERKEY_SET_KEY:
-    {
-        MemCpy(g_UserKey, &(pCmdBlock->DataPacket[5]), 56);
-        eRetVal = eCmdAnswerOK;
-    }
-    break;
-
-    case USERKEY_RELOAD_KEY:
-    {
-        GetUserKey();
-        eRetVal = eCmdAnswerOK;
-    }
-    break;
-
-    case USERKEY_SAVE_KEY:
-    {
-        SaveUserKey();
-        eRetVal = eCmdAnswerOK;
-        //printf("Save Aging Time\r\n");
-    }
-    break;
-    default:
-    {
-        eRetVal = CMD_ANSWER_UNKNOWN;
-    }
-    break;
-    }
+//    stObjCtrlCombin_t *pObjCombin = GetObjCombin();
+//
+//    switch(pCmdBlock->DataPacket[2])
+//    {
+//    case USERKEY_GET_ID:
+//    {
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = pCmdBlock->DataPacket[1];
+//        pReCmdBlock->DataPacket[2] = USERKEY_GET_ID_RE;
+//        pReCmdBlock->DataPacket[3] = 16;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        GetUniqueID(&(pReCmdBlock->DataPacket[5]), 16);
+//        pReCmdBlock->nDataLen = 21;
+//        eRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case USERKEY_GET_KEY:
+//    {
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = pCmdBlock->DataPacket[1];
+//        pReCmdBlock->DataPacket[2] = USERKEY_GET_KEY_RE;
+//        pReCmdBlock->DataPacket[3] = 56;
+//        pReCmdBlock->DataPacket[4] = 0x00;
+//        MemCpy(&(pReCmdBlock->DataPacket[5]), g_UserKey, 56);
+//        pReCmdBlock->nDataLen = 64;
+//        eRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case USERKEY_SET_KEY:
+//    {
+//        MemCpy(g_UserKey, &(pCmdBlock->DataPacket[5]), 56);
+//        eRetVal = CMD_ANSWER_OK;
+//    }
+//    break;
+//
+//    case USERKEY_RELOAD_KEY:
+//    {
+//        GetUserKey();
+//        eRetVal = CMD_ANSWER_OK;
+//    }
+//    break;
+//
+//    case USERKEY_SAVE_KEY:
+//    {
+//        SaveUserKey();
+//        eRetVal = CMD_ANSWER_OK;
+//        //printf("Save Aging Time\r\n");
+//    }
+//    break;
+//    default:
+//    {
+//        eRetVal = CMD_ANSWER_UNKNOWN;
+//    }
+//    break;
+//    }
     return eRetVal;
 }
 
@@ -1979,22 +1993,22 @@ CmdAnswerType CmdSendCoordConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pR
     {
     case CMD_SENDCOORD_EN:
     {
-        if(1==pCmdBlock->DataPacket[5])
-        {
-            g_bSendCoord = pCmdBlock->DataPacket[6];
-            pReCmdBlock->DataPacket[6] = pCmdBlock->DataPacket[6];
-
-        } else if(0==pCmdBlock->DataPacket[5])
-        {
-            pReCmdBlock->DataPacket[6] = g_bSendCoord ;
-        }
-        pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
-        pReCmdBlock->DataPacket[1] = CMD_SENDCOORD_CONFIG;
-        pReCmdBlock->DataPacket[2] = CMD_CMD_SENDCOORD_EN_RE;
-        pReCmdBlock->DataPacket[3] = 0x03;
-        pReCmdBlock->DataPacket[4] = 0xCC;
-        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
-        pReCmdBlock->nDataLen = 7 ;
+//        if(1==pCmdBlock->DataPacket[5])
+//        {
+//            g_bSendCoord = pCmdBlock->DataPacket[6];
+//            pReCmdBlock->DataPacket[6] = pCmdBlock->DataPacket[6];
+//
+//        } else if(0==pCmdBlock->DataPacket[5])
+//        {
+//            pReCmdBlock->DataPacket[6] = g_bSendCoord ;
+//        }
+//        pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
+//        pReCmdBlock->DataPacket[1] = CMD_SENDCOORD_CONFIG;
+//        pReCmdBlock->DataPacket[2] = CMD_CMD_SENDCOORD_EN_RE;
+//        pReCmdBlock->DataPacket[3] = 0x03;
+//        pReCmdBlock->DataPacket[4] = 0xCC;
+//        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
+//        pReCmdBlock->nDataLen = 7 ;
 
         eRetVal = CMD_ANSWER_DATA;
     }
@@ -2026,30 +2040,30 @@ ATTR_WEAK CmdAnswerType ComDropScreen(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOC
 {
     eUsbDevice_t eUsbDev = GetUsbDev(pCmdBlock->eCmdSource);
     eUsbDevice_t eRUsbDev = eUsbDev == eUsbDev0 ? eUsbDev1 : eUsbDev0;
-    if (0 == pCmdBlock->DataPacket[5])
-    {
-        MemSet(&g_stDrop, 0, sizeof(g_stDrop));
-    }
-    else
-    {
-        MemSet(&g_stDrop, 0, sizeof(g_stDrop));
-        if (pCmdBlock->DataPacket[5] <= 3)
-        {
-            g_stDrop.arrOffset[Y] = MAX_LOGICAL_VALUE / (pCmdBlock->DataPacket[5] + 1);
-        }
-        else
-        {
-            g_stDrop.arrOffset[Y] = (int32_t)(MAX_LOGICAL_VALUE * (pCmdBlock->DataPacket[5] / 100.0f));
-        }
-        if(pCmdBlock->eCmdSource != eUsart3Mode)
-        {
-            g_stDrop.bUsbEnable[eRUsbDev] = 1;
-        }
-        else
-        {
-            g_stDrop.bUsbEnable[eUsbDev0] = 1;
-        }
-    }
+//    if (0 == pCmdBlock->DataPacket[5])
+//    {
+//        MemSet(&g_stDrop, 0, sizeof(g_stDrop));
+//    }
+//    else
+//    {
+//        MemSet(&g_stDrop, 0, sizeof(g_stDrop));
+//        if (pCmdBlock->DataPacket[5] <= 3)
+//        {
+//            g_stDrop.arrOffset[Y] = MAX_LOGICAL_VALUE / (pCmdBlock->DataPacket[5] + 1);
+//        }
+//        else
+//        {
+//            g_stDrop.arrOffset[Y] = (int32_t)(MAX_LOGICAL_VALUE * (pCmdBlock->DataPacket[5] / 100.0f));
+//        }
+//        if(pCmdBlock->eCmdSource != eUsart3Mode)
+//        {
+//            g_stDrop.bUsbEnable[eRUsbDev] = 1;
+//        }
+//        else
+//        {
+//            g_stDrop.bUsbEnable[eUsbDev0] = 1;
+//        }
+//    }
     return CMD_ANSWER_NONE;
 }
 /*****************************************************************
@@ -2068,87 +2082,87 @@ ATTR_WEAK CmdAnswerType CmdFormat(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* p
 
     case FMT_SET:
     {
-        if(pCmdBlock->DataPacket[5] == eFormatNone)
-        {
-            if(g_stUsbCoordCfg[eUsbDev].eFormat != eFormatNone)
-            {
-                g_stUsbCoordCfg[eUsbDev].eFormatRe = g_stUsbCoordCfg[eUsbDev].eFormat;
-            }
-            //change this to support USB0 send touch when only using USB0
-            //do not know why modify g_eUsb0Format here
-        }
-        else if(pCmdBlock->DataPacket[5] == FMT_RE)
-        {
-            g_stUsbCoordCfg[eUsbDev].eFormat = g_stUsbCoordCfg[eUsbDev].eFormatRe;
-        }
-        else
-        {
-            g_stUsbCoordCfg[eUsbDev].eFormat = (eTouchFormat_t)pCmdBlock->DataPacket[5];
-            g_stUsbCoordCfg[eUsbDev].eFormatRe = g_stUsbCoordCfg[eUsbDev].eFormat;
-        }
+//        if(pCmdBlock->DataPacket[5] == eFormatNone)
+//        {
+//            if(g_stUsbCoordCfg[eUsbDev].eFormat != eFormatNone)
+//            {
+//                g_stUsbCoordCfg[eUsbDev].eFormatRe = g_stUsbCoordCfg[eUsbDev].eFormat;
+//            }
+//            //change this to support USB0 send touch when only using USB0
+//            //do not know why modify g_eUsb0Format here
+//        }
+//        else if(pCmdBlock->DataPacket[5] == FMT_RE)
+//        {
+//            g_stUsbCoordCfg[eUsbDev].eFormat = g_stUsbCoordCfg[eUsbDev].eFormatRe;
+//        }
+//        else
+//        {
+//            g_stUsbCoordCfg[eUsbDev].eFormat = (eTouchFormat_t)pCmdBlock->DataPacket[5];
+//            g_stUsbCoordCfg[eUsbDev].eFormatRe = g_stUsbCoordCfg[eUsbDev].eFormat;
+//        }
 
-        eRetVal = eCmdAnswerOK;
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case FMT_GET:
     {
-        pReCmdBlock->nDataLen = 6;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = FORMAT;
-        pReCmdBlock->DataPacket[2] = FMT_GET_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].eFormat;
+//        pReCmdBlock->nDataLen = 6;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = FORMAT;
+//        pReCmdBlock->DataPacket[2] = FMT_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].eFormat;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case FMT_CVT:
     {
-        g_stUsbCoordCfg[eUsbDev].bTuioCoordEn = pCmdBlock->DataPacket[5];
-        eRetVal = eCmdAnswerOK;
+//        g_stUsbCoordCfg[eUsbDev].bTuioCoordEn = pCmdBlock->DataPacket[5];
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case FMT_CAL:
     {
-        g_bCalEn = pCmdBlock->DataPacket[5];
-        eRetVal = eCmdAnswerOK;
+//        g_bCalEn = pCmdBlock->DataPacket[5];
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case FMT_SMO:
     {
-        g_bSmoothEn = pCmdBlock->DataPacket[5];
-        eRetVal = eCmdAnswerOK;
+//        g_bSmoothEn = pCmdBlock->DataPacket[5];
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case FMT_WIDTH_EN:
     {
-        if(pCmdBlock->DataPacket[5] == 0)
-        {
-            g_stUsbCoordCfg[eUsbDev].bTuioCoordWidthEn = 0;
-        }
-        else
-        {
-            g_stUsbCoordCfg[eUsbDev].bTuioCoordWidthEn = 1;
-        }
+//        if(pCmdBlock->DataPacket[5] == 0)
+//        {
+//            g_stUsbCoordCfg[eUsbDev].bTuioCoordWidthEn = 0;
+//        }
+//        else
+//        {
+//            g_stUsbCoordCfg[eUsbDev].bTuioCoordWidthEn = 1;
+//        }
 
-        eRetVal = eCmdAnswerOK;
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case FMT_USB_COORD:
     {
-        pReCmdBlock->nDataLen = 6;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = FORMAT;
-        pReCmdBlock->DataPacket[2] = FMT_USB_COORD_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].bCoordEn;
+//        pReCmdBlock->nDataLen = 6;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = FORMAT;
+//        pReCmdBlock->DataPacket[2] = FMT_USB_COORD_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].bCoordEn;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
@@ -2160,32 +2174,32 @@ ATTR_WEAK CmdAnswerType CmdFormat(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* p
         {
             case TOUCH_DATA_USB_TRAN:
             {
-                if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
-                {
-                    g_stUsbCoordCfg[eUsbDev].bCoordEn = pCmdBlock->DataPacket[5];
-                    pReCmdBlock->DataPacket[2] = 0x81;  //成功
-                }
-                else
-                {
-                    pReCmdBlock->DataPacket[2] = 0x82;  //失败
-                }
-                pReCmdBlock->DataPacket[0] = 0xfc;
-                pReCmdBlock->DataPacket[1] = 0xfe;
-
-                pReCmdBlock->DataPacket[3] = 0x02;
-                pReCmdBlock->DataPacket[4] = 0x00;
-                pReCmdBlock->DataPacket[5] = FORMAT;
-                pReCmdBlock->DataPacket[6] = FMT_USB_COORD_EN;
-                pReCmdBlock->nDataLen = 7;
+//                if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
+//                {
+//                    g_stUsbCoordCfg[eUsbDev].bCoordEn = pCmdBlock->DataPacket[5];
+//                    pReCmdBlock->DataPacket[2] = 0x81;  //成功
+//                }
+//                else
+//                {
+//                    pReCmdBlock->DataPacket[2] = 0x82;  //失败
+//                }
+//                pReCmdBlock->DataPacket[0] = 0xfc;
+//                pReCmdBlock->DataPacket[1] = 0xfe;
+//
+//                pReCmdBlock->DataPacket[3] = 0x02;
+//                pReCmdBlock->DataPacket[4] = 0x00;
+//                pReCmdBlock->DataPacket[5] = FORMAT;
+//                pReCmdBlock->DataPacket[6] = FMT_USB_COORD_EN;
+//                pReCmdBlock->nDataLen = 7;
                 eRetVal = CMD_ANSWER_DATA;
             }
             break;
             case TOUCH_DATA_UART_TRAN:
             {
-                if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
-                {
-                    g_bUartCoordEn = pCmdBlock->DataPacket[5];
-                }
+//                if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
+//                {
+//                    g_bUartCoordEn = pCmdBlock->DataPacket[5];
+//                }
             }
             break;
             default:
@@ -2200,115 +2214,115 @@ ATTR_WEAK CmdAnswerType CmdFormat(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* p
 
     case FMT_MAC_10_SET:
     {
-        g_stUsbCoordCfg[eUsbDev].bUnderMac10 = pCmdBlock->DataPacket[5];
-        SaveCoordFormat();
-        eRetVal = eCmdAnswerOK;
+//        g_stUsbCoordCfg[eUsbDev].bUnderMac10 = pCmdBlock->DataPacket[5];
+//        SaveCoordFormat();
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case FMT_MAC_10_GET:
     {
-        pReCmdBlock->nDataLen = 6;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = FORMAT;
-        pReCmdBlock->DataPacket[2] = FMT_MAC_10_GET_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].bUnderMac10;
+//        pReCmdBlock->nDataLen = 6;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = FORMAT;
+//        pReCmdBlock->DataPacket[2] = FMT_MAC_10_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].bUnderMac10;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case FMT_GET_ALL:
     {
-        pReCmdBlock->nDataLen = 12;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = FORMAT;
-        pReCmdBlock->DataPacket[2] = FMT_GET_ALL_RE;
-        pReCmdBlock->DataPacket[3] = 7;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].eFormat;
-        pReCmdBlock->DataPacket[6] = g_stUsbCoordCfg[eUsbDev].eFormatRe;
-        pReCmdBlock->DataPacket[7] = g_stUsbCoordCfg[eUsbDev].bTuioCoordEn;
-        pReCmdBlock->DataPacket[8] = g_bCalEn;
-        pReCmdBlock->DataPacket[9] = g_bSmoothEn;
-        pReCmdBlock->DataPacket[10] = g_stUsbCoordCfg[eUsbDev].bTuioCoordWidthEn;
-        pReCmdBlock->DataPacket[11] = g_stUsbCoordCfg[eUsbDev].bCoordEn;
+//        pReCmdBlock->nDataLen = 12;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = FORMAT;
+//        pReCmdBlock->DataPacket[2] = FMT_GET_ALL_RE;
+//        pReCmdBlock->DataPacket[3] = 7;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_stUsbCoordCfg[eUsbDev].eFormat;
+//        pReCmdBlock->DataPacket[6] = g_stUsbCoordCfg[eUsbDev].eFormatRe;
+//        pReCmdBlock->DataPacket[7] = g_stUsbCoordCfg[eUsbDev].bTuioCoordEn;
+//        pReCmdBlock->DataPacket[8] = g_bCalEn;
+//        pReCmdBlock->DataPacket[9] = g_bSmoothEn;
+//        pReCmdBlock->DataPacket[10] = g_stUsbCoordCfg[eUsbDev].bTuioCoordWidthEn;
+//        pReCmdBlock->DataPacket[11] = g_stUsbCoordCfg[eUsbDev].bCoordEn;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case FMT_UART_COORD:
     {
-        pReCmdBlock->nDataLen = 6;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = FORMAT;
-        pReCmdBlock->DataPacket[2] = FMT_UART_COORD_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_bUartCoordEn;
+//        pReCmdBlock->nDataLen = 6;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = FORMAT;
+//        pReCmdBlock->DataPacket[2] = FMT_UART_COORD_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_bUartCoordEn;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case FMT_UART_COORD_EN:
     {
-        g_bUartCoordEn = pCmdBlock->DataPacket[5];
-        eRetVal = eCmdAnswerOK;
+//        g_bUartCoordEn = pCmdBlock->DataPacket[5];
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case FMT_UART_POINT_NUM_SET:
     {
-        if (pCmdBlock->DataPacket[5] > 0 && pCmdBlock->DataPacket[5] <= USER_POINT)
-        {
-            g_nUartSendCoordNum = pCmdBlock->DataPacket[5];
-            eRetVal = eCmdAnswerOK;
-        }
-        else
-        {
-            eRetVal = CMD_ANSWER_FAIL;
-        }
+//        if (pCmdBlock->DataPacket[5] > 0 && pCmdBlock->DataPacket[5] <= USER_POINT)
+//        {
+//            g_nUartSendCoordNum = pCmdBlock->DataPacket[5];
+//            eRetVal = CMD_ANSWER_OK;
+//        }
+//        else
+//        {
+//            eRetVal = CMD_ANSWER_FAIL;
+//        }
     }
     break;
 
     case FMT_UART_POINT_NUM_GET:
     {
-        pReCmdBlock->nDataLen = 6;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = FORMAT;
-        pReCmdBlock->DataPacket[2] = FMT_UART_POINT_NUM_GET_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_nUartSendCoordNum;
+//        pReCmdBlock->nDataLen = 6;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = FORMAT;
+//        pReCmdBlock->DataPacket[2] = FMT_UART_POINT_NUM_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_nUartSendCoordNum;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case FMT_UART_COORD_WIDTH_SET:
     {
-        if (pCmdBlock->DataPacket[5] == 0 || pCmdBlock->DataPacket[5] == 1)
-        {
-            g_bUartCoordWidthEn = pCmdBlock->DataPacket[5];
-            eRetVal = eCmdAnswerOK;
-        }
-        else
-        {
-            eRetVal = CMD_ANSWER_FAIL;
-        }
+//        if (pCmdBlock->DataPacket[5] == 0 || pCmdBlock->DataPacket[5] == 1)
+//        {
+//            g_bUartCoordWidthEn = pCmdBlock->DataPacket[5];
+//            eRetVal = CMD_ANSWER_OK;
+//        }
+//        else
+//        {
+//            eRetVal = CMD_ANSWER_FAIL;
+//        }
     }
     break;
 
     case FMT_UART_COORD_WIDTH_GET:
     {
-        pReCmdBlock->nDataLen = 6;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = FORMAT;
-        pReCmdBlock->DataPacket[2] = FMT_UART_COORD_WIDTH_GET_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_bUartCoordWidthEn;
-        eRetVal = eCmdAnswerOK;
+//        pReCmdBlock->nDataLen = 6;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = FORMAT;
+//        pReCmdBlock->DataPacket[2] = FMT_UART_COORD_WIDTH_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_bUartCoordWidthEn;
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
@@ -2362,72 +2376,72 @@ CmdAnswerType CmdRotation(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     {
     case ROTATION_SET:
     {
-        if(pCmdBlock->DataPacket[3] != 0x02)
-        {
-            g_nDeRotation = (pCmdBlock->DataPacket[5] + g_pConfigData->eRotationDef) % 4;
-            g_nDeRotationOS = 0xcc;
-            ResetRotation();
-        }
-        else
-        {
-            g_nRotation = (pCmdBlock->DataPacket[5] + g_pConfigData->eRotationDef) % 4;
-            SaveRotationData();
-        }
+//        if(pCmdBlock->DataPacket[3] != 0x02)
+//        {
+//            g_nDeRotation = (pCmdBlock->DataPacket[5] + g_pConfigData->eRotationDef) % 4;
+//            g_nDeRotationOS = 0xcc;
+//            ResetRotation();
+//        }
+//        else
+//        {
+//            g_nRotation = (pCmdBlock->DataPacket[5] + g_pConfigData->eRotationDef) % 4;
+//            SaveRotationData();
+//        }
 
-        eRetVal = eCmdAnswerOK;
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case ROTATION_OS_SET:
     {
-        if(pCmdBlock->DataPacket[3] != 0x02)
-        {
-            g_nDeRotationOS = pCmdBlock->DataPacket[5];
-        }
-        else
-        {
-            g_nRotationOS = pCmdBlock->DataPacket[5];
-        }
-        eRetVal = eCmdAnswerOK;
+//        if(pCmdBlock->DataPacket[3] != 0x02)
+//        {
+//            g_nDeRotationOS = pCmdBlock->DataPacket[5];
+//        }
+//        else
+//        {
+//            g_nRotationOS = pCmdBlock->DataPacket[5];
+//        }
+        eRetVal = CMD_ANSWER_OK;
     }
     break;
 
     case ROTATION_DEF_GET:
     {
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = ROTATION;
-        pReCmdBlock->DataPacket[2] = ROTATION_DEF_GET_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[4] = 0;
-        if(g_nDeRotation != 0xcc)
-        {
-            pReCmdBlock->DataPacket[5] = g_nDeRotation;
-        }
-        else
-        {
-            pReCmdBlock->DataPacket[5] = g_pConfigData->eRotationDef;
-        }
-        pReCmdBlock->nDataLen = 6;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = ROTATION;
+//        pReCmdBlock->DataPacket[2] = ROTATION_DEF_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        if(g_nDeRotation != 0xcc)
+//        {
+//            pReCmdBlock->DataPacket[5] = g_nDeRotation;
+//        }
+//        else
+//        {
+//            pReCmdBlock->DataPacket[5] = g_pConfigData->eRotationDef;
+//        }
+//        pReCmdBlock->nDataLen = 6;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case ROTATION_GET:
     {
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = ROTATION;
-        pReCmdBlock->DataPacket[2] = ROTATION_GET_RE;
-        pReCmdBlock->DataPacket[3] = 8;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = g_nRotation;
-        pReCmdBlock->DataPacket[6] = g_nRotationOS;
-        pReCmdBlock->DataPacket[7] = g_nDeRotation;
-        pReCmdBlock->DataPacket[8] = g_nDeRotationOS;
-        pReCmdBlock->DataPacket[9] = g_bReverse;
-        pReCmdBlock->DataPacket[10] = g_pConfigData->eRotationDef;
-        pReCmdBlock->DataPacket[11] = g_pConfigData->eRotationOsDef;
-        pReCmdBlock->DataPacket[12] = g_pConfigData->bReverse;
-        pReCmdBlock->nDataLen = 13;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = ROTATION;
+//        pReCmdBlock->DataPacket[2] = ROTATION_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 8;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = g_nRotation;
+//        pReCmdBlock->DataPacket[6] = g_nRotationOS;
+//        pReCmdBlock->DataPacket[7] = g_nDeRotation;
+//        pReCmdBlock->DataPacket[8] = g_nDeRotationOS;
+//        pReCmdBlock->DataPacket[9] = g_bReverse;
+//        pReCmdBlock->DataPacket[10] = g_pConfigData->eRotationDef;
+//        pReCmdBlock->DataPacket[11] = g_pConfigData->eRotationOsDef;
+//        pReCmdBlock->DataPacket[12] = g_pConfigData->bReverse;
+//        pReCmdBlock->nDataLen = 13;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
@@ -2453,127 +2467,127 @@ CmdAnswerType CmdOldCalibration(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pRe
     CmdAnswerType nRetVal = CMD_ANSWER_NONE;
     uint32_t nDeviation = 0;
 
-    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
-    switch (pCmdBlock->DataPacket[2]) //根据校准步骤散转
-    {
-    case CAL_BEGIN: //启动校准，返回确认
-    {
-        g_bCalEn = 0;
-        g_bInCalibrating = 1;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = CAL;
-        pReCmdBlock->DataPacket[2] = CAL_STEP1;
-        pReCmdBlock->nDataLen = 3;
-        nRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case CAL_STEP1:
-    case CAL_STEP2:
-    case CAL_STEP3:
-    case CAL_STEP4:
-    {
-        g_bInCalibrating = 1;
-        nRetVal = CMD_ANSWER_NONE;
-    }
-    break;
-
-    case CAL_CHECK:
-    {
-        //如果上位机下发系统旋转参数则使用，如果没有下发则计算出默认的
-        g_bCalEn = 1;
-        //参数不能在此处保存。在校准时随便点四下，再重启机器会有触摸偏差很大，造成无触摸的假象
-        //SaveCalibrationData(); //保存参数
-        nDeviation = GetDeviation(); //校验校准是否OK
-
-        pReCmdBlock->nDataLen = 19;
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = CAL;
-        pReCmdBlock->DataPacket[2] = CAL_END;
-        pReCmdBlock->DataPacket[3] = (nDeviation >= 5) ? 0x03 : 0x00;
-
-        pReCmdBlock->DataPacket[4] = nDeviation;
-        pReCmdBlock->DataPacket[5] = nDeviation;
-        pReCmdBlock->DataPacket[11] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 / 0x100;
-        pReCmdBlock->DataPacket[12] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 % 0x100;
-        pReCmdBlock->DataPacket[13] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 / 0x100;
-        pReCmdBlock->DataPacket[14] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 % 0x100;
-        pReCmdBlock->DataPacket[15] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 / 0x100;
-        pReCmdBlock->DataPacket[16] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 % 0x100;
-        pReCmdBlock->DataPacket[17] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 / 0x100;
-        pReCmdBlock->DataPacket[18] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 % 0x100;
-
-        nRetVal = CMD_ANSWER_DATA;
-#if (1 == CALIB_INFO_DUG)
-        printf("check cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
-#endif
-    }
-    break;
-
-    case CAL_END:
-    {
-        pReCmdBlock->DataPacket[0] = 0xFC;
-        pReCmdBlock->DataPacket[1] = 0x01;
-        pReCmdBlock->DataPacket[2] = 0x08;
-        pReCmdBlock->nDataLen = 3;
-        nRetVal = CMD_ANSWER_DATA;
-#if (1 == CALIB_INFO_DUG)
-        printf("cal end\r\n");
-#endif
-    }
-    break;
-
-    case CAL_RESET:
-    {
-        g_bSendCoord = 0;   //解决进入校准功能异常操作[不保存校准参数就不进入SendCoord函数]
-        ResetCalibration(); // 由于校准软件校准完毕后，未决定OK就已经保存数据，复位只能复位到出厂参数。
-        ResetDefaultPointTransform();
-        nRetVal = eCmdAnswerOK;
-    }
-    break;
-
-    case ALL_RESET:
-    {
-        ResetCalibration();
-        ResetDefaultPointTransform();
-        ResetCoordFormat();
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = CAL;
-        pReCmdBlock->DataPacket[2] = ALL_RESET;
-        pReCmdBlock->nDataLen = 3;
-
-        nRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case CAL_GET:
-    {
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = CAL;
-        pReCmdBlock->DataPacket[2] = CAL_GET_RE;
-        pReCmdBlock->DataPacket[3] = 21;
-        pReCmdBlock->DataPacket[4] = 0;
-
-        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
-        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
-        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
-        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
-        SaveCalibrationData(); //保存参数
-
-        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
-
-        pReCmdBlock->nDataLen = 22 ;
-        nRetVal = CMD_ANSWER_DATA;
-#if (1 == CALIB_INFO_DUG)
-        printf("get cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
-#endif
-    }
-    break;
-    default:
-    {
-    }
-    break;
-    }
+//    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
+//    switch (pCmdBlock->DataPacket[2]) //根据校准步骤散转
+//    {
+//    case CAL_BEGIN: //启动校准，返回确认
+//    {
+//        g_bCalEn = 0;
+//        g_bInCalibrating = 1;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = CAL;
+//        pReCmdBlock->DataPacket[2] = CAL_STEP1;
+//        pReCmdBlock->nDataLen = 3;
+//        nRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case CAL_STEP1:
+//    case CAL_STEP2:
+//    case CAL_STEP3:
+//    case CAL_STEP4:
+//    {
+//        g_bInCalibrating = 1;
+//        nRetVal = CMD_ANSWER_NONE;
+//    }
+//    break;
+//
+//    case CAL_CHECK:
+//    {
+//        //如果上位机下发系统旋转参数则使用，如果没有下发则计算出默认的
+//        g_bCalEn = 1;
+//        //参数不能在此处保存。在校准时随便点四下，再重启机器会有触摸偏差很大，造成无触摸的假象
+//        //SaveCalibrationData(); //保存参数
+//        nDeviation = GetDeviation(); //校验校准是否OK
+//
+//        pReCmdBlock->nDataLen = 19;
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = CAL;
+//        pReCmdBlock->DataPacket[2] = CAL_END;
+//        pReCmdBlock->DataPacket[3] = (nDeviation >= 5) ? 0x03 : 0x00;
+//
+//        pReCmdBlock->DataPacket[4] = nDeviation;
+//        pReCmdBlock->DataPacket[5] = nDeviation;
+//        pReCmdBlock->DataPacket[11] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 / 0x100;
+//        pReCmdBlock->DataPacket[12] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 % 0x100;
+//        pReCmdBlock->DataPacket[13] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 / 0x100;
+//        pReCmdBlock->DataPacket[14] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 % 0x100;
+//        pReCmdBlock->DataPacket[15] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 / 0x100;
+//        pReCmdBlock->DataPacket[16] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 % 0x100;
+//        pReCmdBlock->DataPacket[17] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 / 0x100;
+//        pReCmdBlock->DataPacket[18] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 % 0x100;
+//
+//        nRetVal = CMD_ANSWER_DATA;
+//#if (1 == CALIB_INFO_DUG)
+//        printf("check cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
+//#endif
+//    }
+//    break;
+//
+//    case CAL_END:
+//    {
+//        pReCmdBlock->DataPacket[0] = 0xFC;
+//        pReCmdBlock->DataPacket[1] = 0x01;
+//        pReCmdBlock->DataPacket[2] = 0x08;
+//        pReCmdBlock->nDataLen = 3;
+//        nRetVal = CMD_ANSWER_DATA;
+//#if (1 == CALIB_INFO_DUG)
+//        printf("cal end\r\n");
+//#endif
+//    }
+//    break;
+//
+//    case CAL_RESET:
+//    {
+//        g_bSendCoord = 0;   //解决进入校准功能异常操作[不保存校准参数就不进入SendCoord函数]
+//        ResetCalibration(); // 由于校准软件校准完毕后，未决定OK就已经保存数据，复位只能复位到出厂参数。
+//        ResetDefaultPointTransform();
+//        nRetVal = CMD_ANSWER_OK;
+//    }
+//    break;
+//
+//    case ALL_RESET:
+//    {
+//        ResetCalibration();
+//        ResetDefaultPointTransform();
+//        ResetCoordFormat();
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = CAL;
+//        pReCmdBlock->DataPacket[2] = ALL_RESET;
+//        pReCmdBlock->nDataLen = 3;
+//
+//        nRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case CAL_GET:
+//    {
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = CAL;
+//        pReCmdBlock->DataPacket[2] = CAL_GET_RE;
+//        pReCmdBlock->DataPacket[3] = 21;
+//        pReCmdBlock->DataPacket[4] = 0;
+//
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
+//        SaveCalibrationData(); //保存参数
+//
+//        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
+//
+//        pReCmdBlock->nDataLen = 22 ;
+//        nRetVal = CMD_ANSWER_DATA;
+//#if (1 == CALIB_INFO_DUG)
+//        printf("get cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
+//#endif
+//    }
+//    break;
+//    default:
+//    {
+//    }
+//    break;
+//    }
     return nRetVal;
 }
 
@@ -2598,19 +2612,19 @@ int32_t CmdMultPoints(uint8_t* pCmdData,  int16_t Len, eCmdSource_t eMode)
 int8_t ShowIndicatorLed(uint8_t nTouchPointCount)
 {
     int8_t bLedOn = 0;
-    if(g_bBoradLedEnable == 1)
-    {
-        if (nTouchPointCount > 0)
-        {
-            LedOn();
-            bLedOn = 1;
-        }
-        else
-        {
-            LedOff();
-            bLedOn = 0;
-        }
-    }
+//    if(g_bBoradLedEnable == 1)
+//    {
+//        if (nTouchPointCount > 0)
+//        {
+//            LedOn();
+//            bLedOn = 1;
+//        }
+//        else
+//        {
+//            LedOff();
+//            bLedOn = 0;
+//        }
+//    }
     return bLedOn;
 }
 
@@ -2643,18 +2657,18 @@ CmdAnswerType CmdSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBloc
     {
     case SET_TIME:
     {
-        g_nRightBTNTime = pCmdBlock->DataPacket[2] + (((uint16_t)pCmdBlock->DataPacket[3]) << 8);
-        if (g_nRightBTNTime > 2500 || g_nRightBTNTime < 500)
-        {
-            g_nRightBTNTime = 1500;
-        }
-        g_nRightBTNRange = pCmdBlock->DataPacket[6];
-        if (g_nRightBTNRange > 5 || g_nRightBTNRange < 1)
-        {
-            g_nRightBTNRange = 1;
-        }
-        g_nDoubleClickDbRange = pCmdBlock->DataPacket[7];
-        SaveSettingData(); //保存参数*/
+//        g_nRightBTNTime = pCmdBlock->DataPacket[2] + (((uint16_t)pCmdBlock->DataPacket[3]) << 8);
+//        if (g_nRightBTNTime > 2500 || g_nRightBTNTime < 500)
+//        {
+//            g_nRightBTNTime = 1500;
+//        }
+//        g_nRightBTNRange = pCmdBlock->DataPacket[6];
+//        if (g_nRightBTNRange > 5 || g_nRightBTNRange < 1)
+//        {
+//            g_nRightBTNRange = 1;
+//        }
+//        g_nDoubleClickDbRange = pCmdBlock->DataPacket[7];
+//        SaveSettingData(); //保存参数*/
         pReCmdBlock->DataPacket[0] = 0xFC;
         pReCmdBlock->DataPacket[1] = SET_TIME;
         pReCmdBlock->nDataLen = 2;
@@ -2664,29 +2678,29 @@ CmdAnswerType CmdSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBloc
 
     case GET_TIME:   //获取时间
     {
-        pReCmdBlock->DataPacket[0] = 0xFC;
-        pReCmdBlock->DataPacket[1] = GET_TIME;
-        pReCmdBlock->DataPacket[2] = FN_BYTE(g_nRightBTNTime, 0);
-        pReCmdBlock->DataPacket[3] = FN_BYTE(g_nRightBTNTime, 1);
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = 0;
-        pReCmdBlock->DataPacket[6] = g_nRightBTNRange;
-        pReCmdBlock->DataPacket[7] = g_nDoubleClickDbRange;
-        pReCmdBlock->DataPacket[8] = g_bRightBTNEn;
-        pReCmdBlock->DataPacket[9] = 0;
-        pReCmdBlock->nDataLen = 10;
+//        pReCmdBlock->DataPacket[0] = 0xFC;
+//        pReCmdBlock->DataPacket[1] = GET_TIME;
+//        pReCmdBlock->DataPacket[2] = FN_BYTE(g_nRightBTNTime, 0);
+//        pReCmdBlock->DataPacket[3] = FN_BYTE(g_nRightBTNTime, 1);
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = 0;
+//        pReCmdBlock->DataPacket[6] = g_nRightBTNRange;
+//        pReCmdBlock->DataPacket[7] = g_nDoubleClickDbRange;
+//        pReCmdBlock->DataPacket[8] = g_bRightBTNEn;
+//        pReCmdBlock->DataPacket[9] = 0;
+//        pReCmdBlock->nDataLen = 10;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case SET_RB_EN: //设置右键功能以及鼠标功能
     {
-        g_bRightBTNEn = pCmdBlock->DataPacket[2];
-        if (g_bRightBTNEn > 1)
-        {
-            g_bRightBTNEn = 1;
-        }
-        SaveSettingData(); //保存参数*/
+//        g_bRightBTNEn = pCmdBlock->DataPacket[2];
+//        if (g_bRightBTNEn > 1)
+//        {
+//            g_bRightBTNEn = 1;
+//        }
+//        SaveSettingData(); //保存参数*/
         pReCmdBlock->DataPacket[0] = 0xFC;
         pReCmdBlock->DataPacket[1] = SET_RB_EN;
         pReCmdBlock->nDataLen = 2;
@@ -2696,32 +2710,32 @@ CmdAnswerType CmdSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBloc
 
     case SET_ALL_TOUCH_ENABLE:  //设置禁止所有通道的触摸
     {
-        g_bTouchEn = pCmdBlock->DataPacket[2];
-        if (g_bTouchEn > 1)
-        {
-            g_bTouchEn = 1;
-        }
+//        g_bTouchEn = pCmdBlock->DataPacket[2];
+//        if (g_bTouchEn > 1)
+//        {
+//            g_bTouchEn = 1;
+//        }
         eRetVal = CMD_ANSWER_NONE;
     }
     break;
 
     case GET_ALL_TOUCH_ENABLE:  //获取所有通道的触摸状态
     {
-        pReCmdBlock->DataPacket[0] = 0xFC;
-        pReCmdBlock->DataPacket[1] = GET_ALL_TOUCH_ENABLE;
-        pReCmdBlock->DataPacket[2] = g_bTouchEn;
-        pReCmdBlock->nDataLen = 3;
+//        pReCmdBlock->DataPacket[0] = 0xFC;
+//        pReCmdBlock->DataPacket[1] = GET_ALL_TOUCH_ENABLE;
+//        pReCmdBlock->DataPacket[2] = g_bTouchEn;
+//        pReCmdBlock->nDataLen = 3;
         eRetVal = CMD_ANSWER_DATA;
     }
     break;
 
     case ALL_RESET:  //设置鼠标是否使能
     {
-        g_bTouchEn = 1;
-        SaveCoordFormat();
-        ResetSetting();
-        ResetRotation();
-        ResetCalibration();
+//        g_bTouchEn = 1;
+//        SaveCoordFormat();
+//        ResetSetting();
+//        ResetRotation();
+//        ResetCalibration();
         pReCmdBlock->DataPacket[0] = 0xFC;
         pReCmdBlock->DataPacket[1] = ALL_RESET;
         pReCmdBlock->DataPacket[2] = 00;
@@ -2788,215 +2802,215 @@ CmdAnswerType CmdSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBloc
 *****************************************************************/
 CmdAnswerType CmdCalibration(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
 {
-    eUsbDevice_t eUsbDev = GetUsbDev(pCmdBlock->eCmdSource);
-    static uint8_t s_bIsCalibrteBegin = 0;
-    static eTouchFormat_t s_eFormatSave;
+//    eUsbDevice_t eUsbDev = GetUsbDev(pCmdBlock->eCmdSource);
+//    static uint8_t s_bIsCalibrteBegin = 0;
+//    static eTouchFormat_t s_eFormatSave;
 
     CmdAnswerType eRetVal = CMD_ANSWER_NONE;
-    int32_t i = 0;
-    int8_t CalibraData[4] = {0};
-
-    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
-    switch(g_stCalibrationData.nStep) //根据校准步骤散转
-    {
-    case NEW_CAL_BEGIN:  //启动校准，返回确认
-    {
-        if(!s_bIsCalibrteBegin)
-        {
-            s_eFormatSave = g_stUsbCoordCfg[eUsbDev].eFormat;
-            //do not know the reason modify g_eUsb0Format here
-            //g_eUsb0Format = eFormatNone;
-            g_bCalEn = 0;
-
-            s_bIsCalibrteBegin = 1; // 设置为真，表示已经启动
-        }
-
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = NEW_CAL;
-        pReCmdBlock->DataPacket[2] = NEW_CAL_BEGIN_RE;
-
-        pReCmdBlock->nDataLen = 3;
-        eRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case NEW_CAL_END:  // 接收校准数据
-    {
-        if(s_bIsCalibrteBegin)  // 判断是否已经启动了校准
-        {
-            g_stUsbCoordCfg[eUsbDev].eFormat = s_eFormatSave;
-            g_bCalEn = 1;
-            if(pCmdBlock->DataPacket[5] == 1)
-            {
-                for(i=0; i<4; i++)
-                {
-                    g_stCalibrationData.arrCoord[i].nX = (uint16_t)(pCmdBlock->DataPacket[7 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[6 + i * 4]) * 0x100;
-                    g_stCalibrationData.arrCoord[i].nY = (uint16_t)(pCmdBlock->DataPacket[9 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[8 + i * 4]) * 0x100;
-                }
-                CalibrationInit();
-            }
-            s_bIsCalibrteBegin = 0;
-        }
-
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = NEW_CAL;
-        pReCmdBlock->DataPacket[2] = NEW_CAL_END_RE;
-
-        for(i = 3; i < 64; i++)
-        {
-            pReCmdBlock->DataPacket[i] = pCmdBlock->DataPacket[i];
-        }
-
-        pReCmdBlock->nDataLen = 64;
-        eRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case NEW_CAL_SAVE:    // 保存校准数据
-    {
-        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
-        if(pCmdBlock->DataPacket[5] == 1)
-        {
-            SaveCalibrationData();
-        }
-        else
-        {
-            ResetCalibration();
-        }
-
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = NEW_CAL;
-        pReCmdBlock->DataPacket[2] = NEW_CAL_SAVE_RE;
-        pReCmdBlock->DataPacket[3] = 1;
-        pReCmdBlock->DataPacket[5] = 1;
-        pReCmdBlock->nDataLen = 6;
-        eRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case NEW_CAL_GET:
-    {
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = NEW_CAL;
-        pReCmdBlock->DataPacket[2] = NEW_CAL_GET_RE;
-
-        pReCmdBlock->DataPacket[3] = 17;
-        pReCmdBlock->DataPacket[4] = 0;
-        pReCmdBlock->DataPacket[5] = 1;
-        pReCmdBlock->DataPacket[6] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 1);
-        pReCmdBlock->DataPacket[7] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 0);
-        pReCmdBlock->DataPacket[8] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 1);
-        pReCmdBlock->DataPacket[9] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 0);
-        pReCmdBlock->DataPacket[10] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 1);
-        pReCmdBlock->DataPacket[11] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 0);
-        pReCmdBlock->DataPacket[12] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 1);
-        pReCmdBlock->DataPacket[13] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 0);
-        pReCmdBlock->DataPacket[14] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 1);
-        pReCmdBlock->DataPacket[15] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 0);
-        pReCmdBlock->DataPacket[16] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 1);
-        pReCmdBlock->DataPacket[17] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 0);
-        pReCmdBlock->DataPacket[18] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 1);
-        pReCmdBlock->DataPacket[19] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 0);
-        pReCmdBlock->DataPacket[20] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 1);
-        pReCmdBlock->DataPacket[21] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 0);
-        pReCmdBlock->nDataLen = 22;
-        eRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-
-    case NEW_CAL_RESET:
-    {
-        ResetRotation();
-        ResetCalibration();
-        eRetVal = eCmdAnswerOK;
-    }
-    break;
-
-    case NEW_CAL_SAVE_DEFAULT:  // 将校准数据保存为默认校准数据
-    {
-        SaveCalibrationData();
-        eRetVal = eCmdAnswerOK;
-    }
-    break;
-
-    case NEW_CAL_RESET_DEFAULT:     // 将校准数据重置为出厂值
-    {
-        ResetCalibration();
-        eRetVal = eCmdAnswerOK;
-    }
-    break;
-    case NEW_CAL_APP_SET:
-    {
-        /*  0x80:左边偏右        0x40:左边偏左
-            0x20:右边偏右        0x10:右边偏左
-            0x08:上边偏下        0x04:上边偏上
-            0x02:下边偏下        0x01:下边偏上
-        */
-        CalibraData[0] = 0;
-        CalibraData[1] = 0;
-        CalibraData[2] = 0;
-        CalibraData[3] = 0;
-        switch(pCmdBlock->DataPacket[4] & 0xFF)
-        {
-        case 0x80:
-            CalibraData[0] = 1;
-            break;
-        case 0x40:
-            CalibraData[0] = -1;
-            break;
-        case 0x20:
-            CalibraData[1] = 1;
-            break;
-        case 0x10:
-            CalibraData[1] = -1;
-            break;
-        case 0x08:
-            CalibraData[2] = 1;
-            break;
-        case 0x04:
-            CalibraData[2] = -1;
-            break;
-        case 0x02:
-            CalibraData[3] = 1;
-            break;
-        case 0x01:
-            CalibraData[3] = -1;
-            break;
-        default :
-            break;
-        }
-        if (pCmdBlock->DataPacket[4] == 0xff) //0xff表示即将启动校准，将鼠标格式的数据设置为touch0发送
-        {
-            g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgMouseBit] = g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgTouch0CommBit];
-        }
-        //注意：g_stCalibrationData.nREOX等4个参数是unsigned类型，经过下面的加减之后，不能为负数，否则会变得很大，导致触摸偏移，导致无触摸假象
-        g_stCalibrationData.nREOX1 = g_stCalibrationData.nREOX1 + CalibraData[0];
-        g_stCalibrationData.nREOX2 = g_stCalibrationData.nREOX2 + CalibraData[1];
-        g_stCalibrationData.nREOY1 = g_stCalibrationData.nREOY1 + CalibraData[2];
-        g_stCalibrationData.nREOY2 = g_stCalibrationData.nREOY2 + CalibraData[3];
-
-        SetCalibrationData();
-        
-        pReCmdBlock->DataPacket[0] = 0xfc;
-        pReCmdBlock->DataPacket[1] = NEW_CAL;
-        pReCmdBlock->DataPacket[2] = NEW_CAL_APP_SET_RE;
-        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
-        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
-        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
-        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
-
-        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
-        pReCmdBlock->nDataLen       = 22 ;
-
-        eRetVal = CMD_ANSWER_DATA;
-    }
-    break;
-    default:
-    {
-        eRetVal = CMD_ANSWER_UNKNOWN;
-    }
-    break;
-    }
+//    int32_t i = 0;
+//    int8_t CalibraData[4] = {0};
+//
+//    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
+//    switch(g_stCalibrationData.nStep) //根据校准步骤散转
+//    {
+//    case NEW_CAL_BEGIN:  //启动校准，返回确认
+//    {
+//        if(!s_bIsCalibrteBegin)
+//        {
+//            s_eFormatSave = g_stUsbCoordCfg[eUsbDev].eFormat;
+//            //do not know the reason modify g_eUsb0Format here
+//            //g_eUsb0Format = eFormatNone;
+//            g_bCalEn = 0;
+//
+//            s_bIsCalibrteBegin = 1; // 设置为真，表示已经启动
+//        }
+//
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = NEW_CAL;
+//        pReCmdBlock->DataPacket[2] = NEW_CAL_BEGIN_RE;
+//
+//        pReCmdBlock->nDataLen = 3;
+//        eRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case NEW_CAL_END:  // 接收校准数据
+//    {
+//        if(s_bIsCalibrteBegin)  // 判断是否已经启动了校准
+//        {
+//            g_stUsbCoordCfg[eUsbDev].eFormat = s_eFormatSave;
+//            g_bCalEn = 1;
+//            if(pCmdBlock->DataPacket[5] == 1)
+//            {
+//                for(i=0; i<4; i++)
+//                {
+//                    g_stCalibrationData.arrCoord[i].nX = (uint16_t)(pCmdBlock->DataPacket[7 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[6 + i * 4]) * 0x100;
+//                    g_stCalibrationData.arrCoord[i].nY = (uint16_t)(pCmdBlock->DataPacket[9 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[8 + i * 4]) * 0x100;
+//                }
+//                CalibrationInit();
+//            }
+//            s_bIsCalibrteBegin = 0;
+//        }
+//
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = NEW_CAL;
+//        pReCmdBlock->DataPacket[2] = NEW_CAL_END_RE;
+//
+//        for(i = 3; i < 64; i++)
+//        {
+//            pReCmdBlock->DataPacket[i] = pCmdBlock->DataPacket[i];
+//        }
+//
+//        pReCmdBlock->nDataLen = 64;
+//        eRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case NEW_CAL_SAVE:    // 保存校准数据
+//    {
+//        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
+//        if(pCmdBlock->DataPacket[5] == 1)
+//        {
+//            SaveCalibrationData();
+//        }
+//        else
+//        {
+//            ResetCalibration();
+//        }
+//
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = NEW_CAL;
+//        pReCmdBlock->DataPacket[2] = NEW_CAL_SAVE_RE;
+//        pReCmdBlock->DataPacket[3] = 1;
+//        pReCmdBlock->DataPacket[5] = 1;
+//        pReCmdBlock->nDataLen = 6;
+//        eRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case NEW_CAL_GET:
+//    {
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = NEW_CAL;
+//        pReCmdBlock->DataPacket[2] = NEW_CAL_GET_RE;
+//
+//        pReCmdBlock->DataPacket[3] = 17;
+//        pReCmdBlock->DataPacket[4] = 0;
+//        pReCmdBlock->DataPacket[5] = 1;
+//        pReCmdBlock->DataPacket[6] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 1);
+//        pReCmdBlock->DataPacket[7] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 0);
+//        pReCmdBlock->DataPacket[8] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 1);
+//        pReCmdBlock->DataPacket[9] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 0);
+//        pReCmdBlock->DataPacket[10] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 1);
+//        pReCmdBlock->DataPacket[11] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 0);
+//        pReCmdBlock->DataPacket[12] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 1);
+//        pReCmdBlock->DataPacket[13] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 0);
+//        pReCmdBlock->DataPacket[14] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 1);
+//        pReCmdBlock->DataPacket[15] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 0);
+//        pReCmdBlock->DataPacket[16] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 1);
+//        pReCmdBlock->DataPacket[17] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 0);
+//        pReCmdBlock->DataPacket[18] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 1);
+//        pReCmdBlock->DataPacket[19] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 0);
+//        pReCmdBlock->DataPacket[20] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 1);
+//        pReCmdBlock->DataPacket[21] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 0);
+//        pReCmdBlock->nDataLen = 22;
+//        eRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//
+//    case NEW_CAL_RESET:
+//    {
+//        ResetRotation();
+//        ResetCalibration();
+//        eRetVal = CMD_ANSWER_OK;
+//    }
+//    break;
+//
+//    case NEW_CAL_SAVE_DEFAULT:  // 将校准数据保存为默认校准数据
+//    {
+//        SaveCalibrationData();
+//        eRetVal = CMD_ANSWER_OK;
+//    }
+//    break;
+//
+//    case NEW_CAL_RESET_DEFAULT:     // 将校准数据重置为出厂值
+//    {
+//        ResetCalibration();
+//        eRetVal = CMD_ANSWER_OK;
+//    }
+//    break;
+//    case NEW_CAL_APP_SET:
+//    {
+//        /*  0x80:左边偏右        0x40:左边偏左
+//            0x20:右边偏右        0x10:右边偏左
+//            0x08:上边偏下        0x04:上边偏上
+//            0x02:下边偏下        0x01:下边偏上
+//        */
+//        CalibraData[0] = 0;
+//        CalibraData[1] = 0;
+//        CalibraData[2] = 0;
+//        CalibraData[3] = 0;
+//        switch(pCmdBlock->DataPacket[4] & 0xFF)
+//        {
+//        case 0x80:
+//            CalibraData[0] = 1;
+//            break;
+//        case 0x40:
+//            CalibraData[0] = -1;
+//            break;
+//        case 0x20:
+//            CalibraData[1] = 1;
+//            break;
+//        case 0x10:
+//            CalibraData[1] = -1;
+//            break;
+//        case 0x08:
+//            CalibraData[2] = 1;
+//            break;
+//        case 0x04:
+//            CalibraData[2] = -1;
+//            break;
+//        case 0x02:
+//            CalibraData[3] = 1;
+//            break;
+//        case 0x01:
+//            CalibraData[3] = -1;
+//            break;
+//        default :
+//            break;
+//        }
+//        if (pCmdBlock->DataPacket[4] == 0xff) //0xff表示即将启动校准，将鼠标格式的数据设置为touch0发送
+//        {
+//            g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgMouseBit] = g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgTouch0CommBit];
+//        }
+//        //注意：g_stCalibrationData.nREOX等4个参数是unsigned类型，经过下面的加减之后，不能为负数，否则会变得很大，导致触摸偏移，导致无触摸假象
+//        g_stCalibrationData.nREOX1 = g_stCalibrationData.nREOX1 + CalibraData[0];
+//        g_stCalibrationData.nREOX2 = g_stCalibrationData.nREOX2 + CalibraData[1];
+//        g_stCalibrationData.nREOY1 = g_stCalibrationData.nREOY1 + CalibraData[2];
+//        g_stCalibrationData.nREOY2 = g_stCalibrationData.nREOY2 + CalibraData[3];
+//
+//        SetCalibrationData();
+//        
+//        pReCmdBlock->DataPacket[0] = 0xfc;
+//        pReCmdBlock->DataPacket[1] = NEW_CAL;
+//        pReCmdBlock->DataPacket[2] = NEW_CAL_APP_SET_RE;
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
+//        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
+//
+//        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
+//        pReCmdBlock->nDataLen       = 22 ;
+//
+//        eRetVal = CMD_ANSWER_DATA;
+//    }
+//    break;
+//    default:
+//    {
+//        eRetVal = CMD_ANSWER_UNKNOWN;
+//    }
+//    break;
+//    }
 
     return eRetVal;
 }
@@ -3057,18 +3071,18 @@ ATTR_WEAK CmdAnswerType CmdDebug(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pR
 
         case DEBUG_SET_USB_CONFIG_TYPE:
         {
-            stUsbEnumInfo_t stUsbTouchDevice = {USB0_VID, USB0_PID, Firmware_Version, (eUsbCfgType_t)pCmdBlock->DataPacket[5],
-            g_pConfigData->nPhysicalX, g_pConfigData->nPhysicalY, g_pConfigData->bTouchCoordWidthEn};
-            stUsbTouchDevice.eUsbDev = eUsbDev;
-            StartUsbDev(stUsbTouchDevice);    //开启USB枚举
-            g_stUsbCoordCfg[eUsbDev].eTouchItf = stUsbTouchDevice.eUsbCfgType & eUsbCfgTouch1Bit ? eUsbCfgTouch1Bit : eUsbCfgTouch0CommBit;
+//            stUsbEnumInfo_t stUsbTouchDevice = {USB0_VID, USB0_PID, Firmware_Version, (eUsbCfgType_t)pCmdBlock->DataPacket[5],
+//            g_pConfigData->nPhysicalX, g_pConfigData->nPhysicalY, g_pConfigData->bTouchCoordWidthEn};
+//            stUsbTouchDevice.eUsbDev = eUsbDev;
+//            StartUsbDev(stUsbTouchDevice);    //开启USB枚举
+//            g_stUsbCoordCfg[eUsbDev].eTouchItf = stUsbTouchDevice.eUsbCfgType & eUsbCfgTouch1Bit ? eUsbCfgTouch1Bit : eUsbCfgTouch0CommBit;
         }
         break;
 
         case DEBUG_REG_USB_PRINTF_REPORT_ID:
         {
-            g_nUsbPrintReportId = pCmdBlock->DataPacket[6];
-            UsbDevCallbackRegister(pCmdBlock->DataPacket[5], Evaluation);
+//            g_nUsbPrintReportId = pCmdBlock->DataPacket[6];
+//            UsbDevCallbackRegister(pCmdBlock->DataPacket[5], Evaluation);
         }
         break;
         case DEBUG_PRINTF_INFO:
@@ -3076,23 +3090,23 @@ ATTR_WEAK CmdAnswerType CmdDebug(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pR
             pReCmdBlock->DataPacket[0] = 0xfc;
             pReCmdBlock->DataPacket[1] = DEBUG_COMMAND;
             pReCmdBlock->DataPacket[2] = 0x84;
-            pReCmdBlock->DataPacket[3] = FN_BYTE(g_bRunAlg , 0);
-            pReCmdBlock->DataPacket[4] = FN_BYTE(g_eAlgInit, 0);
-            pReCmdBlock->DataPacket[5] = FN_BYTE(g_pAlgCoreVar->nRealPoint  , 0);
-            pReCmdBlock->DataPacket[6] = FN_BYTE(g_pAlgCoreVar->nValidRayCnt, 1);
-            pReCmdBlock->DataPacket[7] = FN_BYTE(g_pAlgCoreVar->nValidRayCnt, 0);
-            pReCmdBlock->DataPacket[8] = FN_BYTE(g_pAlgCoreVar->nMaskLineCnt, 1);
-            pReCmdBlock->DataPacket[9] = FN_BYTE(g_pAlgCoreVar->nMaskLineCnt, 0);
-            pReCmdBlock->DataPacket[10] = g_pAlgCoreVar->nActiveState;
-            pReCmdBlock->DataPacket[11] = FN_BYTE(g_nDownLight, 1);
-            pReCmdBlock->DataPacket[12] = FN_BYTE(g_nDownLight, 0);
-            pReCmdBlock->DataPacket[13] = FN_BYTE(g_nHaveLight, 1);
-            pReCmdBlock->DataPacket[14] = FN_BYTE(g_nHaveLight, 0);
-            pReCmdBlock->DataPacket[15] = g_nTouchCount;
-            pReCmdBlock->DataPacket[16] = g_stAmbienceVar.eEnvmPattern;
-            pReCmdBlock->DataPacket[17] = FN_BYTE(g_bRecvQTData, 0);
-            pReCmdBlock->DataPacket[18] = FN_BYTE(g_nFrame, 1);
-            pReCmdBlock->DataPacket[19] = FN_BYTE(g_nFrame, 0);
+//            pReCmdBlock->DataPacket[3] = FN_BYTE(g_bRunAlg , 0);
+//            pReCmdBlock->DataPacket[4] = FN_BYTE(g_eAlgInit, 0);
+//            pReCmdBlock->DataPacket[5] = FN_BYTE(g_pAlgCoreVar->nRealPoint  , 0);
+//            pReCmdBlock->DataPacket[6] = FN_BYTE(g_pAlgCoreVar->nValidRayCnt, 1);
+//            pReCmdBlock->DataPacket[7] = FN_BYTE(g_pAlgCoreVar->nValidRayCnt, 0);
+//            pReCmdBlock->DataPacket[8] = FN_BYTE(g_pAlgCoreVar->nMaskLineCnt, 1);
+//            pReCmdBlock->DataPacket[9] = FN_BYTE(g_pAlgCoreVar->nMaskLineCnt, 0);
+//            pReCmdBlock->DataPacket[10] = g_pAlgCoreVar->nActiveState;
+//            pReCmdBlock->DataPacket[11] = FN_BYTE(g_nDownLight, 1);
+//            pReCmdBlock->DataPacket[12] = FN_BYTE(g_nDownLight, 0);
+//            pReCmdBlock->DataPacket[13] = FN_BYTE(g_nHaveLight, 1);
+//            pReCmdBlock->DataPacket[14] = FN_BYTE(g_nHaveLight, 0);
+//            pReCmdBlock->DataPacket[15] = g_nTouchCount;
+//            pReCmdBlock->DataPacket[16] = g_stAmbienceVar.eEnvmPattern;
+//            pReCmdBlock->DataPacket[17] = FN_BYTE(g_bRecvQTData, 0);
+//            pReCmdBlock->DataPacket[18] = FN_BYTE(g_nFrame, 1);
+//            pReCmdBlock->DataPacket[19] = FN_BYTE(g_nFrame, 0);
             pReCmdBlock->nDataLen = 20;
 
             eRetVal = CMD_ANSWER_DATA;
@@ -3100,11 +3114,11 @@ ATTR_WEAK CmdAnswerType CmdDebug(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pR
         break;
         case DEBUG_AUTO_AGC_EN:
         {
-            if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
-            {
-                g_bAutoAgcEn = pCmdBlock->DataPacket[5];
-                g_bAutoAGC = (!pCmdBlock->DataPacket[5]);
-            }
+//            if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
+//            {
+//                g_bAutoAgcEn = pCmdBlock->DataPacket[5];
+//                g_bAutoAGC = (!pCmdBlock->DataPacket[5]);
+//            }
         }
         break;
         default:
@@ -3123,133 +3137,133 @@ Return:            void
 ATTR_WEAK CmdAnswerType ComPenetratingRegion(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
 {
     CmdAnswerType eRetVal = CMD_ANSWER_NONE;
-    stRegionStruct_t stpRegion;
-    uint8_t nRegionIDTotal = 0;
-    uint8_t nRet = 0;
-    uint8_t i = 0;
-
-    switch (pCmdBlock->DataPacket[2])
-    {
-        case CMD_ADD_REGION:
-        {
-            if(pCmdBlock->DataPacket[3] == 9)
-            {
-                stpRegion.nId = pCmdBlock->DataPacket[5];
-                stpRegion.nXStart = pCmdBlock->DataPacket[6] + (pCmdBlock->DataPacket[7] << 8);
-                stpRegion.nYStart = pCmdBlock->DataPacket[8] + (pCmdBlock->DataPacket[9] << 8);
-                stpRegion.nXEnd = pCmdBlock->DataPacket[10] + (pCmdBlock->DataPacket[11] << 8);
-                stpRegion.nYEnd = pCmdBlock->DataPacket[12] + (pCmdBlock->DataPacket[13] << 8);
-
-                if((stpRegion.nXStart < stpRegion.nXEnd) && (stpRegion.nYStart < stpRegion.nYEnd)
-                    &&(stpRegion.nXStart >= 0) && (stpRegion.nXEnd <= MAX_LOGICAL_VALUE)
-                    &&(stpRegion.nYStart >= 0) && (stpRegion.nYEnd <= MAX_LOGICAL_VALUE))
-                {
-                       nRet = AddRegionArea(&stpRegion);
-                }
-                else
-                {
-                    nRet = 0x03;
-                }
-            }
-            else
-            {
-                nRet = 0x03;
-            }
-
-            pReCmdBlock->DataPacket[0] = 0xfc;
-            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
-            pReCmdBlock->DataPacket[2] = CMD_ADD_REGION_RE;
-            pReCmdBlock->DataPacket[3] = 2;
-            pReCmdBlock->DataPacket[4] = 0;
-            pReCmdBlock->DataPacket[5] = nRet;
-            pReCmdBlock->DataPacket[6] = stpRegion.nId;
-            pReCmdBlock->nDataLen = 7;
-            eRetVal = CMD_ANSWER_DATA;
-        }
-        break;
-
-        case CMD_DELETE_REGION:
-        {
-            stpRegion.nId = pCmdBlock->DataPacket[5];
-            nRet = DeleteRegionArea(stpRegion.nId);
-
-            pReCmdBlock->DataPacket[0] = 0xfc;
-            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
-            pReCmdBlock->DataPacket[2] = CMD_DELETE_REGION_RE;
-            pReCmdBlock->DataPacket[3] = 2;
-            pReCmdBlock->DataPacket[4] = 0;
-            pReCmdBlock->DataPacket[5] = nRet;
-            pReCmdBlock->DataPacket[6] = stpRegion.nId;
-
-            pReCmdBlock->nDataLen = 7;
-            eRetVal = CMD_ANSWER_DATA;
-        }
-        break;
-
-        case CMD_QUERY_REGION:
-        {
-            stpRegion.nId = pCmdBlock->DataPacket[5];
-            nRet = GetRegionArea(stpRegion.nId, &stpRegion);
-
-            pReCmdBlock->DataPacket[0] = 0xfc;
-            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
-            pReCmdBlock->DataPacket[2] = CMD_QUERY_REGION_RE;
-            pReCmdBlock->DataPacket[3] = 10;
-            pReCmdBlock->DataPacket[4] = 0;
-
-            pReCmdBlock->DataPacket[5] = nRet;
-            pReCmdBlock->DataPacket[6] = stpRegion.nId;
-
-            pReCmdBlock->DataPacket[7] = (stpRegion.nXStart & 0xff);
-            pReCmdBlock->DataPacket[8] = (stpRegion.nXStart >> 8);
-
-            pReCmdBlock->DataPacket[9] = (stpRegion.nYStart & 0xff);
-            pReCmdBlock->DataPacket[10]= (stpRegion.nYStart >> 8);
-
-            pReCmdBlock->DataPacket[11]= (stpRegion.nXEnd & 0xff);
-            pReCmdBlock->DataPacket[12]= (stpRegion.nXEnd >> 8);
-
-            pReCmdBlock->DataPacket[13]= (stpRegion.nYEnd & 0xff);
-            pReCmdBlock->DataPacket[14]= (stpRegion.nYEnd >> 8);
-
-            pReCmdBlock->nDataLen = 15;
-            eRetVal = CMD_ANSWER_DATA;
-        }
-        break;
-
-        case CMD_QUERY_REGION_ID:
-        {
-             nRegionIDTotal = 0;
-
-             for(i = 0; i < MAXIMUM_NUMBER_OF_REGIONS; i++)
-             {
-                 if(g_stRegArray.stRegion[i].nId < MAXIMUM_NUMBER_OF_REGIONS)
-                 {
-                    nRegionIDTotal++;
-                    pReCmdBlock->DataPacket[6+nRegionIDTotal] = g_stRegArray.stRegion[i].nId;
-                 }
-             }
-
-            pReCmdBlock->DataPacket[0] = 0xfc;
-            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
-            pReCmdBlock->DataPacket[2] = CMD_QUERY_REGION_ID_RE;
-            pReCmdBlock->DataPacket[3] = 2 + nRegionIDTotal;
-            pReCmdBlock->DataPacket[4] = 0;
-            pReCmdBlock->DataPacket[5] = 0;
-            pReCmdBlock->DataPacket[6] = nRegionIDTotal;
-
-            pReCmdBlock->nDataLen = 7 + nRegionIDTotal;
-            eRetVal = CMD_ANSWER_DATA;
-        }
-        break;
-
-        default:
-        {
-            eRetVal = CMD_ANSWER_UNKNOWN;
-
-        }
-        break;
-    }
+//    stRegionStruct_t stpRegion;
+//    uint8_t nRegionIDTotal = 0;
+//    uint8_t nRet = 0;
+//    uint8_t i = 0;
+//
+//    switch (pCmdBlock->DataPacket[2])
+//    {
+//        case CMD_ADD_REGION:
+//        {
+//            if(pCmdBlock->DataPacket[3] == 9)
+//            {
+//                stpRegion.nId = pCmdBlock->DataPacket[5];
+//                stpRegion.nXStart = pCmdBlock->DataPacket[6] + (pCmdBlock->DataPacket[7] << 8);
+//                stpRegion.nYStart = pCmdBlock->DataPacket[8] + (pCmdBlock->DataPacket[9] << 8);
+//                stpRegion.nXEnd = pCmdBlock->DataPacket[10] + (pCmdBlock->DataPacket[11] << 8);
+//                stpRegion.nYEnd = pCmdBlock->DataPacket[12] + (pCmdBlock->DataPacket[13] << 8);
+//
+//                if((stpRegion.nXStart < stpRegion.nXEnd) && (stpRegion.nYStart < stpRegion.nYEnd)
+//                    &&(stpRegion.nXStart >= 0) && (stpRegion.nXEnd <= MAX_LOGICAL_VALUE)
+//                    &&(stpRegion.nYStart >= 0) && (stpRegion.nYEnd <= MAX_LOGICAL_VALUE))
+//                {
+//                       nRet = AddRegionArea(&stpRegion);
+//                }
+//                else
+//                {
+//                    nRet = 0x03;
+//                }
+//            }
+//            else
+//            {
+//                nRet = 0x03;
+//            }
+//
+//            pReCmdBlock->DataPacket[0] = 0xfc;
+//            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
+//            pReCmdBlock->DataPacket[2] = CMD_ADD_REGION_RE;
+//            pReCmdBlock->DataPacket[3] = 2;
+//            pReCmdBlock->DataPacket[4] = 0;
+//            pReCmdBlock->DataPacket[5] = nRet;
+//            pReCmdBlock->DataPacket[6] = stpRegion.nId;
+//            pReCmdBlock->nDataLen = 7;
+//            eRetVal = CMD_ANSWER_DATA;
+//        }
+//        break;
+//
+//        case CMD_DELETE_REGION:
+//        {
+//            stpRegion.nId = pCmdBlock->DataPacket[5];
+//            nRet = DeleteRegionArea(stpRegion.nId);
+//
+//            pReCmdBlock->DataPacket[0] = 0xfc;
+//            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
+//            pReCmdBlock->DataPacket[2] = CMD_DELETE_REGION_RE;
+//            pReCmdBlock->DataPacket[3] = 2;
+//            pReCmdBlock->DataPacket[4] = 0;
+//            pReCmdBlock->DataPacket[5] = nRet;
+//            pReCmdBlock->DataPacket[6] = stpRegion.nId;
+//
+//            pReCmdBlock->nDataLen = 7;
+//            eRetVal = CMD_ANSWER_DATA;
+//        }
+//        break;
+//
+//        case CMD_QUERY_REGION:
+//        {
+//            stpRegion.nId = pCmdBlock->DataPacket[5];
+//            nRet = GetRegionArea(stpRegion.nId, &stpRegion);
+//
+//            pReCmdBlock->DataPacket[0] = 0xfc;
+//            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
+//            pReCmdBlock->DataPacket[2] = CMD_QUERY_REGION_RE;
+//            pReCmdBlock->DataPacket[3] = 10;
+//            pReCmdBlock->DataPacket[4] = 0;
+//
+//            pReCmdBlock->DataPacket[5] = nRet;
+//            pReCmdBlock->DataPacket[6] = stpRegion.nId;
+//
+//            pReCmdBlock->DataPacket[7] = (stpRegion.nXStart & 0xff);
+//            pReCmdBlock->DataPacket[8] = (stpRegion.nXStart >> 8);
+//
+//            pReCmdBlock->DataPacket[9] = (stpRegion.nYStart & 0xff);
+//            pReCmdBlock->DataPacket[10]= (stpRegion.nYStart >> 8);
+//
+//            pReCmdBlock->DataPacket[11]= (stpRegion.nXEnd & 0xff);
+//            pReCmdBlock->DataPacket[12]= (stpRegion.nXEnd >> 8);
+//
+//            pReCmdBlock->DataPacket[13]= (stpRegion.nYEnd & 0xff);
+//            pReCmdBlock->DataPacket[14]= (stpRegion.nYEnd >> 8);
+//
+//            pReCmdBlock->nDataLen = 15;
+//            eRetVal = CMD_ANSWER_DATA;
+//        }
+//        break;
+//
+//        case CMD_QUERY_REGION_ID:
+//        {
+//             nRegionIDTotal = 0;
+//
+//             for(i = 0; i < MAXIMUM_NUMBER_OF_REGIONS; i++)
+//             {
+//                 if(g_stRegArray.stRegion[i].nId < MAXIMUM_NUMBER_OF_REGIONS)
+//                 {
+//                    nRegionIDTotal++;
+//                    pReCmdBlock->DataPacket[6+nRegionIDTotal] = g_stRegArray.stRegion[i].nId;
+//                 }
+//             }
+//
+//            pReCmdBlock->DataPacket[0] = 0xfc;
+//            pReCmdBlock->DataPacket[1] = CMD_NON_PENETRAING_REGION;
+//            pReCmdBlock->DataPacket[2] = CMD_QUERY_REGION_ID_RE;
+//            pReCmdBlock->DataPacket[3] = 2 + nRegionIDTotal;
+//            pReCmdBlock->DataPacket[4] = 0;
+//            pReCmdBlock->DataPacket[5] = 0;
+//            pReCmdBlock->DataPacket[6] = nRegionIDTotal;
+//
+//            pReCmdBlock->nDataLen = 7 + nRegionIDTotal;
+//            eRetVal = CMD_ANSWER_DATA;
+//        }
+//        break;
+//
+//        default:
+//        {
+//            eRetVal = CMD_ANSWER_UNKNOWN;
+//
+//        }
+//        break;
+//    }
     return eRetVal;
 }
 
@@ -3264,31 +3278,31 @@ CmdAnswerType ComKeyboard(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     {
         case KEYBOARD_SENDKEY:
         {
-            SendKeyboardData(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
-            MemCpy(pReCmdBlock, pCmdBlock, pCmdBlock->nDataLen);
-            pReCmdBlock->DataPacket[2] = KEYBOARD_SENDKEY_RE;
-            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
+//            SendKeyboardData(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
+//            MemCpy(pReCmdBlock, pCmdBlock, pCmdBlock->nDataLen);
+//            pReCmdBlock->DataPacket[2] = KEYBOARD_SENDKEY_RE;
+//            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
             eRetVal = CMD_ANSWER_DATA;
         }
         break;
 
         case KEYBOARD_KEY_PRESS:
         {
-            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_PRESS_RE;
-            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
-            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
-            eRetVal = eCmdAnswerOK;
+//            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_PRESS_RE;
+//            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
+//            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
+            eRetVal = CMD_ANSWER_OK;
         }
         break;
 
         case KEYBOARD_KEY_RELEASE:
         {
-            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_RELEASE_RE;
-            pCmdBlock->DataPacket[5] = 0;
-            pCmdBlock->DataPacket[6] = 0;
-            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
-            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
-            eRetVal = eCmdAnswerOK;
+//            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_RELEASE_RE;
+//            pCmdBlock->DataPacket[5] = 0;
+//            pCmdBlock->DataPacket[6] = 0;
+//            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
+//            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
+            eRetVal = CMD_ANSWER_OK;
         }
         break;
 
@@ -3315,26 +3329,26 @@ ATTR_WEAK CmdAnswerType ComZoomScreen(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOC
     {
     case SCREEN_ZOOM_SETTING:
     {
-        //屏幕缩放设置
-        MemSet(&g_stZoom, 0, sizeof(g_stZoom));
-
-        g_stZoom.x = pCmdBlock->DataPacket[5] + (pCmdBlock->DataPacket[6] << 8);
-        g_stZoom.y = pCmdBlock->DataPacket[7] + (pCmdBlock->DataPacket[8] << 8);
-        g_stZoom.w = pCmdBlock->DataPacket[9] + (pCmdBlock->DataPacket[10] << 8);
-        g_stZoom.h = pCmdBlock->DataPacket[11] + (pCmdBlock->DataPacket[12] << 8);
-
-        if((g_stZoom.x + g_stZoom.y + g_stZoom.w + g_stZoom.h) != 0)
-        {
-            if(pCmdBlock->eCmdSource != eUsart3Mode)
-            {
-                g_stZoom.bUsbEnable[eUsbDev] = 0;
-                g_stZoom.bUsbEnable[eRUsbDev] = 1;
-            }
-            else
-            {
-                g_stZoom.bUsbEnable[eUsbDev0] = 1;
-            }
-        }
+//        //屏幕缩放设置
+//        MemSet(&g_stZoom, 0, sizeof(g_stZoom));
+//
+//        g_stZoom.x = pCmdBlock->DataPacket[5] + (pCmdBlock->DataPacket[6] << 8);
+//        g_stZoom.y = pCmdBlock->DataPacket[7] + (pCmdBlock->DataPacket[8] << 8);
+//        g_stZoom.w = pCmdBlock->DataPacket[9] + (pCmdBlock->DataPacket[10] << 8);
+//        g_stZoom.h = pCmdBlock->DataPacket[11] + (pCmdBlock->DataPacket[12] << 8);
+//
+//        if((g_stZoom.x + g_stZoom.y + g_stZoom.w + g_stZoom.h) != 0)
+//        {
+//            if(pCmdBlock->eCmdSource != eUsart3Mode)
+//            {
+//                g_stZoom.bUsbEnable[eUsbDev] = 0;
+//                g_stZoom.bUsbEnable[eRUsbDev] = 1;
+//            }
+//            else
+//            {
+//                g_stZoom.bUsbEnable[eUsbDev0] = 1;
+//            }
+//        }
     }
     break;
 
@@ -3388,7 +3402,7 @@ CmdAnswerType Communication(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
         }
         break;
 
-        case CONFIG:
+        case CMD_CONFIG:
         {
             eRetVal = CmdDeviceConfig(pCmdBlock, pReCmdBlock);
         }

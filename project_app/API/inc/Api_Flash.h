@@ -50,6 +50,9 @@
 #define FLASH_BOOT_PARA_ADDRESS         (FLASH_EXT_CODE_PARA_ADDRESS + FLASH_EXT_CODE_PARA_LENGTH)
 #define FLASH_BOOT_PARA_LENGTH          (0x100)
 
+#define FLASH_PARAM_ADDRESS             (FLASH_BOOT_PARA_ADDRESS + FLASH_BOOT_PARA_LENGTH)
+#define FLASH_PARAM_LENGTH              (4*1024)
+
 
 
 
@@ -109,6 +112,8 @@ extern int32_t GetBootPara(stStartBootPara_t *pPara);
 extern int32_t BootParaInit(stStartBootPara_t *pDefault);
 extern eAppUpgradeFlag_t GetUpgradeFlag(void);
 extern uint32_t GetFwCheckSum(void);
+extern uint16_t GetBootVersion(void);
+extern uint16_t GetBootBoardType(void);
 extern uint32_t GetBootDataCrc32(void);
 extern int32_t SaveAppDataLen(uint32_t nLen);
 extern int32_t SaveAppCheckSum(void);

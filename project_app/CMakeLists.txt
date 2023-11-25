@@ -19,6 +19,7 @@ sdk_app_src(user/src/app_systick.c)
 sdk_app_src(user/src/app_watch_dog.c)
 sdk_app_src(user/src/CommService.c)
 sdk_app_src(user/src/Communication.c)
+sdk_app_src(user/src/FlashPara.c)
 
 sdk_app_inc(API/inc)
 sdk_app_src(API/src/Api_Flash.c)

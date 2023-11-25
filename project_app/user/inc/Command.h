@@ -305,7 +305,7 @@
 #define CONFIGPARA_XY_RLED_GET_RE       0x86
   
 // 固件配置命令  
-#define CONFIG                          0xAC//固件配置父命令
+#define CMD_CONFIG                      0xAC//固件配置父命令
 //固件配置子命令  
 #define CONFIG_OK                       0x00
 #define CONFIG_FINISH                   0x01

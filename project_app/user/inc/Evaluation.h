@@ -75,7 +75,6 @@ extern eUsbDevice_t g_eUsbDevice;
 extern eUsbCfgBitType_t g_eUsbSendCfgType;
 extern uint8_t g_nEvalReportId;
 extern int32_t EmulatorInit(void);
-extern uint32_t GetSystickTime(void);
 extern int32_t Evaluation(uint8_t* pBuf, int16_t nLen, eCmdSource_t eMode);
 
 #endif /* _EVALUATION_H_ */

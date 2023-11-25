@@ -60,6 +60,7 @@ typedef struct
 
 typedef int32_t (*pUsbDevFuncCallback)(uint8_t *pBuf, int16_t nLen, eCmdSource_t eSource);
 extern pUsbDevFuncCallback g_pUsbDevCallback[USB_DEV_REPORT_ID_TOTAL];
+extern eUsbCfgType_t g_eUsbCfgType[eUsbDevCount];
 extern stUsbEpsInfo_t g_stUsbEpsInfo[eUsbDevCount];
 
 extern int32_t InitAEpInfo(eUsbDevice_t eDev, uint8_t nEpIdx, uint16_t nEpType, uint16_t nEpSize, uint16_t nEpsPhyOffset,
@@ -68,8 +69,9 @@ extern int32_t InitAEpInfo(eUsbDevice_t eDev, uint8_t nEpIdx, uint16_t nEpType, 
 extern int16_t USBEPSendPacket(eUsbDevice_t eDev, uint8_t nEpIdx, uint8_t *pBuffer, int16_t nLen);
 extern int16_t USBSendPacket(eUsbDevice_t eDev, eUsbCfgBitType_t eBitType, uint8_t *pBuffer, int16_t nLen);
 extern void UsbDevCallbackRegister(uint8_t nReportId, pUsbDevFuncCallback pCallback);
-
+extern int32_t GetAllUsbQueueBusy(void);
 extern int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo);
+extern int32_t StopAllUsbDev(void);
 
 
 
