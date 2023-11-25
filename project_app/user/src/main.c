@@ -25,6 +25,7 @@ void HwPlatformInit(void)
 {
     board_init();
     FlashInit();
+    UsbDevCallbackRegister(CMD_FC_REPORT_ID, AddCmdQueueBlock); //注册USB相关回调函数
     UsbDevCallbackRegister(CMD_FE_REPORT_ID, AddCmdQueueBlock); //注册USB相关回调函数
 
     // IO口控制LED
