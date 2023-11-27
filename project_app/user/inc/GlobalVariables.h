@@ -223,6 +223,7 @@ typedef struct
 }stBurnAging_t;
 
 
+extern uint8_t                          g_bSyncMode;
 
 
 extern adc_type_t*                      g_ORG;

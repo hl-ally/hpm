@@ -23,6 +23,7 @@ sdk_app_src(user/src/FlashPara.c)
 sdk_app_src(user/src/HardWareInfo.c)
 sdk_app_src(user/src/GlobalVariables.c)
 sdk_app_src(user/src/TouchSignal.c)
+sdk_app_src(user/src/Evaluation.c)
 
 sdk_app_inc(API/inc)
 sdk_app_src(API/src/Api_Flash.c)

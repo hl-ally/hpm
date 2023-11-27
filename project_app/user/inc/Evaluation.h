@@ -15,6 +15,8 @@
 #include "Api_Crc.h"
 #include "TouchSignal.h"
 #include "GlobalVariables.h"
+#include "AlgApiMath.h"
+
 
 #define CMD_F0_REPORT_ID                0xF0 //PC与下位机间的调试通道ID
 #define CMD_F0_STOP_SLAVE_SCAN          0x00 //停止从机扫描

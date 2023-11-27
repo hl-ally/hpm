@@ -250,38 +250,38 @@ CmdAnswerType CmdMaster(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock
         pReCmdBlock->DataPacket[2] = SLAVE_SET_SEND_DATA_RE;
         pReCmdBlock->DataPacket[3] = 3;
 
-//        pReCmdBlock->DataPacket[5] = g_bSendTouchData;
-//        pReCmdBlock->DataPacket[6] = g_eTouchData;
-//        pReCmdBlock->DataPacket[8] = g_bSyncMode;
-//
-//        pReCmdBlock->nDataLen = 8;
-//        AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
-//
-//        //兼容免驱采集数据工具下发的指令
-//        if (GetCRC32(pCmdBlock->DataPacket, 60) == FN_UINT32(&pCmdBlock->DataPacket[60]))
-//        {
-//            g_bSendTouchData = pCmdBlock->DataPacket[5];
-//            g_eTouchData = pCmdBlock->DataPacket[6];
-//            g_bSyncMode = pCmdBlock->DataPacket[8];
-//
-//            g_eUsbDevice = GetUsbDev(pCmdBlock->eCmdSource);
-//            g_eUsbSendCfgType = (eUsbCfgBitType_t)pCmdBlock->DataPacket[9];
-//            g_nEvalReportId = pCmdBlock->DataPacket[10];
-//            if (pCmdBlock->DataPacket[11])
-//            {
+        pReCmdBlock->DataPacket[5] = g_bSendTouchData;
+        pReCmdBlock->DataPacket[6] = g_eTouchData;
+        pReCmdBlock->DataPacket[8] = g_bSyncMode;
+
+        pReCmdBlock->nDataLen = 8;
+        AnswerCommand(pReCmdBlock->DataPacket, pReCmdBlock->nDataLen, pCmdBlock->eCmdSource);
+
+        //兼容免驱采集数据工具下发的指令
+        if (GetCRC32(pCmdBlock->DataPacket, 60) == FN_UINT32(&pCmdBlock->DataPacket[60]))
+        {
+            g_bSendTouchData = pCmdBlock->DataPacket[5];
+            g_eTouchData = pCmdBlock->DataPacket[6];
+            g_bSyncMode = pCmdBlock->DataPacket[8];
+
+            g_eUsbDevice = GetUsbDev(pCmdBlock->eCmdSource);
+            g_eUsbSendCfgType = (eUsbCfgBitType_t)pCmdBlock->DataPacket[9];
+            g_nEvalReportId = pCmdBlock->DataPacket[10];
+            if (pCmdBlock->DataPacket[11])
+            {
 //                ScanAndOrgInit();
-//            }
-//        }
-//        else
-//        {
-//            if(g_bSendTouchData != pCmdBlock->DataPacket[5] || g_eTouchData != pCmdBlock->DataPacket[6] || g_bSyncMode != pCmdBlock->DataPacket[8])
-//            {
-//                g_bSendTouchData = pCmdBlock->DataPacket[5];
-//                g_eTouchData = pCmdBlock->DataPacket[6];
-//                g_bSyncMode = pCmdBlock->DataPacket[8];
+            }
+        }
+        else
+        {
+            if(g_bSendTouchData != pCmdBlock->DataPacket[5] || g_eTouchData != pCmdBlock->DataPacket[6] || g_bSyncMode != pCmdBlock->DataPacket[8])
+            {
+                g_bSendTouchData = pCmdBlock->DataPacket[5];
+                g_eTouchData = pCmdBlock->DataPacket[6];
+                g_bSyncMode = pCmdBlock->DataPacket[8];
 //                ScanAndOrgInit();
-//            }
-//        }
+            }
+        }
 
         /******** Modified by Roc ********/
         //printf("CMDMaster\r\n");

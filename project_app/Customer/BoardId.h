@@ -4,13 +4,9 @@
  * 硬件机型定义
  */
 
-#define R30S55_C_C1_6CH             1   //Seewo
-#define R30S65_C_C1_9CH             2
-#define R30S75_C_C1_9CH             3
-#define R30S86_C_C1_9CH             4
+#define R30S86_C_C1_9CH             1   //Seewo
 
-#define R30S65_DH_C1_9CH            5   //大华
-#define R30S86_DH_C1_9CH            6
+
 /*
  * 扫描方案
  */
