@@ -871,7 +871,7 @@ CmdAnswerType CmdBootloader(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
             pReCmdBlock->DataPacket[5] = BL_UPD_FLAG_SET_OK;
             pReCmdBlock->DataPacket[6] = UpgradeFlag;
             eRetVal = CMD_ANSWER_DATA;
-//            printf("finish upgrade. %02X\r\n", UpgradeFlag);
+            printf("finish upgrade. %02X\r\n", UpgradeFlag);
         }
         else
         {
@@ -1921,22 +1921,22 @@ ATTR_WEAK CmdAnswerType CmdUserKey(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* 
 {
     CmdAnswerType eRetVal = CMD_ANSWER_NONE;
 //    stObjCtrlCombin_t *pObjCombin = GetObjCombin();
-//
-//    switch(pCmdBlock->DataPacket[2])
-//    {
-//    case USERKEY_GET_ID:
-//    {
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = pCmdBlock->DataPacket[1];
-//        pReCmdBlock->DataPacket[2] = USERKEY_GET_ID_RE;
-//        pReCmdBlock->DataPacket[3] = 16;
-//        pReCmdBlock->DataPacket[4] = 0;
-//        GetUniqueID(&(pReCmdBlock->DataPacket[5]), 16);
-//        pReCmdBlock->nDataLen = 21;
-//        eRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//
+
+    switch(pCmdBlock->DataPacket[2])
+    {
+    case USERKEY_GET_ID:
+    {
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = pCmdBlock->DataPacket[1];
+        pReCmdBlock->DataPacket[2] = USERKEY_GET_ID_RE;
+        pReCmdBlock->DataPacket[3] = 16;
+        pReCmdBlock->DataPacket[4] = 0;
+        GetUniqueID(&(pReCmdBlock->DataPacket[5]), 16);
+        pReCmdBlock->nDataLen = 21;
+        eRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+
 //    case USERKEY_GET_KEY:
 //    {
 //        pReCmdBlock->DataPacket[0] = 0xfc;
@@ -1971,12 +1971,12 @@ ATTR_WEAK CmdAnswerType CmdUserKey(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* 
 //        //printf("Save Aging Time\r\n");
 //    }
 //    break;
-//    default:
-//    {
-//        eRetVal = CMD_ANSWER_UNKNOWN;
-//    }
-//    break;
-//    }
+    default:
+    {
+        eRetVal = CMD_ANSWER_UNKNOWN;
+    }
+    break;
+    }
     return eRetVal;
 }
 

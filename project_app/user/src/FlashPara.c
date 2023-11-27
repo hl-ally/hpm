@@ -216,17 +216,17 @@ int32_t InitCommonConfigData(stHardConfigData_t* pConfig)
 //    pConfig->nTestMaxAgcFactory = TEST_MAX_AGC_FAC;
 //    pConfig->nTestMinAgcFactory = TEST_MIN_AGC_FAC;
 //
-//    MemSet(pConfig->strManufacturerDesc,0x00,MAX_STRING_LENGTH);
-//    MemSet(pConfig->strDeviceDesc,0x00,MAX_STRING_LENGTH);
-//    MemSet(pConfig->strModelDesc,0x00,MAX_STRING_LENGTH);
-//    MemCpy(pConfig->strManufacturerDesc, MANUFACTURER_DESC, FN_MIN(MAX_STRING_LENGTH, sizeof(MANUFACTURER_DESC) - 1));
-//
-//    MemCpy(pConfig->strDeviceDesc, DEVICE_DESC, FN_MIN(MAX_STRING_LENGTH, sizeof(DEVICE_DESC) - 1));
-//    MemCpy(pConfig->strModelDesc, MODEL_DESC, FN_MIN(MAX_STRING_LENGTH, sizeof(MODEL_DESC) - 1));
-//
-//    pConfig->nManufacturerDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(MANUFACTURER_DESC) - 1);
-//    pConfig->nDeviceDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(DEVICE_DESC) - 1);
-//    pConfig->nModelDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(MODEL_DESC) - 1);
+    MemSet(pConfig->strManufacturerDesc,0x00,MAX_STRING_LENGTH);
+    MemSet(pConfig->strDeviceDesc,0x00,MAX_STRING_LENGTH);
+    MemSet(pConfig->strModelDesc,0x00,MAX_STRING_LENGTH);
+    MemCpy(pConfig->strManufacturerDesc, MANUFACTURER_DESC, FN_MIN(MAX_STRING_LENGTH, sizeof(MANUFACTURER_DESC) - 1));
+
+    MemCpy(pConfig->strDeviceDesc, DEVICE_DESC, FN_MIN(MAX_STRING_LENGTH, sizeof(DEVICE_DESC) - 1));
+    MemCpy(pConfig->strModelDesc, MODEL_DESC, FN_MIN(MAX_STRING_LENGTH, sizeof(MODEL_DESC) - 1));
+
+    pConfig->nManufacturerDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(MANUFACTURER_DESC) - 1);
+    pConfig->nDeviceDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(DEVICE_DESC) - 1);
+    pConfig->nModelDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(MODEL_DESC) - 1);
 //
 //    pConfig->nREOX1 = REOX1;
 //    pConfig->nREOX2 = REOX2;
@@ -240,7 +240,7 @@ int32_t InitCommonConfigData(stHardConfigData_t* pConfig)
 //
 //    pConfig->bUsb1DeviceConfigType = (uint8_t)USB1_DEVICE_CONFIG_TYPE;
 //
-//    pConfig->nUsePoint = USER_POINT;
+    pConfig->nUsePoint = USER_POINT;
 //    pConfig->bTouchEn = TOUCH_EN;
 //    pConfig->bUnderMac10 = UNDER_MAC10_EN;
 //    pConfig->eFormat = USB0_DEFAULT_TOUCH_FMT;
@@ -894,13 +894,13 @@ uint32_t InitCommonConfigDataAndSave(uint32_t nFlashAddress)
 {
     stHardConfigData_t stHwCfData;
 
-//    InitCommonConfigData(&stHwCfData);
-//    stHwCfData.nAppChekSum = GetFwCheckSum();
-//    stHwCfData.nConfigLength = sizeof(stHardConfigData_t);
+    InitCommonConfigData(&stHwCfData);
+    stHwCfData.nAppChekSum = GetFwCheckSum();
+    stHwCfData.nConfigLength = sizeof(stHardConfigData_t);
 //    stHwCfData.nLineCount = g_nAllAdcIndexCount;
-//    stHwCfData.nConfigCrc32Sum = GetCRC32(((uint8_t*)&stHwCfData) + 12, stHwCfData.nConfigLength-12);
-//
-//    FLASH_WriteLenByte(nFlashAddress, (uint8_t *)&stHwCfData, sizeof(stHwCfData));
+    stHwCfData.nConfigCrc32Sum = GetCRC32(((uint8_t*)&stHwCfData) + 12, stHwCfData.nConfigLength-12);
+
+    FlashWrite(nFlashAddress, (uint8_t *)&stHwCfData, sizeof(stHwCfData));
     return sizeof(stHardConfigData_t);
 }
 
@@ -909,18 +909,18 @@ uint32_t InitCommonConfigDataAndSave(uint32_t nFlashAddress)
  */
 int32_t InitFlashPara(void)
 {
-//    uint32_t nAddress = 0, nCommCfgAddress = GetScanParaSaveAddr();  //将硬件配置信息放在最开始的地方
+    uint32_t nAddress = 0, nCommCfgAddress = GetScanParaSaveAddr();  //将硬件配置信息放在最开始的地方
 //    uint32_t nFlashAddrIndexAddress = FLASH_FW_TABLE_ADDRESS;
-//    uint32_t nLen = 0, nOffset = 0;
+    uint32_t nLen = 0, nOffset = 0;
 //    uint32_t arrTotal[eAxisCount] = {(X_TOTAL + 3) / 4 * 4, (Y_TOTAL + 3) / 4 * 4};
 //    eEdge_t eEdge = eBottom;
 //    eAxis_t eAxis = X;
 //    uint32_t i = 0;
 //    uint32_t nFWCheckSum = GetFwCheckSum();
 //    stFlashAddrIndex_t stFlashAddressIndex = *(stFlashAddrIndex_t *)nFlashAddrIndexAddress;
-//
-//    g_pConfigData = (stHardConfigData_t *)nCommCfgAddress;
-//
+
+    g_pConfigData = (stHardConfigData_t *)nCommCfgAddress;
+
 //    if (GetCRC32((uint8_t *)(nCommCfgAddress + 12), sizeof(stHardConfigData_t) - 12) != g_pConfigData->nConfigCrc32Sum ||
 //            g_pConfigData->nAppChekSum != nFWCheckSum ||
 //            stFlashAddressIndex.nCrc32 != GetCRC32((uint8_t *)(nFlashAddrIndexAddress + 4), sizeof(stFlashAddrIndex_t) - 4) ||
@@ -1020,7 +1020,7 @@ int32_t InitFlashPara(void)
 //        stFlashAddressIndex.stIndex[eDMACopyToLedOn].nAddressLenght = nLen;
 //        nAddress = FN_ALIGN_4BYTES_SFX(nAddress + nLen);
 //
-//        nLen = InitCommonConfigDataAndSave(nCommCfgAddress);
+        nLen = InitCommonConfigDataAndSave(nCommCfgAddress);
 //        stFlashAddressIndex.stIndex[eHardwareConfigArray].nAddressStart = nCommCfgAddress;
 //        stFlashAddressIndex.stIndex[eHardwareConfigArray].nAddressLenght = nLen;
 //

@@ -27,9 +27,22 @@
 #define PHYSICAL_SIZE_SCALE                 (0.6f)  //默认缩放物理尺寸比例60%  解决win10 1809之前的非16:9分辨率的触控问题
 #endif
 
+#ifndef MANUFACTURER_DESC
+#define MANUFACTURER_DESC                   "TOUCH_MODE Device"
+#endif
+
+#ifndef DEVICE_DESC
+#define DEVICE_DESC                         ""
+#endif
+
+#ifndef MODEL_DESC
+#define MODEL_DESC                          "R5H_DEMO"
+#endif
+
+
 
 #ifndef USB0_DEVICE_CONFIG_TYPE
-#define USB0_DEVICE_CONFIG_TYPE             eUsbCfgStandardWithDualHid
+#define USB0_DEVICE_CONFIG_TYPE             eUsbCfgStandardWithBulk
 #endif
 
 #ifndef MAX_INK_PENS

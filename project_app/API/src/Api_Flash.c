@@ -353,6 +353,29 @@ uint32_t GetBootDataCrc32(void)
 //    return GetCrc32_SW((uint8_t *)(BOOTLOADER_ADDRESS), BOOTLOADER_MAX_SIZE);
 }
 
+
+#define OTP_CHIP_UUID_IDX_START     (88U)
+#define OTP_CHIP_UUID_IDX_END       (91U)
+int32_t GetUniqueID(uint8_t* pBuffer, int32_t nLen)
+{
+    uint32_t uuid_words[4];
+    uint32_t word_idx = 0;
+    for (uint32_t i = OTP_CHIP_UUID_IDX_START; i <= OTP_CHIP_UUID_IDX_END; i++)
+    {
+        //uuid_words[word_idx++] = ROM_API_TABLE_ROOT->otp_driver_if->read_from_shadow(i);
+        uuid_words[word_idx++] = otp_read_from_shadow(i);
+    }
+    uint32_t *pId = (uint32_t *)pBuffer;
+
+    pId[0] = uuid_words[0];
+    pId[1] = uuid_words[1];
+    pId[2] = uuid_words[2];
+    pId[3] = uuid_words[3];
+
+    return nLen;
+}
+
+
 int32_t FlashEraseKey(void)
 {   
     int32_t i;

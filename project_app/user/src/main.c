@@ -20,6 +20,7 @@
 #include "CommService.h"
 #include "GlobalDefaultDefine.h"
 #include "GlobalVariables.h"
+#include "FlashPara.h"
 
 void HwPlatformInit(void)
 {
@@ -41,6 +42,8 @@ void HwPlatformInit(void)
     /* As QFN32, QFN48 and LQFP64 has no vbus pin, so should be call usb_phy_using_internal_vbus() API to use internal vbus. */
     /* usb_phy_using_internal_vbus(BOARD_USB); */
     usb_phy_using_internal_vbus(BOARD_USB);
+
+    InitFlashPara();
 }
 
 int main(void)
@@ -62,7 +65,7 @@ int main(void)
     }
 
     
-#if 1
+#if 0
     // 开机延时等待
     nLastTime = GetCurrentTimeUs();
     while(GetCurrentTimeUs() - nLastTime < 1*1000*1000)

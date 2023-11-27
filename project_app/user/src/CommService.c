@@ -72,6 +72,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         case eUsb0Ep7Mode:
         {
             USBEPSendPacket(eUsbDev0, (uint8_t)(eCmdSource), pAnsCmdBuf, CMD_QUEUE_DATA_MAX_SIZE);
+//            printf("AnswerCommand, source:%d,len:%d,send:%x,%x,%x\n",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1],pAnsCmdBuf[2]);
         }
         break;
 
@@ -88,7 +89,7 @@ void AnswerCommand(uint8_t pAnsCmdBuf[], uint32_t nlength, eCmdSource_t eCmdSour
         break;
 
         default:
-            printf("AnswerCommand, source:%d,send:%d,%x,%x\n",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1]);
+            printf("AnswerCommand, source:%d,len:%d,send:%x,%x,%x\n",eCmdSource,nlength,pAnsCmdBuf[0],pAnsCmdBuf[1],pAnsCmdBuf[2]);
         break;
     }
 }

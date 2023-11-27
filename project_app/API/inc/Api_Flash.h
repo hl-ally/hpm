@@ -115,6 +115,7 @@ extern uint32_t GetFwCheckSum(void);
 extern uint16_t GetBootVersion(void);
 extern uint16_t GetBootBoardType(void);
 extern uint32_t GetBootDataCrc32(void);
+extern int32_t GetUniqueID(uint8_t* pBuffer, int32_t nLen);
 extern int32_t SaveAppDataLen(uint32_t nLen);
 extern int32_t SaveAppCheckSum(void);
 extern int32_t SetUpgradeFlag(eAppUpgradeFlag_t nFlag);
