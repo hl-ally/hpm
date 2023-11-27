@@ -224,6 +224,11 @@ typedef struct
 
 
 extern uint8_t                          g_bSyncMode;
+extern stBurnAging_t                    g_stBurnAging;
+extern uint8_t                          g_bSendCoord;
+extern uint8_t                          g_bBoradLedEnable;
+extern uint8_t                          g_bAutoAGC ;
+extern uint8_t                          g_bAutoAgcEn;
 
 
 extern adc_type_t*                      g_ORG;
@@ -237,10 +242,14 @@ extern int32_t                          g_nInterVal[eAxisCount][OBQ_COUNT];
 extern stPosF_t*                        g_arrPos[eEdgeCount];
 extern float                            g_fMaxRate[eAxisCount];
 
+extern stTestStatus_t                   g_stTestStatus;
+
+
 extern stTouchData                      g_TouchDataFifo[2];
 extern volatile uint8_t                 g_nTouchDataFifoFront;
 extern volatile uint8_t                 g_nTouchDataFifoBack;
 
+extern volatile int32_t                 g_bTouchPenetration;
 
 
 #endif  // GLOBAL_VARIABLES_H

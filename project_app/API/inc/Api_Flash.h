@@ -120,6 +120,7 @@ extern int32_t SaveAppDataLen(uint32_t nLen);
 extern int32_t SaveAppCheckSum(void);
 extern int32_t SetUpgradeFlag(eAppUpgradeFlag_t nFlag);
 
+extern int32_t FlashEraseKey(void);
 extern uint32_t SaveDataList(eDataList_t eType, uint8_t *pBuf, uint32_t nLen);
 
 

@@ -302,6 +302,12 @@
 #define USB1_PID                            0x0F33
 #endif
 
+
+#ifndef ANDROID_UNTTEST_WAITTIME
+#define ANDROID_UNTTEST_WAITTIME            (1000*30)             //seewo整机安卓测试波动值InitAGC等待时间[30s]
+#endif
+
+
 #define USB_VID                             0x1ff7
 #define USB_PID                             0x0f32
 

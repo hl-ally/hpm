@@ -72,6 +72,8 @@ extern void UsbDevCallbackRegister(uint8_t nReportId, pUsbDevFuncCallback pCallb
 extern int32_t GetAllUsbQueueBusy(void);
 extern int32_t StartUsbDev(stUsbEnumInfo_t stUsbEnumInfo);
 extern int32_t StopAllUsbDev(void);
+extern void SendKeyboardData(eUsbDevice_t eUsbDev, uint8_t nK0, uint8_t nK1);
+extern void SendKeyboardAKey(eUsbDevice_t eUsbDev, uint8_t nK0, uint8_t nK1);
 
 
 

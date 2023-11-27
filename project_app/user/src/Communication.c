@@ -283,7 +283,7 @@ CmdAnswerType CmdMaster(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock
             }
         }
 
-        /******** Modified by Roc ********/
+        /*********************************/
         //printf("CMDMaster\r\n");
         //printf(" g_bSendTouchData:%x\r\n g_bSyncMode:%x\r\n",g_bSendTouchData,g_bSyncMode);
         /*********************************/
@@ -450,20 +450,20 @@ CmdAnswerType CmdSignalTest(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdB
             g_stSingalTest.dataStep = 0;
 
             //updata g_stTestStatus
-//            g_stTestStatus.eStatus = eTestStart;
-//            g_stTestStatus.eCmdSource = pReCmdBlock->eCmdSource;
-//            g_stTestStatus.nStartTime = GetSystickTime();
+            g_stTestStatus.eStatus = eTestStart;
+            g_stTestStatus.eCmdSource = pReCmdBlock->eCmdSource;
+            g_stTestStatus.nStartTime = GetCurrentTime();
         }
     }
     break;
     case TOUCH_BOX_CONTRO_PENETRATION:
     {
-//        g_bTouchPenetration = 0;
+        g_bTouchPenetration = 0;
     }
     break;
     case MCU_TOUCH_CONTRO_PENETRATION:
     {
-//        g_bTouchPenetration = 1;
+        g_bTouchPenetration = 1;
     }
     break;
     default:
@@ -540,7 +540,7 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     case HW_AGEING:
     {
         //printf("Aging Status:%d----->\r\n", g_stBurnAging.eMode);
-//        g_stBurnAging.eCmdState = (pCmdBlock->DataPacket[5] == eAgingEnable) ? eAgingEnable : eAgingDisable;  //接入老化工具，使能老化模式
+        g_stBurnAging.eCmdState = (pCmdBlock->DataPacket[5] == eAgingEnable) ? eAgingEnable : eAgingDisable;  //接入老化工具，使能老化模式
         eRetVal = CMD_ANSWER_OK;
         //printf("Aging Status:%d\r\n", g_stBurnAging.eMode);
     }
@@ -549,20 +549,20 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     /*LED进入老化的状态显示灯*/
     case HW_LED:
     {
-//        if(pCmdBlock->DataPacket[5]==0)
-//        {
+        if(pCmdBlock->DataPacket[5]==0)
+        {
 //            LedOff();
-//            g_bBoradLedEnable = 0;
-//        }
-//        else if(pCmdBlock->DataPacket[5]==1)
-//        {
+            g_bBoradLedEnable = 0;
+        }
+        else if(pCmdBlock->DataPacket[5]==1)
+        {
 //            LedOn();
-//            g_bBoradLedEnable = 0;
-//        }
-//        else
-//        {
-//            g_bBoradLedEnable = 1;
-//        }
+            g_bBoradLedEnable = 0;
+        }
+        else
+        {
+            g_bBoradLedEnable = 1;
+        }
         eRetVal = CMD_ANSWER_OK;
     }
     break;
@@ -626,21 +626,7 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
         pReCmdBlock->DataPacket[2] = HW_F_MODE_RE;
         pReCmdBlock->DataPacket[3] = 1;
         pReCmdBlock->DataPacket[4] = pCmdBlock->DataPacket[4];
-        
-#ifdef N32G457_ENV
-        stFlashPersistentData_t  stFlashPersistentData;
 
-        GetPersistentData(&stFlashPersistentData);
-        if ((*(uint32_t *)(stFlashPersistentData.stFlashParaofOtherFunction.arrKey + 0) == 0xFFFFFFFF) && (*(uint32_t *)(stFlashPersistentData.stFlashParaofOtherFunction.arrKey + 4) == 0xFFFFFFFF)
-            && (*(uint32_t *)(stFlashPersistentData.stFlashParaofOtherFunction.arrKey + 8) == 0xFFFFFFFF) && (*(uint32_t *)(stFlashPersistentData.stFlashParaofOtherFunction.arrKey + 12) == 0xFFFFFFFF))
-        {
-            pReCmdBlock->DataPacket[5] = 1;
-        }
-        else
-        {
-             pReCmdBlock->DataPacket[5] = 0;
-        }
-#else
         stStartBootPara_t stPara;
         GetBootPara(&stPara);
         if ((*(uint32_t *)(stPara.stBootFlashPara.nKey+ 0) == 0xFFFFFFFF) && (*(uint32_t *)(stPara.stBootFlashPara.nKey + 4) == 0xFFFFFFFF)
@@ -652,7 +638,6 @@ CmdAnswerType CmdHardWare(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
         {
              pReCmdBlock->DataPacket[5] = 0;
         }
-#endif
 
         pReCmdBlock->nDataLen = 6;
         eRetVal = CMD_ANSWER_DATA;
@@ -1286,13 +1271,13 @@ CmdAnswerType CmdData(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
         pReCmdBlock->DataPacket[5] = 24;
         pReCmdBlock->nDataLen = 64;
 
-//        for(i = 0; i < 12; i++)
-//        {
-//            pReCmdBlock->DataPacket[6 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 0);
-//            pReCmdBlock->DataPacket[7 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 1);
-//            pReCmdBlock->DataPacket[8 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 0);
-//            pReCmdBlock->DataPacket[9 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 1);
-//        }
+        for(i = 0; i < 12; i++)
+        {
+            pReCmdBlock->DataPacket[6 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 0);
+            pReCmdBlock->DataPacket[7 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[X], 1);
+            pReCmdBlock->DataPacket[8 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 0);
+            pReCmdBlock->DataPacket[9 + 4 * i] = FN_BYTE(g_pConfigData->nTotal[Y], 1);
+        }
 
         pReCmdBlock->DataPacket[6 + 4 * i] = 0;
         pReCmdBlock->DataPacket[7 + 4 * i] = 0;
@@ -1510,28 +1495,28 @@ CmdAnswerType CmdEraseBootloaderKey(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK*
     {
     case ERASE_KEY_OPTION:
     {
-//        uint8_t arrUniqueID[16] = {0};
-//        int32_t i = 0;
-//
-//        GetUniqueID(arrUniqueID, sizeof(arrUniqueID));
-//        for (i = 0; i < 16; i++)
-//        {
-//            arrUniqueID[i] = arrUniqueID[i] & pCmdBlock->DataPacket[5];
-//            if (pCmdBlock->DataPacket[6 + i] != arrUniqueID[i])
-//            {
-//                break;
-//            }
-//        }
-//
-//        if(i == 16)
-//        {
-//            eRetVal = CMD_ANSWER_OK;
-//            FlashEraseKey();
-//        }
-//        else
-//        {
-//            eRetVal = CMD_ANSWER_FAIL;
-//        }
+        uint8_t arrUniqueID[16] = {0};
+        int32_t i = 0;
+
+        GetUniqueID(arrUniqueID, sizeof(arrUniqueID));
+        for (i = 0; i < 16; i++)
+        {
+            arrUniqueID[i] = arrUniqueID[i] & pCmdBlock->DataPacket[5];
+            if (pCmdBlock->DataPacket[6 + i] != arrUniqueID[i])
+            {
+                break;
+            }
+        }
+
+        if(i == 16)
+        {
+            eRetVal = CMD_ANSWER_OK;
+            FlashEraseKey();
+        }
+        else
+        {
+            eRetVal = CMD_ANSWER_FAIL;
+        }
     }
     break;
 
@@ -1994,22 +1979,22 @@ CmdAnswerType CmdSendCoordConfig(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pR
     {
     case CMD_SENDCOORD_EN:
     {
-//        if(1==pCmdBlock->DataPacket[5])
-//        {
-//            g_bSendCoord = pCmdBlock->DataPacket[6];
-//            pReCmdBlock->DataPacket[6] = pCmdBlock->DataPacket[6];
-//
-//        } else if(0==pCmdBlock->DataPacket[5])
-//        {
-//            pReCmdBlock->DataPacket[6] = g_bSendCoord ;
-//        }
-//        pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
-//        pReCmdBlock->DataPacket[1] = CMD_SENDCOORD_CONFIG;
-//        pReCmdBlock->DataPacket[2] = CMD_CMD_SENDCOORD_EN_RE;
-//        pReCmdBlock->DataPacket[3] = 0x03;
-//        pReCmdBlock->DataPacket[4] = 0xCC;
-//        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
-//        pReCmdBlock->nDataLen = 7 ;
+        if(1==pCmdBlock->DataPacket[5])
+        {
+            g_bSendCoord = pCmdBlock->DataPacket[6];
+            pReCmdBlock->DataPacket[6] = pCmdBlock->DataPacket[6];
+
+        } else if(0==pCmdBlock->DataPacket[5])
+        {
+            pReCmdBlock->DataPacket[6] = g_bSendCoord ;
+        }
+        pReCmdBlock->DataPacket[0] = CMD_FC_REPORT_ID;
+        pReCmdBlock->DataPacket[1] = CMD_SENDCOORD_CONFIG;
+        pReCmdBlock->DataPacket[2] = CMD_CMD_SENDCOORD_EN_RE;
+        pReCmdBlock->DataPacket[3] = 0x03;
+        pReCmdBlock->DataPacket[4] = 0xCC;
+        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
+        pReCmdBlock->nDataLen = 7 ;
 
         eRetVal = CMD_ANSWER_DATA;
     }
@@ -2613,19 +2598,19 @@ int32_t CmdMultPoints(uint8_t* pCmdData,  int16_t Len, eCmdSource_t eMode)
 int8_t ShowIndicatorLed(uint8_t nTouchPointCount)
 {
     int8_t bLedOn = 0;
-//    if(g_bBoradLedEnable == 1)
-//    {
-//        if (nTouchPointCount > 0)
-//        {
+    if(g_bBoradLedEnable == 1)
+    {
+        if (nTouchPointCount > 0)
+        {
 //            LedOn();
-//            bLedOn = 1;
-//        }
-//        else
-//        {
+            bLedOn = 1;
+        }
+        else
+        {
 //            LedOff();
-//            bLedOn = 0;
-//        }
-//    }
+            bLedOn = 0;
+        }
+    }
     return bLedOn;
 }
 
@@ -3082,8 +3067,8 @@ ATTR_WEAK CmdAnswerType CmdDebug(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pR
 
         case DEBUG_REG_USB_PRINTF_REPORT_ID:
         {
-//            g_nUsbPrintReportId = pCmdBlock->DataPacket[6];
-//            UsbDevCallbackRegister(pCmdBlock->DataPacket[5], Evaluation);
+            g_nUsbPrintReportId = pCmdBlock->DataPacket[6];
+            UsbDevCallbackRegister(pCmdBlock->DataPacket[5], Evaluation);
         }
         break;
         case DEBUG_PRINTF_INFO:
@@ -3115,11 +3100,11 @@ ATTR_WEAK CmdAnswerType CmdDebug(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pR
         break;
         case DEBUG_AUTO_AGC_EN:
         {
-//            if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
-//            {
-//                g_bAutoAgcEn = pCmdBlock->DataPacket[5];
-//                g_bAutoAGC = (!pCmdBlock->DataPacket[5]);
-//            }
+            if (0 == pCmdBlock->DataPacket[5] || 1 == pCmdBlock->DataPacket[5])
+            {
+                g_bAutoAgcEn = pCmdBlock->DataPacket[5];
+                g_bAutoAGC = (!pCmdBlock->DataPacket[5]);
+            }
         }
         break;
         default:
@@ -3279,30 +3264,30 @@ CmdAnswerType ComKeyboard(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlo
     {
         case KEYBOARD_SENDKEY:
         {
-//            SendKeyboardData(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
-//            MemCpy(pReCmdBlock, pCmdBlock, pCmdBlock->nDataLen);
-//            pReCmdBlock->DataPacket[2] = KEYBOARD_SENDKEY_RE;
-//            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
+            SendKeyboardData(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
+            MemCpy(pReCmdBlock, pCmdBlock, pCmdBlock->nDataLen);
+            pReCmdBlock->DataPacket[2] = KEYBOARD_SENDKEY_RE;
+            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
             eRetVal = CMD_ANSWER_DATA;
         }
         break;
 
         case KEYBOARD_KEY_PRESS:
         {
-//            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_PRESS_RE;
-//            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
-//            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
+            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_PRESS_RE;
+            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
+            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
             eRetVal = CMD_ANSWER_OK;
         }
         break;
 
         case KEYBOARD_KEY_RELEASE:
         {
-//            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_RELEASE_RE;
-//            pCmdBlock->DataPacket[5] = 0;
-//            pCmdBlock->DataPacket[6] = 0;
-//            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
-//            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
+            pCmdBlock->DataPacket[2] = KEYBOARD_KEY_RELEASE_RE;
+            pCmdBlock->DataPacket[5] = 0;
+            pCmdBlock->DataPacket[6] = 0;
+            SendKeyboardAKey(eUsbDev0, pCmdBlock->DataPacket[5], pCmdBlock->DataPacket[6]);
+            pReCmdBlock->nDataLen = pCmdBlock->nDataLen;
             eRetVal = CMD_ANSWER_OK;
         }
         break;

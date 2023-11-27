@@ -469,6 +469,37 @@ uint8_t SetUsbReportStatus(eUsbDevice_t eUsbDev, uint8_t bSetReport)
     return sg_arrSetReport[eUsbDev];
 }
 
+//模拟按下一个键码并释放
+void SendKeyboardData(eUsbDevice_t eUsbDev, uint8_t nK0, uint8_t nK1)
+{
+    uint8_t pBuf[8] = {0};
+
+    pBuf[0] = nK0;   //KEY_WIN;    // WIN
+    pBuf[1] = 0x00;
+    pBuf[2] = nK1;   //KEY_L;    // L
+    USBSendPacket(eUsbDev, eUsbCfgKeyboardBit, pBuf, 8);
+    Delay_ms(50);
+
+    pBuf[0] = 0x00;    // WIN
+    pBuf[2] = 0x00;    // L
+    USBSendPacket(eUsbDev, eUsbCfgKeyboardBit, pBuf, 8);
+    Delay_ms(50);
+}
+
+//模拟按下一个键码
+void SendKeyboardAKey(eUsbDevice_t eUsbDev, uint8_t nK0, uint8_t nK1)
+{
+    uint8_t pBuf[8] = {0};
+
+    Delay_ms(10);
+    pBuf[0] = nK0;  //KEY_WIN;    // WIN
+    pBuf[1] = 0x00;
+    pBuf[2] = nK1;  //KEY_L;    // L
+    USBSendPacket(eUsbDev, eUsbCfgKeyboardBit, pBuf, 8);
+    Delay_ms(50);
+}
+
+
 //等待枚举完成 超时退出
 int32_t WaitWhileUsbEuming(eUsbDevice_t eUsbDev, uint32_t nTimeOut)
 {
