@@ -18,6 +18,8 @@
 #include "hpm_ppor_drv.h"
 #include "Evaluation.h"
 #include "app_systick.h"
+#include "Calibration.h"
+
 
 
 
@@ -2453,127 +2455,127 @@ CmdAnswerType CmdOldCalibration(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pRe
     CmdAnswerType nRetVal = CMD_ANSWER_NONE;
     uint32_t nDeviation = 0;
 
-//    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
-//    switch (pCmdBlock->DataPacket[2]) //根据校准步骤散转
-//    {
-//    case CAL_BEGIN: //启动校准，返回确认
-//    {
-//        g_bCalEn = 0;
-//        g_bInCalibrating = 1;
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = CAL;
-//        pReCmdBlock->DataPacket[2] = CAL_STEP1;
-//        pReCmdBlock->nDataLen = 3;
-//        nRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//
-//    case CAL_STEP1:
-//    case CAL_STEP2:
-//    case CAL_STEP3:
-//    case CAL_STEP4:
-//    {
-//        g_bInCalibrating = 1;
-//        nRetVal = CMD_ANSWER_NONE;
-//    }
-//    break;
-//
-//    case CAL_CHECK:
-//    {
-//        //如果上位机下发系统旋转参数则使用，如果没有下发则计算出默认的
-//        g_bCalEn = 1;
-//        //参数不能在此处保存。在校准时随便点四下，再重启机器会有触摸偏差很大，造成无触摸的假象
-//        //SaveCalibrationData(); //保存参数
-//        nDeviation = GetDeviation(); //校验校准是否OK
-//
-//        pReCmdBlock->nDataLen = 19;
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = CAL;
-//        pReCmdBlock->DataPacket[2] = CAL_END;
-//        pReCmdBlock->DataPacket[3] = (nDeviation >= 5) ? 0x03 : 0x00;
-//
-//        pReCmdBlock->DataPacket[4] = nDeviation;
-//        pReCmdBlock->DataPacket[5] = nDeviation;
-//        pReCmdBlock->DataPacket[11] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 / 0x100;
-//        pReCmdBlock->DataPacket[12] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 % 0x100;
-//        pReCmdBlock->DataPacket[13] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 / 0x100;
-//        pReCmdBlock->DataPacket[14] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 % 0x100;
-//        pReCmdBlock->DataPacket[15] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 / 0x100;
-//        pReCmdBlock->DataPacket[16] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 % 0x100;
-//        pReCmdBlock->DataPacket[17] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 / 0x100;
-//        pReCmdBlock->DataPacket[18] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 % 0x100;
-//
-//        nRetVal = CMD_ANSWER_DATA;
-//#if (1 == CALIB_INFO_DUG)
-//        printf("check cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
-//#endif
-//    }
-//    break;
-//
-//    case CAL_END:
-//    {
-//        pReCmdBlock->DataPacket[0] = 0xFC;
-//        pReCmdBlock->DataPacket[1] = 0x01;
-//        pReCmdBlock->DataPacket[2] = 0x08;
-//        pReCmdBlock->nDataLen = 3;
-//        nRetVal = CMD_ANSWER_DATA;
-//#if (1 == CALIB_INFO_DUG)
-//        printf("cal end\r\n");
-//#endif
-//    }
-//    break;
-//
-//    case CAL_RESET:
-//    {
+    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
+    switch (pCmdBlock->DataPacket[2]) //根据校准步骤散转
+    {
+    case CAL_BEGIN: //启动校准，返回确认
+    {
+        g_bCalEn = 0;
+        g_bInCalibrating = 1;
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = CAL;
+        pReCmdBlock->DataPacket[2] = CAL_STEP1;
+        pReCmdBlock->nDataLen = 3;
+        nRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+
+    case CAL_STEP1:
+    case CAL_STEP2:
+    case CAL_STEP3:
+    case CAL_STEP4:
+    {
+        g_bInCalibrating = 1;
+        nRetVal = CMD_ANSWER_NONE;
+    }
+    break;
+
+    case CAL_CHECK:
+    {
+        //如果上位机下发系统旋转参数则使用，如果没有下发则计算出默认的
+        g_bCalEn = 1;
+        //参数不能在此处保存。在校准时随便点四下，再重启机器会有触摸偏差很大，造成无触摸的假象
+        //SaveCalibrationData(); //保存参数
+        nDeviation = GetDeviation(); //校验校准是否OK
+
+        pReCmdBlock->nDataLen = 19;
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = CAL;
+        pReCmdBlock->DataPacket[2] = CAL_END;
+        pReCmdBlock->DataPacket[3] = (nDeviation >= 5) ? 0x03 : 0x00;
+
+        pReCmdBlock->DataPacket[4] = nDeviation;
+        pReCmdBlock->DataPacket[5] = nDeviation;
+        pReCmdBlock->DataPacket[11] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 / 0x100;
+        pReCmdBlock->DataPacket[12] = (g_stCalibrationData.arrCoord[0].nX + g_stCalibrationData.arrCoord[3].nX) / 2 % 0x100;
+        pReCmdBlock->DataPacket[13] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 / 0x100;
+        pReCmdBlock->DataPacket[14] = (g_stCalibrationData.arrCoord[0].nY + g_stCalibrationData.arrCoord[1].nY) / 2 % 0x100;
+        pReCmdBlock->DataPacket[15] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 / 0x100;
+        pReCmdBlock->DataPacket[16] = (g_stCalibrationData.arrCoord[1].nX + g_stCalibrationData.arrCoord[2].nX) / 2 % 0x100;
+        pReCmdBlock->DataPacket[17] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 / 0x100;
+        pReCmdBlock->DataPacket[18] = (g_stCalibrationData.arrCoord[2].nY + g_stCalibrationData.arrCoord[3].nY) / 2 % 0x100;
+
+        nRetVal = CMD_ANSWER_DATA;
+#if (1 == CALIB_INFO_DUG)
+        printf("check cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
+#endif
+    }
+    break;
+
+    case CAL_END:
+    {
+        pReCmdBlock->DataPacket[0] = 0xFC;
+        pReCmdBlock->DataPacket[1] = 0x01;
+        pReCmdBlock->DataPacket[2] = 0x08;
+        pReCmdBlock->nDataLen = 3;
+        nRetVal = CMD_ANSWER_DATA;
+#if (1 == CALIB_INFO_DUG)
+        printf("cal end\r\n");
+#endif
+    }
+    break;
+
+    case CAL_RESET:
+    {
 //        g_bSendCoord = 0;   //解决进入校准功能异常操作[不保存校准参数就不进入SendCoord函数]
 //        ResetCalibration(); // 由于校准软件校准完毕后，未决定OK就已经保存数据，复位只能复位到出厂参数。
 //        ResetDefaultPointTransform();
-//        nRetVal = CMD_ANSWER_OK;
-//    }
-//    break;
-//
-//    case ALL_RESET:
-//    {
+        nRetVal = CMD_ANSWER_OK;
+    }
+    break;
+
+    case ALL_RESET:
+    {
 //        ResetCalibration();
 //        ResetDefaultPointTransform();
 //        ResetCoordFormat();
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = CAL;
-//        pReCmdBlock->DataPacket[2] = ALL_RESET;
-//        pReCmdBlock->nDataLen = 3;
-//
-//        nRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//
-//    case CAL_GET:
-//    {
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = CAL;
-//        pReCmdBlock->DataPacket[2] = CAL_GET_RE;
-//        pReCmdBlock->DataPacket[3] = 21;
-//        pReCmdBlock->DataPacket[4] = 0;
-//
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
-//        SaveCalibrationData(); //保存参数
-//
-//        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
-//
-//        pReCmdBlock->nDataLen = 22 ;
-//        nRetVal = CMD_ANSWER_DATA;
-//#if (1 == CALIB_INFO_DUG)
-//        printf("get cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
-//#endif
-//    }
-//    break;
-//    default:
-//    {
-//    }
-//    break;
-//    }
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = CAL;
+        pReCmdBlock->DataPacket[2] = ALL_RESET;
+        pReCmdBlock->nDataLen = 3;
+
+        nRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+
+    case CAL_GET:
+    {
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = CAL;
+        pReCmdBlock->DataPacket[2] = CAL_GET_RE;
+        pReCmdBlock->DataPacket[3] = 21;
+        pReCmdBlock->DataPacket[4] = 0;
+
+        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
+        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
+        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
+        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
+        SaveCalibrationData(); //保存参数
+
+        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
+
+        pReCmdBlock->nDataLen = 22 ;
+        nRetVal = CMD_ANSWER_DATA;
+#if (1 == CALIB_INFO_DUG)
+        printf("get cal %04x %04x %04x %04x\r\n", g_stCalibrationData.nREOX1, g_stCalibrationData.nREOX2, g_stCalibrationData.nREOY1, g_stCalibrationData.nREOY2);
+#endif
+    }
+    break;
+    default:
+    {
+    }
+    break;
+    }
     return nRetVal;
 }
 
@@ -2788,215 +2790,215 @@ CmdAnswerType CmdSetting(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBloc
 *****************************************************************/
 CmdAnswerType CmdCalibration(CMD_QUEUE_BLOCK* pCmdBlock, CMD_QUEUE_BLOCK* pReCmdBlock)
 {
-//    eUsbDevice_t eUsbDev = GetUsbDev(pCmdBlock->eCmdSource);
-//    static uint8_t s_bIsCalibrteBegin = 0;
-//    static eTouchFormat_t s_eFormatSave;
+    eUsbDevice_t eUsbDev = GetUsbDev(pCmdBlock->eCmdSource);
+    static uint8_t s_bIsCalibrteBegin = 0;
+    static eTouchFormat_t s_eFormatSave;
 
     CmdAnswerType eRetVal = CMD_ANSWER_NONE;
-//    int32_t i = 0;
-//    int8_t CalibraData[4] = {0};
-//
-//    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
-//    switch(g_stCalibrationData.nStep) //根据校准步骤散转
-//    {
-//    case NEW_CAL_BEGIN:  //启动校准，返回确认
-//    {
-//        if(!s_bIsCalibrteBegin)
-//        {
+    int32_t i = 0;
+    int8_t CalibraData[4] = {0};
+
+    g_stCalibrationData.nStep= pCmdBlock->DataPacket[2];
+    switch(g_stCalibrationData.nStep) //根据校准步骤散转
+    {
+    case NEW_CAL_BEGIN:  //启动校准，返回确认
+    {
+        if(!s_bIsCalibrteBegin)
+        {
 //            s_eFormatSave = g_stUsbCoordCfg[eUsbDev].eFormat;
-//            //do not know the reason modify g_eUsb0Format here
-//            //g_eUsb0Format = eFormatNone;
-//            g_bCalEn = 0;
-//
-//            s_bIsCalibrteBegin = 1; // 设置为真，表示已经启动
-//        }
-//
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = NEW_CAL;
-//        pReCmdBlock->DataPacket[2] = NEW_CAL_BEGIN_RE;
-//
-//        pReCmdBlock->nDataLen = 3;
-//        eRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//
-//    case NEW_CAL_END:  // 接收校准数据
-//    {
-//        if(s_bIsCalibrteBegin)  // 判断是否已经启动了校准
-//        {
+            //do not know the reason modify g_eUsb0Format here
+            //g_eUsb0Format = eFormatNone;
+            g_bCalEn = 0;
+
+            s_bIsCalibrteBegin = 1; // 设置为真，表示已经启动
+        }
+
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = NEW_CAL;
+        pReCmdBlock->DataPacket[2] = NEW_CAL_BEGIN_RE;
+
+        pReCmdBlock->nDataLen = 3;
+        eRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+
+    case NEW_CAL_END:  // 接收校准数据
+    {
+        if(s_bIsCalibrteBegin)  // 判断是否已经启动了校准
+        {
 //            g_stUsbCoordCfg[eUsbDev].eFormat = s_eFormatSave;
-//            g_bCalEn = 1;
-//            if(pCmdBlock->DataPacket[5] == 1)
-//            {
-//                for(i=0; i<4; i++)
-//                {
-//                    g_stCalibrationData.arrCoord[i].nX = (uint16_t)(pCmdBlock->DataPacket[7 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[6 + i * 4]) * 0x100;
-//                    g_stCalibrationData.arrCoord[i].nY = (uint16_t)(pCmdBlock->DataPacket[9 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[8 + i * 4]) * 0x100;
-//                }
-//                CalibrationInit();
-//            }
-//            s_bIsCalibrteBegin = 0;
-//        }
-//
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = NEW_CAL;
-//        pReCmdBlock->DataPacket[2] = NEW_CAL_END_RE;
-//
-//        for(i = 3; i < 64; i++)
-//        {
-//            pReCmdBlock->DataPacket[i] = pCmdBlock->DataPacket[i];
-//        }
-//
-//        pReCmdBlock->nDataLen = 64;
-//        eRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//
-//    case NEW_CAL_SAVE:    // 保存校准数据
-//    {
-//        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
-//        if(pCmdBlock->DataPacket[5] == 1)
-//        {
-//            SaveCalibrationData();
-//        }
-//        else
-//        {
-//            ResetCalibration();
-//        }
-//
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = NEW_CAL;
-//        pReCmdBlock->DataPacket[2] = NEW_CAL_SAVE_RE;
-//        pReCmdBlock->DataPacket[3] = 1;
-//        pReCmdBlock->DataPacket[5] = 1;
-//        pReCmdBlock->nDataLen = 6;
-//        eRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//
-//    case NEW_CAL_GET:
-//    {
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = NEW_CAL;
-//        pReCmdBlock->DataPacket[2] = NEW_CAL_GET_RE;
-//
-//        pReCmdBlock->DataPacket[3] = 17;
-//        pReCmdBlock->DataPacket[4] = 0;
-//        pReCmdBlock->DataPacket[5] = 1;
-//        pReCmdBlock->DataPacket[6] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 1);
-//        pReCmdBlock->DataPacket[7] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 0);
-//        pReCmdBlock->DataPacket[8] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 1);
-//        pReCmdBlock->DataPacket[9] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 0);
-//        pReCmdBlock->DataPacket[10] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 1);
-//        pReCmdBlock->DataPacket[11] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 0);
-//        pReCmdBlock->DataPacket[12] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 1);
-//        pReCmdBlock->DataPacket[13] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 0);
-//        pReCmdBlock->DataPacket[14] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 1);
-//        pReCmdBlock->DataPacket[15] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 0);
-//        pReCmdBlock->DataPacket[16] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 1);
-//        pReCmdBlock->DataPacket[17] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 0);
-//        pReCmdBlock->DataPacket[18] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 1);
-//        pReCmdBlock->DataPacket[19] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 0);
-//        pReCmdBlock->DataPacket[20] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 1);
-//        pReCmdBlock->DataPacket[21] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 0);
-//        pReCmdBlock->nDataLen = 22;
-//        eRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//
-//    case NEW_CAL_RESET:
-//    {
+            g_bCalEn = 1;
+            if(pCmdBlock->DataPacket[5] == 1)
+            {
+                for(i=0; i<4; i++)
+                {
+                    g_stCalibrationData.arrCoord[i].nX = (uint16_t)(pCmdBlock->DataPacket[7 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[6 + i * 4]) * 0x100;
+                    g_stCalibrationData.arrCoord[i].nY = (uint16_t)(pCmdBlock->DataPacket[9 + i * 4]) + (uint16_t)(pCmdBlock->DataPacket[8 + i * 4]) * 0x100;
+                }
+                CalibrationInit();
+            }
+            s_bIsCalibrteBegin = 0;
+        }
+
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = NEW_CAL;
+        pReCmdBlock->DataPacket[2] = NEW_CAL_END_RE;
+
+        for(i = 3; i < 64; i++)
+        {
+            pReCmdBlock->DataPacket[i] = pCmdBlock->DataPacket[i];
+        }
+
+        pReCmdBlock->nDataLen = 64;
+        eRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+
+    case NEW_CAL_SAVE:    // 保存校准数据
+    {
+        pReCmdBlock->DataPacket[5] = pCmdBlock->DataPacket[5];
+        if(pCmdBlock->DataPacket[5] == 1)
+        {
+            SaveCalibrationData();
+        }
+        else
+        {
+            ResetCalibration();
+        }
+
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = NEW_CAL;
+        pReCmdBlock->DataPacket[2] = NEW_CAL_SAVE_RE;
+        pReCmdBlock->DataPacket[3] = 1;
+        pReCmdBlock->DataPacket[5] = 1;
+        pReCmdBlock->nDataLen = 6;
+        eRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+
+    case NEW_CAL_GET:
+    {
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = NEW_CAL;
+        pReCmdBlock->DataPacket[2] = NEW_CAL_GET_RE;
+
+        pReCmdBlock->DataPacket[3] = 17;
+        pReCmdBlock->DataPacket[4] = 0;
+        pReCmdBlock->DataPacket[5] = 1;
+        pReCmdBlock->DataPacket[6] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 1);
+        pReCmdBlock->DataPacket[7] = FN_BYTE(g_stCalibrationData.arrCoord[0].nX, 0);
+        pReCmdBlock->DataPacket[8] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 1);
+        pReCmdBlock->DataPacket[9] = FN_BYTE(g_stCalibrationData.arrCoord[0].nY, 0);
+        pReCmdBlock->DataPacket[10] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 1);
+        pReCmdBlock->DataPacket[11] = FN_BYTE(g_stCalibrationData.arrCoord[1].nX, 0);
+        pReCmdBlock->DataPacket[12] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 1);
+        pReCmdBlock->DataPacket[13] = FN_BYTE(g_stCalibrationData.arrCoord[1].nY, 0);
+        pReCmdBlock->DataPacket[14] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 1);
+        pReCmdBlock->DataPacket[15] = FN_BYTE(g_stCalibrationData.arrCoord[2].nX, 0);
+        pReCmdBlock->DataPacket[16] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 1);
+        pReCmdBlock->DataPacket[17] = FN_BYTE(g_stCalibrationData.arrCoord[2].nY, 0);
+        pReCmdBlock->DataPacket[18] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 1);
+        pReCmdBlock->DataPacket[19] = FN_BYTE(g_stCalibrationData.arrCoord[3].nX, 0);
+        pReCmdBlock->DataPacket[20] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 1);
+        pReCmdBlock->DataPacket[21] = FN_BYTE(g_stCalibrationData.arrCoord[3].nY, 0);
+        pReCmdBlock->nDataLen = 22;
+        eRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+
+    case NEW_CAL_RESET:
+    {
 //        ResetRotation();
 //        ResetCalibration();
-//        eRetVal = CMD_ANSWER_OK;
-//    }
-//    break;
-//
-//    case NEW_CAL_SAVE_DEFAULT:  // 将校准数据保存为默认校准数据
-//    {
-//        SaveCalibrationData();
-//        eRetVal = CMD_ANSWER_OK;
-//    }
-//    break;
-//
-//    case NEW_CAL_RESET_DEFAULT:     // 将校准数据重置为出厂值
-//    {
-//        ResetCalibration();
-//        eRetVal = CMD_ANSWER_OK;
-//    }
-//    break;
-//    case NEW_CAL_APP_SET:
-//    {
-//        /*  0x80:左边偏右        0x40:左边偏左
-//            0x20:右边偏右        0x10:右边偏左
-//            0x08:上边偏下        0x04:上边偏上
-//            0x02:下边偏下        0x01:下边偏上
-//        */
-//        CalibraData[0] = 0;
-//        CalibraData[1] = 0;
-//        CalibraData[2] = 0;
-//        CalibraData[3] = 0;
-//        switch(pCmdBlock->DataPacket[4] & 0xFF)
-//        {
-//        case 0x80:
-//            CalibraData[0] = 1;
-//            break;
-//        case 0x40:
-//            CalibraData[0] = -1;
-//            break;
-//        case 0x20:
-//            CalibraData[1] = 1;
-//            break;
-//        case 0x10:
-//            CalibraData[1] = -1;
-//            break;
-//        case 0x08:
-//            CalibraData[2] = 1;
-//            break;
-//        case 0x04:
-//            CalibraData[2] = -1;
-//            break;
-//        case 0x02:
-//            CalibraData[3] = 1;
-//            break;
-//        case 0x01:
-//            CalibraData[3] = -1;
-//            break;
-//        default :
-//            break;
-//        }
-//        if (pCmdBlock->DataPacket[4] == 0xff) //0xff表示即将启动校准，将鼠标格式的数据设置为touch0发送
-//        {
-//            g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgMouseBit] = g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgTouch0CommBit];
-//        }
-//        //注意：g_stCalibrationData.nREOX等4个参数是unsigned类型，经过下面的加减之后，不能为负数，否则会变得很大，导致触摸偏移，导致无触摸假象
-//        g_stCalibrationData.nREOX1 = g_stCalibrationData.nREOX1 + CalibraData[0];
-//        g_stCalibrationData.nREOX2 = g_stCalibrationData.nREOX2 + CalibraData[1];
-//        g_stCalibrationData.nREOY1 = g_stCalibrationData.nREOY1 + CalibraData[2];
-//        g_stCalibrationData.nREOY2 = g_stCalibrationData.nREOY2 + CalibraData[3];
-//
-//        SetCalibrationData();
-//        
-//        pReCmdBlock->DataPacket[0] = 0xfc;
-//        pReCmdBlock->DataPacket[1] = NEW_CAL;
-//        pReCmdBlock->DataPacket[2] = NEW_CAL_APP_SET_RE;
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
-//        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
-//
-//        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
-//        pReCmdBlock->nDataLen       = 22 ;
-//
-//        eRetVal = CMD_ANSWER_DATA;
-//    }
-//    break;
-//    default:
-//    {
-//        eRetVal = CMD_ANSWER_UNKNOWN;
-//    }
-//    break;
-//    }
+        eRetVal = CMD_ANSWER_OK;
+    }
+    break;
+
+    case NEW_CAL_SAVE_DEFAULT:  // 将校准数据保存为默认校准数据
+    {
+        SaveCalibrationData();
+        eRetVal = CMD_ANSWER_OK;
+    }
+    break;
+
+    case NEW_CAL_RESET_DEFAULT:     // 将校准数据重置为出厂值
+    {
+        ResetCalibration();
+        eRetVal = CMD_ANSWER_OK;
+    }
+    break;
+    case NEW_CAL_APP_SET:
+    {
+        /*  0x80:左边偏右        0x40:左边偏左
+            0x20:右边偏右        0x10:右边偏左
+            0x08:上边偏下        0x04:上边偏上
+            0x02:下边偏下        0x01:下边偏上
+        */
+        CalibraData[0] = 0;
+        CalibraData[1] = 0;
+        CalibraData[2] = 0;
+        CalibraData[3] = 0;
+        switch(pCmdBlock->DataPacket[4] & 0xFF)
+        {
+        case 0x80:
+            CalibraData[0] = 1;
+            break;
+        case 0x40:
+            CalibraData[0] = -1;
+            break;
+        case 0x20:
+            CalibraData[1] = 1;
+            break;
+        case 0x10:
+            CalibraData[1] = -1;
+            break;
+        case 0x08:
+            CalibraData[2] = 1;
+            break;
+        case 0x04:
+            CalibraData[2] = -1;
+            break;
+        case 0x02:
+            CalibraData[3] = 1;
+            break;
+        case 0x01:
+            CalibraData[3] = -1;
+            break;
+        default :
+            break;
+        }
+        if (pCmdBlock->DataPacket[4] == 0xff) //0xff表示即将启动校准，将鼠标格式的数据设置为touch0发送
+        {
+            g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgMouseBit] = g_stUsbEpsInfo[eUsbDev].arrInterfaceIdxMap[eUsbCfgTouch0CommBit];
+        }
+        //注意：g_stCalibrationData.nREOX等4个参数是unsigned类型，经过下面的加减之后，不能为负数，否则会变得很大，导致触摸偏移，导致无触摸假象
+        g_stCalibrationData.nREOX1 = g_stCalibrationData.nREOX1 + CalibraData[0];
+        g_stCalibrationData.nREOX2 = g_stCalibrationData.nREOX2 + CalibraData[1];
+        g_stCalibrationData.nREOY1 = g_stCalibrationData.nREOY1 + CalibraData[2];
+        g_stCalibrationData.nREOY2 = g_stCalibrationData.nREOY2 + CalibraData[3];
+
+        SetCalibrationData();
+        
+        pReCmdBlock->DataPacket[0] = 0xfc;
+        pReCmdBlock->DataPacket[1] = NEW_CAL;
+        pReCmdBlock->DataPacket[2] = NEW_CAL_APP_SET_RE;
+        *((uint32_t*)(&pReCmdBlock->DataPacket[5]))   = g_stCalibrationData.nREOX1; //nREOX1;
+        *((uint32_t*)(&pReCmdBlock->DataPacket[9]))   = g_stCalibrationData.nREOX2; //nREOX2;
+        *((uint32_t*)(&pReCmdBlock->DataPacket[13]))  = g_stCalibrationData.nREOY1; //nREOY1;
+        *((uint32_t*)(&pReCmdBlock->DataPacket[17]))  = g_stCalibrationData.nREOY2; //nREOY2;
+
+        pReCmdBlock->DataPacket[21] = g_pConfigData->eRotationParameter;
+        pReCmdBlock->nDataLen       = 22 ;
+
+        eRetVal = CMD_ANSWER_DATA;
+    }
+    break;
+    default:
+    {
+        eRetVal = CMD_ANSWER_UNKNOWN;
+    }
+    break;
+    }
 
     return eRetVal;
 }
