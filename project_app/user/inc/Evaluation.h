@@ -13,7 +13,7 @@
 //#include "API_Timer.h"
 #include "Api_UsbDevice.h"
 #include "Api_Crc.h"
-//#include "TouchSignal.h"
+#include "TouchSignal.h"
 #include "GlobalVariables.h"
 
 #define CMD_F0_REPORT_ID                0xF0 //PC与下位机间的调试通道ID

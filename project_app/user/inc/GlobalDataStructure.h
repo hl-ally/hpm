@@ -1,7 +1,7 @@
 #ifndef _GLOBALDATASTRUCTURE_
 #define _GLOBALDATASTRUCTURE_
 #include <stdint.h>
-//#include "AlgBaseStructure.h"
+#include "AlgBaseStructure.h"
 
 #define LOGICAL_VALUE_PER_MM            (g_stCfgData.fLogicalValuePerMM)
 

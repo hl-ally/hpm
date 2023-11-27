@@ -20,6 +20,9 @@ sdk_app_src(user/src/app_watch_dog.c)
 sdk_app_src(user/src/CommService.c)
 sdk_app_src(user/src/Communication.c)
 sdk_app_src(user/src/FlashPara.c)
+sdk_app_src(user/src/HardWareInfo.c)
+sdk_app_src(user/src/GlobalVariables.c)
+sdk_app_src(user/src/TouchSignal.c)
 
 sdk_app_inc(API/inc)
 sdk_app_src(API/src/Api_Flash.c)
@@ -28,6 +31,11 @@ sdk_app_src(API/src/Api_Crc.c)
 sdk_app_src(API/src/Api_CommandQueue.c)
 sdk_app_src(API/src/Api_UsbDesc.c)
 sdk_app_src(API/src/Api_UsbDevice.c)
+
+sdk_app_inc(alg/inc)
+
+sdk_app_inc(Customer)
+
 
 sdk_ses_opt_debug_connection(J-Link)
 generate_ses_project()

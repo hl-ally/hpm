@@ -1,14 +1,19 @@
 #ifndef _GLOBALDEFAULTDEFINE_H_
 #define _GLOBALDEFAULTDEFINE_H_
 
+#include "HardWareInfo.h"
+
+
 #define OBQ_COUNT                           3
 
 #ifndef USER_POINT
 #define USER_POINT                          20
 #endif
 
+#define MAX_POINT                           USER_POINT  //系统所允许的最大点数
+
 #ifndef LIGHT_WIDTH
-#define LIGHT_WIDTH                          (1000)      //定义光线宽度，以um为单位
+#define LIGHT_WIDTH                         (1000)      //定义光线宽度，以um为单位
 #endif
 
 #ifndef MAX_STRING_LENGTH
@@ -39,11 +44,86 @@
 #define MODEL_DESC                          "R5H_DEMO"
 #endif
 
+#ifndef ROTATION_DIRECTION
+#define ROTATION_DIRECTION                  0x0
+#endif
+
+#ifndef ROTATION_DEF
+#define ROTATION_DEF                        ROTATION_0  //默认旋转参数
+#endif
+
+#ifndef ROTATION_OS_DEF
+#define ROTATION_OS_DEF                     ROTATION_0  //默认系统旋转参数
+#endif
+
+#ifndef REVERSE
+#define REVERSE                             0           //坐标翻转
+#endif
+
+#ifndef UNDER_MAC_10
+#define UNDER_MAC_10                        0
+#endif
+
+#ifndef TUIO_COORD_EN
+#define TUIO_COORD_EN                       0
+#endif
+
+#ifndef UART_COORD_EN
+#define UART_COORD_EN                       1
+#endif
+
+#ifndef TOUCH_EN
+#define TOUCH_EN                            1
+#endif
+
+#ifndef TOUCH_COORD_WIDTH_EN
+#define TOUCH_COORD_WIDTH_EN                0
+#endif
+
+#ifndef TUIO_COORD_WIDTH_EN
+#define TUIO_COORD_WIDTH_EN                 0
+#endif
+
+#ifndef UART_COORD_WIDTH_EN
+#define UART_COORD_WIDTH_EN                 0
+#endif
+
+#ifndef UART_SEND_COORD_NUM
+#define UART_SEND_COORD_NUM                 USER_POINT
+#endif
+
+#ifndef UNDER_MAC10_EN
+#define UNDER_MAC10_EN                      1
+#endif
+
+#ifndef THRESHOLD_RATE
+#define THRESHOLD_RATE                      (0.95f)
+#endif
+#ifndef UNSTABLE_RATE
+#define UNSTABLE_RATE                       (0.85f)
+#endif
 
 
 #ifndef USB0_DEVICE_CONFIG_TYPE
 #define USB0_DEVICE_CONFIG_TYPE             eUsbCfgStandardWithBulk
 #endif
+
+#ifndef EDGE_COUNT_X
+#define EDGE_COUNT_X                        0       //边缘支持一发多收的灯管数量
+#endif
+
+#ifndef EDGE_COUNT_Y
+#define EDGE_COUNT_Y                        0       //边缘支持一发多收的灯管数量
+#endif
+
+#ifndef SIGNAL_INTERVAL_X
+#define SIGNAL_INTERVAL_X                   1       //X轴使用光线的间隔数量
+#endif
+
+#ifndef SIGNAL_INTERVAL_Y
+#define SIGNAL_INTERVAL_Y                   1       //Y轴使用光线的间隔数量
+#endif
+
 
 #ifndef MAX_INK_PENS
 #define MAX_INK_PENS                        (2)   //若开启INK协议 最大支持pen数量

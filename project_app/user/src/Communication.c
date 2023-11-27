@@ -10,6 +10,7 @@
 //#include "upgrade.h"
 #include "FlashPara.h"
 #include "GlobalVariables.h"
+#include "TouchSignal.h"
 #include "GlobalDefaultDefine.h"
 #include "Api_UsbDevice.h"
 #include "hpm_common.h"

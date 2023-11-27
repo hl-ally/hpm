@@ -1,8 +1,8 @@
-//#include "HardWareInfo.h"
+#include "HardWareInfo.h"
 #include "FlashPara.h"
 #include "GlobalVariables.h"
 #include "Api_Flash.h"
-//#include "TouchSignal.h"
+#include "TouchSignal.h"
 #include "Api_Math.h"
 //#include "scan.h"
 #include <stdio.h>
@@ -153,69 +153,69 @@ int32_t InitCommonConfigData(stHardConfigData_t* pConfig)
     pConfig->nPhysicalX = PHYSICAL_SIZE_X * PHYSICAL_SIZE_SCALE;
     pConfig->nPhysicalY = PHYSICAL_SIZE_Y * PHYSICAL_SIZE_SCALE;
 
-//    pConfig->nTotal[X] = g_nTotal[X];
-//    pConfig->nTotal[Y] = g_nTotal[Y];
-//
-//    pConfig->nLedStart[0][0] = 0;
-//    pConfig->nLedStart[0][1] = 0;
-//    pConfig->nLedStart[0][2] = 0;
-//
-//    pConfig->nLedStart[1][0] = 0;
-//    pConfig->nLedStart[1][1] = 0;
-//    pConfig->nLedStart[1][2] = 0;
-//
-//    pConfig->nLedEnd[0][0] = X_TOTAL - 1;
-//    pConfig->nLedEnd[0][1] = X_TOTAL - 1;
-//    pConfig->nLedEnd[0][2] = X_TOTAL - 1;
-//
-//    pConfig->nLedEnd[1][0] = Y_TOTAL - 1;
-//    pConfig->nLedEnd[1][1] = Y_TOTAL - 1;
-//    pConfig->nLedEnd[1][2] = Y_TOTAL - 1;
-//
-//    pConfig->nLedQTStart[0][0] = g_nInterVal[X][0];
-//    pConfig->nLedQTStart[0][1] = 0;
-//    pConfig->nLedQTStart[0][2] = 0;
-//
-//    pConfig->nLedQTStart[1][0] = g_nInterVal[Y][0];
-//    pConfig->nLedQTStart[1][1] = 0;
-//    pConfig->nLedQTStart[1][2] = 0;
-//
-//    pConfig->nLedQTEnd[0][0] = X_TOTAL;
-//    pConfig->nLedQTEnd[0][1] = X_TOTAL;
-//    pConfig->nLedQTEnd[0][2] = X_TOTAL + g_nInterVal[X][OBQ_COUNT - 1];
-//
-//    pConfig->nLedQTEnd[1][0] = Y_TOTAL;
-//    pConfig->nLedQTEnd[1][1] = Y_TOTAL;
-//    pConfig->nLedQTEnd[1][2] = Y_TOTAL + g_nInterVal[Y][OBQ_COUNT - 1];
-//
-//    //测试标准
-//    pConfig->nTestMaxAdc[0] = TEST_OBQ_MAX_ADC;
-//    pConfig->nTestMaxAdc[1] = TEST_MAX_ADC;
-//    pConfig->nTestMaxAdc[2] = TEST_OBQ_MAX_ADC;
-//
-//    pConfig->nTestMinAdc[0] = TEST_OBQ_MIN_ADC;
-//    pConfig->nTestMinAdc[1] = TEST_MIN_ADC;
-//    pConfig->nTestMinAdc[2] = TEST_OBQ_MIN_ADC;
-//
-//    pConfig->nTestMaxAdcFactory[0] = TEST_OBQ_MAX_ADC_FAC;
-//    pConfig->nTestMaxAdcFactory[1] = TEST_MAX_ADC_FAC;
-//    pConfig->nTestMaxAdcFactory[2] = TEST_OBQ_MAX_ADC_FAC;
-//
-//    pConfig->nTestMinAdcFactory[0] = TEST_OBQ_MIN_ADC_FAC;
-//    pConfig->nTestMinAdcFactory[1] = TEST_MIN_ADC_FAC;
-//    pConfig->nTestMinAdcFactory[2] = TEST_OBQ_MIN_ADC_FAC;
-//
-//    pConfig->nTestMaxUndulateAdc = TEST_MAX_UNT_ADC_CLT;        //Client read unt will be 20
-//
-//    pConfig->nTestMaxReverseAdc = TEST_MAX_REVERSE_ADC;
-//    pConfig->nTestMinReverseAdc = 0;
-//
-//    pConfig->nTestMaxAgc = TEST_MAX_AGC;
-//    pConfig->nTestMinAgc = TEST_MIN_AGC;
-//
-//    pConfig->nTestMaxAgcFactory = TEST_MAX_AGC_FAC;
-//    pConfig->nTestMinAgcFactory = TEST_MIN_AGC_FAC;
-//
+    pConfig->nTotal[X] = g_nTotal[X];
+    pConfig->nTotal[Y] = g_nTotal[Y];
+
+    pConfig->nLedStart[0][0] = 0;
+    pConfig->nLedStart[0][1] = 0;
+    pConfig->nLedStart[0][2] = 0;
+
+    pConfig->nLedStart[1][0] = 0;
+    pConfig->nLedStart[1][1] = 0;
+    pConfig->nLedStart[1][2] = 0;
+
+    pConfig->nLedEnd[0][0] = X_TOTAL - 1;
+    pConfig->nLedEnd[0][1] = X_TOTAL - 1;
+    pConfig->nLedEnd[0][2] = X_TOTAL - 1;
+
+    pConfig->nLedEnd[1][0] = Y_TOTAL - 1;
+    pConfig->nLedEnd[1][1] = Y_TOTAL - 1;
+    pConfig->nLedEnd[1][2] = Y_TOTAL - 1;
+
+    pConfig->nLedQTStart[0][0] = g_nInterVal[X][0];
+    pConfig->nLedQTStart[0][1] = 0;
+    pConfig->nLedQTStart[0][2] = 0;
+
+    pConfig->nLedQTStart[1][0] = g_nInterVal[Y][0];
+    pConfig->nLedQTStart[1][1] = 0;
+    pConfig->nLedQTStart[1][2] = 0;
+
+    pConfig->nLedQTEnd[0][0] = X_TOTAL;
+    pConfig->nLedQTEnd[0][1] = X_TOTAL;
+    pConfig->nLedQTEnd[0][2] = X_TOTAL + g_nInterVal[X][OBQ_COUNT - 1];
+
+    pConfig->nLedQTEnd[1][0] = Y_TOTAL;
+    pConfig->nLedQTEnd[1][1] = Y_TOTAL;
+    pConfig->nLedQTEnd[1][2] = Y_TOTAL + g_nInterVal[Y][OBQ_COUNT - 1];
+
+    //测试标准
+    pConfig->nTestMaxAdc[0] = TEST_OBQ_MAX_ADC;
+    pConfig->nTestMaxAdc[1] = TEST_MAX_ADC;
+    pConfig->nTestMaxAdc[2] = TEST_OBQ_MAX_ADC;
+
+    pConfig->nTestMinAdc[0] = TEST_OBQ_MIN_ADC;
+    pConfig->nTestMinAdc[1] = TEST_MIN_ADC;
+    pConfig->nTestMinAdc[2] = TEST_OBQ_MIN_ADC;
+
+    pConfig->nTestMaxAdcFactory[0] = TEST_OBQ_MAX_ADC_FAC;
+    pConfig->nTestMaxAdcFactory[1] = TEST_MAX_ADC_FAC;
+    pConfig->nTestMaxAdcFactory[2] = TEST_OBQ_MAX_ADC_FAC;
+
+    pConfig->nTestMinAdcFactory[0] = TEST_OBQ_MIN_ADC_FAC;
+    pConfig->nTestMinAdcFactory[1] = TEST_MIN_ADC_FAC;
+    pConfig->nTestMinAdcFactory[2] = TEST_OBQ_MIN_ADC_FAC;
+
+    pConfig->nTestMaxUndulateAdc = TEST_MAX_UNT_ADC_CLT;        //Client read unt will be 20
+
+    pConfig->nTestMaxReverseAdc = TEST_MAX_REVERSE_ADC;
+    pConfig->nTestMinReverseAdc = 0;
+
+    pConfig->nTestMaxAgc = TEST_MAX_AGC;
+    pConfig->nTestMinAgc = TEST_MIN_AGC;
+
+    pConfig->nTestMaxAgcFactory = TEST_MAX_AGC_FAC;
+    pConfig->nTestMinAgcFactory = TEST_MIN_AGC_FAC;
+
     MemSet(pConfig->strManufacturerDesc,0x00,MAX_STRING_LENGTH);
     MemSet(pConfig->strDeviceDesc,0x00,MAX_STRING_LENGTH);
     MemSet(pConfig->strModelDesc,0x00,MAX_STRING_LENGTH);
@@ -227,35 +227,35 @@ int32_t InitCommonConfigData(stHardConfigData_t* pConfig)
     pConfig->nManufacturerDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(MANUFACTURER_DESC) - 1);
     pConfig->nDeviceDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(DEVICE_DESC) - 1);
     pConfig->nModelDescLen = FN_MIN(MAX_STRING_LENGTH, sizeof(MODEL_DESC) - 1);
-//
-//    pConfig->nREOX1 = REOX1;
-//    pConfig->nREOX2 = REOX2;
-//    pConfig->nREOY1 = REOY1;
-//    pConfig->nREOY2 = REOY2;
-//    pConfig->eRotationParameter = ROTATION_DIRECTION;
-//
-//    pConfig->eRotationDef= ROTATION_DEF;
-//    pConfig->eRotationOsDef= ROTATION_OS_DEF;
-//    pConfig->bReverse = REVERSE;
-//
-//    pConfig->bUsb1DeviceConfigType = (uint8_t)USB1_DEVICE_CONFIG_TYPE;
-//
+
+    pConfig->nREOX1 = REOX1;
+    pConfig->nREOX2 = REOX2;
+    pConfig->nREOY1 = REOY1;
+    pConfig->nREOY2 = REOY2;
+    pConfig->eRotationParameter = ROTATION_DIRECTION;
+
+    pConfig->eRotationDef= ROTATION_DEF;
+    pConfig->eRotationOsDef= ROTATION_OS_DEF;
+    pConfig->bReverse = REVERSE;
+
+    pConfig->bUsb1DeviceConfigType = (uint8_t)USB1_DEVICE_CONFIG_TYPE;
+
     pConfig->nUsePoint = USER_POINT;
-//    pConfig->bTouchEn = TOUCH_EN;
-//    pConfig->bUnderMac10 = UNDER_MAC10_EN;
-//    pConfig->eFormat = USB0_DEFAULT_TOUCH_FMT;
-//    pConfig->eFormatRe = USB0_DEFAULT_TOUCH_FMT;
-//    pConfig->bTuioCoordEn = TUIO_COORD_EN;
-//    pConfig->bUsbCoordEn = USB0_COORD_EN;
-//    pConfig->bUartCoordEn = UART_COORD_EN;
-//    pConfig->bTouchCoordWidthEn = TOUCH_COORD_WIDTH_EN;
-//    pConfig->bTuioCoordWidthEn = TUIO_COORD_WIDTH_EN;
-//    pConfig->bUartCoordWidthEn = UART_COORD_WIDTH_EN;
-//    pConfig->eTouchCoordWidthType = TOUCH_COORD_WIDTH_TYPE;
-//    pConfig->eTuioCoordWidthType = TUIO_COORD_WIDTH_TYPE;
-//    pConfig->eUartCoordWidthType = UART_COORD_WIDTH_TYPE;
-//    pConfig->nUartSendCoordNum = UART_SEND_COORD_NUM;
-//    pConfig->bUartSamePacketNoSend = UART_SAME_PACKET_NO_SEND_EN;
+    pConfig->bTouchEn = TOUCH_EN;
+    pConfig->bUnderMac10 = UNDER_MAC10_EN;
+    pConfig->eFormat = USB0_DEFAULT_TOUCH_FMT;
+    pConfig->eFormatRe = USB0_DEFAULT_TOUCH_FMT;
+    pConfig->bTuioCoordEn = TUIO_COORD_EN;
+    pConfig->bUsbCoordEn = USB0_COORD_EN;
+    pConfig->bUartCoordEn = UART_COORD_EN;
+    pConfig->bTouchCoordWidthEn = TOUCH_COORD_WIDTH_EN;
+    pConfig->bTuioCoordWidthEn = TUIO_COORD_WIDTH_EN;
+    pConfig->bUartCoordWidthEn = UART_COORD_WIDTH_EN;
+    pConfig->eTouchCoordWidthType = TOUCH_COORD_WIDTH_TYPE;
+    pConfig->eTuioCoordWidthType = TUIO_COORD_WIDTH_TYPE;
+    pConfig->eUartCoordWidthType = UART_COORD_WIDTH_TYPE;
+    pConfig->nUartSendCoordNum = UART_SEND_COORD_NUM;
+    pConfig->bUartSamePacketNoSend = UART_SAME_PACKET_NO_SEND_EN;
 
     return 0;
 }

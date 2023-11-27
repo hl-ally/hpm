@@ -190,6 +190,30 @@ uint32_t GetDataCrc32_SW(uint8_t *Buffer, uint32_t nLength, uint32_t nCrcData, u
     return  nCrcData;
 }
 
+/*
+ * 调用硬件CRC复位
+ */
+void Crc32ResetDT(void)
+{
+//    CRC_ResetDT();
+}
+/*
+ * 调用硬件计算 buf 的 CRC
+ */
+int32_t Crc32CalcBlkCRC(uint32_t pBuffer[], uint32_t BufferLength)
+{
+//    return CRC_CalculateBlkCRC(pBuffer, BufferLength);
+    return GetCrc32_SW((uint8_t *)pBuffer, BufferLength);
+}
+
+void GetSerialNum(uint32_t *arrSerialNum)
+{
+  arrSerialNum[0] = *(uint32_t*)(0x1FFFF7E8);
+  arrSerialNum[1] = *(uint32_t*)(0x1FFFF7EC);
+  arrSerialNum[2] = *(uint32_t*)(0x1FFFF7F0);
+}
+
+
 
 /*********************************************************************************************************
  * @Function : 对数据进行大小端模式转换
