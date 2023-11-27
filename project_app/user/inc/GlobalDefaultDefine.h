@@ -41,7 +41,7 @@
 #endif
 
 #ifndef MODEL_DESC
-#define MODEL_DESC                          "R5H_DEMO"
+#define MODEL_DESC                          "HPM_USB_DEMO"
 #endif
 
 #ifndef ROTATION_DIRECTION
