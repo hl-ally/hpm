@@ -24,13 +24,130 @@
 #include "app_tim.h"
 #include "app_tsns.h"
 #include "app_dma_mgr.h"
+#include "hpm_l1c_drv.h"
 
+
+#define TEST_ADDR_START 0x40000
+
+#define XPI_MEM_BASE 0x80000000UL
+
+
+static uint8_t program_buf[4096];
+
+xpi_nor_config_t nor_config;
+
+/**
+  * @brief Mini Sector Erase command
+  * @Note  This function must be placed in RAM
+  */
+ATTR_RAMFUNC
+hpm_stat_t sip_flash_minisector_erase(XPI_Type *base,
+                                                    xpi_xfer_channel_t port,
+                                                    const xpi_nor_config_t *nor_config,
+                                                    uint32_t start)
+{
+    hpm_stat_t status;
+    xpi_instr_seq_t sector1k_erase = 
+    {
+        .entry = {
+            XPI_INSTR_SEQ(XPI_PHASE_CMD_SDR, XPI_1PAD, 0x82, XPI_PHASE_RADDR_SDR, XPI_1PAD, 24),
+            0,
+            0,
+            0
+        }
+    };
+
+    /* Issue Write Enable command */
+    ROM_API_TABLE_ROOT->xpi_nor_driver_if->enable_write(base, port, nor_config, start);
+
+    /* Prepare the Mini Sector Erase command */
+    ROM_API_TABLE_ROOT->xpi_driver_if->update_instr_table(base, &sector1k_erase.entry[0], 1, 1);
+
+    /* Issue Mini Sector Erase Command */
+    xpi_xfer_ctx_t xfer_ctx;
+    (void) memset(&xfer_ctx, 0, sizeof(xfer_ctx));
+    xfer_ctx.addr = start;
+    xfer_ctx.channel = port;
+    xfer_ctx.cmd_type = xpi_apb_xfer_type_cmd;
+    xfer_ctx.seq_idx = 1;
+    xfer_ctx.seq_num = 1;
+    status = ROM_API_TABLE_ROOT->xpi_driver_if->transfer_blocking(base, &xfer_ctx);
+    if (status != status_success) {
+        return status;
+    }
+
+    /* Wait until the Mini Sector Erase command completed */
+    status = ROM_API_TABLE_ROOT->xpi_nor_driver_if->wait_busy(base, port, nor_config, start); 
+
+    return status;
+}
+
+void show_memory_content(uint32_t addr, size_t size_in_bytes)
+{
+    for (uint32_t offset = 0; offset < size_in_bytes; offset += 256) {
+
+        const uint8_t *pbuf_8 = (const uint8_t *)(addr + offset);
+        uint32_t remaining_size = size_in_bytes - offset;
+        uint32_t print_size = MIN(remaining_size, 256);
+        for (uint32_t j = 0; j < print_size; j++) {
+            printf("%02x ", pbuf_8[j]);
+        }
+        printf("\n");
+    }
+}
+
+bool sip_flash_init(xpi_nor_config_t *config)
+{
+    xpi_nor_config_option_t option;
+    option.header.U = 0xfcf90002;
+    option.option0.U = 0x7;
+    option.option0.U = 0x0006;
+    option.option1.U = 0x1000;
+
+    hpm_stat_t status = rom_xpi_nor_auto_config(HPM_XPI0, config, &option);
+
+    return (status == status_success) ? true : false;
+}
+
+
+void test_minisector_erase(xpi_nor_config_t *nor_config)
+{
+    for (uint32_t i = 0; i < sizeof(program_buf); i++) {
+        program_buf[i] = (uint8_t)( i & 0xFF);
+    }
+
+    /* Pre-program test data to test memory region */
+    rom_xpi_nor_erase(HPM_XPI0, xpi_xfer_channel_a1, nor_config, TEST_ADDR_START, 4096);
+    rom_xpi_nor_program(HPM_XPI0, xpi_xfer_channel_a1, nor_config, (uint32_t*)program_buf, TEST_ADDR_START, sizeof(program_buf));
+
+    uint32_t ahb_mem_addr = XPI_MEM_BASE + TEST_ADDR_START;
+    l1c_dc_invalidate(ahb_mem_addr, sizeof(program_buf));
+    printf("Before MINI sector erase test, data content:\n");
+    show_memory_content(ahb_mem_addr, 4096);
+
+    uint32_t erase_offset = TEST_ADDR_START + SIZE_1KB;
+    sip_flash_minisector_erase(HPM_XPI0, xpi_xfer_channel_a1, nor_config, erase_offset);
+    l1c_dc_invalidate(ahb_mem_addr, sizeof(program_buf));
+    printf("After MINI sector erase test, data content:\n");
+    show_memory_content(ahb_mem_addr, 4096);
+
+    printf("Please check the data after mini sector erase, the 2nd 1KB data should be all 0xFFs\n");
+
+}
 
 int main(void)
 {
     int u = 0;
     uint64_t nLastTime = 0;
+    bool result;
     board_init();
+
+    printf("HPMicro SiP Package FLASH test demo\n");
+
+    result = sip_flash_init(&nor_config);
+    printf("SIP FLASH Initialization %s\n", result ? "PASSED" : "FAILED");
+    if (!result) return result;
+    test_minisector_erase(&nor_config);
 
     #if 0
     // 修改主频为480MHz
